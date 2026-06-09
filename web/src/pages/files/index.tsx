@@ -115,16 +115,23 @@ export default function FilesPage() {
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">{t("files.title")}</h1>
-          <p className="text-sm text-muted-foreground">{result?.path ?? currentPath}</p>
+          {result && (
+            <span className="text-xs text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5 font-medium">
+              {result.entries.length} {result.entries.length === 1 ? "item" : "items"}
+            </span>
+          )}
+          <span className="font-mono text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-1.5">
+            {result?.path ?? currentPath}
+          </span>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleGoUp} disabled={!result?.parent}>
+          <Button variant="outline" size="sm" onClick={handleGoUp} disabled={!result?.parent} className="rounded-xl border-border bg-muted/30 hover:bg-muted/50">
             <ArrowLeft className="mr-1 h-3 w-3" />
             {t("files.up")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowMkdir(!showMkdir)}>
+          <Button variant="outline" size="sm" onClick={() => setShowMkdir(!showMkdir)} className="rounded-xl border-border bg-muted/30 hover:bg-muted/50">
             <FolderPlus className="mr-1 h-3 w-3" />
             {t("files.newFolder")}
           </Button>
@@ -139,6 +146,7 @@ export default function FilesPage() {
             size="sm"
             onClick={() => fileInputEl?.click()}
             disabled={uploadMutation.isPending}
+            className="rounded-xl"
           >
             <Upload className="mr-1 h-3 w-3" />
             {t("files.upload")}
@@ -147,14 +155,14 @@ export default function FilesPage() {
       </div>
 
       {showMkdir && (
-        <Card>
+        <Card className="border-border bg-card">
           <CardContent className="flex items-center gap-2 py-3">
             <input
               type="text"
               value={newDirName}
               onChange={(e) => setNewDirName(e.target.value)}
               placeholder={t("files.newFolderName")}
-              className="flex h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex h-9 flex-1 rounded-md border border-border bg-muted/50 px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleMkdir()}
             />
             <Button size="sm" onClick={handleMkdir} disabled={mkdirMutation.isPending}>
@@ -183,10 +191,10 @@ export default function FilesPage() {
       )}
 
       {result && result.entries.length > 0 && (
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-0">
-            <div className="divide-y">
-              <div className="grid grid-cols-[1fr_120px_180px_120px] px-4 py-2 text-xs font-medium text-muted-foreground">
+            <div className="divide-y divide-border">
+              <div className="grid grid-cols-[1fr_120px_180px_120px] px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
                 <span>{t("files.name")}</span>
                 <span className="text-right">{t("files.size")}</span>
                 <span className="text-right">{t("files.modified")}</span>
@@ -196,7 +204,7 @@ export default function FilesPage() {
               {result.entries.map((entry) => (
                 <div
                   key={entry.path}
-                  className="grid grid-cols-[1fr_120px_180px_120px] items-center px-4 py-2.5 hover:bg-muted/50 transition-colors"
+                  className="grid grid-cols-[1fr_120px_180px_120px] items-center px-4 py-2.5 hover:bg-muted/30 transition-colors"
                 >
                   <button
                     type="button"
@@ -204,9 +212,9 @@ export default function FilesPage() {
                     onClick={() => entry.isDir && handleNavigate(entry.path)}
                   >
                     {entry.isDir ? (
-                      <Folder className="h-4 w-4 text-blue-500" />
+                      <Folder className="h-4 w-4 text-cyan-400" />
                     ) : (
-                      <File className="h-4 w-4 text-muted-foreground" />
+                      <File className="h-4 w-4 text-muted-foreground/60" />
                     )}
                     <span className={entry.isDir ? "font-medium" : ""}>{entry.name}</span>
                   </button>
