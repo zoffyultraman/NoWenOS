@@ -140,11 +140,21 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {containersQuery.isLoading
-          ? t("docker.loadingContainers")
-          : t("docker.runningTotal").replace("{running}", String(running)).replace("{total}", String(containers.length))}
-      </p>
+      <div className="flex items-center gap-3">
+        {containersQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">{t("docker.loadingContainers")}</p>
+        ) : (
+          <>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+              {running} running
+            </span>
+            <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              {containers.length} total
+            </span>
+          </>
+        )}
+      </div>
 
       {containersQuery.isError && (
         <Card className="border-destructive">
@@ -196,7 +206,9 @@ function ContainerRow({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className={"rounded-full px-2 py-0.5 text-xs " + (container.state === "running" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600")}>
+          <span className={container.state === "running"
+            ? "rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400"
+            : "rounded-full border border-slate-500/20 bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"}>
             {container.state === "running" ? t("docker.running") : container.state}
           </span>
           {container.state === "running" ? (
