@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# build
+dist/
+build/
+out/
+
+# environment
+.env
+.env.*
+
+# editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+
+# go
+server/bin/
