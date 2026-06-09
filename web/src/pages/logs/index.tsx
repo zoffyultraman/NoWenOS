@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchLogs, fetchLogSources } from "@/features/logs/api";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Terminal, Filter, AlertCircle, Info, AlertTriangle, Bug } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function LogsPage() {
+  const t = useTranslation();
   const [limit, setLimit] = useState(100);
+  const [levelFilter, setLevelFilter] = useState<string | null>(null);
 
   const logsQuery = useQuery({
     queryKey: ["logs", limit],
@@ -18,95 +21,152 @@ export default function LogsPage() {
     queryFn: fetchLogSources,
   });
 
-  const entries = logsQuery.data?.data?.entries ?? [];
+  const allEntries = logsQuery.data?.data?.entries ?? [];
+  const entries = levelFilter ? allEntries.filter((e) => e.level === levelFilter) : allEntries;
   const sources = sourcesQuery.data?.data ?? [];
+
+  const levelCounts = {
+    error: allEntries.filter((e) => e.level === "error").length,
+    warn: allEntries.filter((e) => e.level === "warn").length,
+    info: allEntries.filter((e) => e.level === "info").length,
+    debug: allEntries.filter((e) => e.level === "debug").length,
+  };
 
   return (
     <div className="space-y-6 p-6">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Logs</h1>
-          <p className="text-muted-foreground">
-            {logsQuery.isLoading ? "Loading..." : `${entries.length} log entries`}
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("logs.title")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {logsQuery.isLoading ? t("logs.loading") : `${allEntries.length} ${t("logs.entryCount").replace("{count}", String(allEntries.length))}`}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => logsQuery.refetch()}
-          disabled={logsQuery.isLoading}
-        >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
+        <Button variant="outline" size="sm" onClick={() => logsQuery.refetch()} disabled={logsQuery.isLoading} className="gap-2">
+          <RefreshCw className={"h-4 w-4 " + (logsQuery.isLoading ? "animate-spin" : "")} />
+          {t("logs.refresh")}
         </Button>
       </div>
 
-      {/* Sources info */}
+      {/* Level Filter Cards */}
+      <div className="grid grid-cols-5 gap-3">
+        <LevelCard
+          label="All"
+          count={allEntries.length}
+          active={levelFilter === null}
+          onClick={() => setLevelFilter(null)}
+          color="slate"
+        />
+        <LevelCard
+          label="Error"
+          count={levelCounts.error}
+          active={levelFilter === "error"}
+          onClick={() => setLevelFilter(levelFilter === "error" ? null : "error")}
+          color="red"
+          icon={<AlertCircle className="h-3.5 w-3.5" />}
+        />
+        <LevelCard
+          label="Warn"
+          count={levelCounts.warn}
+          active={levelFilter === "warn"}
+          onClick={() => setLevelFilter(levelFilter === "warn" ? null : "warn")}
+          color="amber"
+          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+        />
+        <LevelCard
+          label="Info"
+          count={levelCounts.info}
+          active={levelFilter === "info"}
+          onClick={() => setLevelFilter(levelFilter === "info" ? null : "info")}
+          color="cyan"
+          icon={<Info className="h-3.5 w-3.5" />}
+        />
+        <LevelCard
+          label="Debug"
+          count={levelCounts.debug}
+          active={levelFilter === "debug"}
+          onClick={() => setLevelFilter(levelFilter === "debug" ? null : "debug")}
+          color="purple"
+          icon={<Bug className="h-3.5 w-3.5" />}
+        />
+      </div>
+
+      {/* Sources */}
       {sources.length > 0 && (
-        <Card>
-          <CardContent className="py-3">
+        <Card className="border-border bg-card">
+          <CardContent className="flex items-center gap-3 py-3">
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">
-              Available log sources: {sources.join(", ")}
+              {t("logs.availableSources")} {sources.join(", ")}
             </p>
           </CardContent>
         </Card>
       )}
 
-      {logsQuery.isLoading && (
-        <p className="text-sm text-muted-foreground">Loading logs...</p>
-      )}
-
-      {logsQuery.isError && (
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-sm text-destructive">Failed to load logs.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Limit controls */}
-      <div className="flex gap-2">
+      {/* Limit Controls */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Limit:</span>
         {[50, 100, 200, 500].map((n) => (
           <Button
             key={n}
             variant={limit === n ? "default" : "outline"}
             size="sm"
             onClick={() => setLimit(n)}
+            className={limit === n ? "bg-primary text-primary-foreground" : ""}
           >
             {n}
           </Button>
         ))}
       </div>
 
-      {/* Log entries */}
-      {entries.length === 0 && !logsQuery.isLoading && (
-        <Card>
+      {/* Loading / Error */}
+      {logsQuery.isLoading && <p className="text-sm text-muted-foreground">{t("logs.loadingLogs")}</p>}
+      {logsQuery.isError && (
+        <Card className="border-danger/30 bg-danger/5">
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">No log entries found.</p>
+            <p className="text-sm text-danger">{t("logs.failed")}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Log Console */}
+      {entries.length === 0 && !logsQuery.isLoading && (
+        <Card className="border-border bg-card">
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">{t("logs.noEntries")}</p>
           </CardContent>
         </Card>
       )}
 
       {entries.length > 0 && (
-        <Card>
+        <Card className="border-border bg-card overflow-hidden">
+          <CardHeader className="border-b border-border bg-muted/30 py-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10">
+                <Terminal className="h-4 w-4 text-cyan-400" />
+              </div>
+              <span>Log Output</span>
+              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+                {entries.length} entries
+              </span>
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             <div className="max-h-[600px] overflow-y-auto">
-              <div className="divide-y font-mono text-xs">
-                <div className="grid grid-cols-[140px_60px_1fr] bg-muted px-4 py-2 font-medium text-muted-foreground">
-                  <span>Timestamp</span>
-                  <span>Level</span>
-                  <span>Message</span>
+              <div className="divide-y divide-border/50 font-mono text-xs">
+                <div className="grid grid-cols-[160px_60px_1fr] bg-muted/50 px-4 py-2 font-medium uppercase tracking-wider text-muted-foreground">
+                  <span>{t("logs.timestamp")}</span>
+                  <span>{t("logs.level")}</span>
+                  <span>{t("logs.message")}</span>
                 </div>
                 {entries.map((entry, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-[140px_60px_1fr] px-4 py-1.5 hover:bg-muted/50"
+                    className="grid grid-cols-[160px_60px_1fr] px-4 py-1.5 transition-colors hover:bg-muted/30"
                   >
                     <span className="text-muted-foreground">{entry.timestamp}</span>
-                    <span>
-                      <LogLevelBadge level={entry.level} />
-                    </span>
-                    <span className="break-all">{entry.message}</span>
+                    <span><LogLevelBadge level={entry.level} /></span>
+                    <span className="break-all text-foreground">{entry.message}</span>
                   </div>
                 ))}
               </div>
@@ -118,20 +178,45 @@ export default function LogsPage() {
   );
 }
 
+function LevelCard({ label, count, active, onClick, color, icon }: {
+  label: string; count: number; active: boolean; onClick: () => void; color: string; icon?: React.ReactNode;
+}) {
+  const colorStyles: Record<string, { active: string; inactive: string; text: string }> = {
+    slate: { active: "border-border bg-muted", inactive: "border-border bg-card", text: "text-foreground" },
+    red: { active: "border-red-500/30 bg-red-500/10", inactive: "border-border bg-card", text: "text-red-400" },
+    amber: { active: "border-amber-500/30 bg-amber-500/10", inactive: "border-border bg-card", text: "text-amber-400" },
+    cyan: { active: "border-cyan-500/30 bg-cyan-500/10", inactive: "border-border bg-card", text: "text-cyan-400" },
+    purple: { active: "border-purple-500/30 bg-purple-500/10", inactive: "border-border bg-card", text: "text-purple-400" },
+  };
+  const s = colorStyles[color] ?? colorStyles.slate;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition-all duration-200 cursor-pointer ${
+        active ? s.active : s.inactive + " hover:bg-muted/50"
+      }`}
+    >
+      <div className="flex items-center gap-1.5">
+        {icon && <span className={active ? s.text : "text-muted-foreground"}>{icon}</span>}
+        <span className={`text-xs font-medium ${active ? s.text : "text-muted-foreground"}`}>{label}</span>
+      </div>
+      <span className={`text-lg font-bold tabular-nums ${active ? s.text : "text-foreground"}`}>{count}</span>
+    </button>
+  );
+}
+
 function LogLevelBadge({ level }: { level: string }) {
   const styles: Record<string, string> = {
-    error: "bg-red-100 text-red-700",
-    warn: "bg-yellow-100 text-yellow-700",
-    info: "bg-blue-100 text-blue-700",
-    debug: "bg-slate-100 text-slate-600",
+    error: "bg-red-500/15 text-red-400 border border-red-500/20",
+    warn: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+    info: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20",
+    debug: "bg-purple-500/15 text-purple-400 border border-purple-500/20",
   };
 
   return (
-    <span
-      className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${
-        styles[level] ?? styles.info
-      }`}
-    >
+    <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${styles[level] ?? styles.info}`}>
       {level}
     </span>
   );
