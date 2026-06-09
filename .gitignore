@@ -27,6 +27,10 @@ Thumbs.db
 
 # go
 server/bin/
+*.exe
+
+# duplicate/accidental dirs
+web/src/src/
 
 # Runtime databases
 *.db
