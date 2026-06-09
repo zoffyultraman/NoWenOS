@@ -3,9 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAlertEvents } from "@/features/alerts/api";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, Bell, Moon, Sun } from "lucide-react";
+import { LogOut, User, Menu, Bell } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useThemeStore } from "@/stores/theme";
 
 interface AppHeaderProps {
   onMenuClick?: () => void;
@@ -17,7 +16,6 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
   const username = useSessionStore((state) => state.username);
   const clearSession = useSessionStore((state) => state.clearSession);
   const t = useTranslation();
-  const { resolved, toggleTheme } = useThemeStore();
 
   const eventsQuery = useQuery({
     queryKey: ["alert-events-badge"],
@@ -33,42 +31,60 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
     navigate("/login", { replace: true });
   }
 
+  const pageTitle = getPageTitle(location.pathname, t);
+
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-background px-4 lg:px-6">
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-6">
       <div className="flex items-center gap-3">
         {onMenuClick && (
           <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden h-9 w-9 p-0">
             <Menu className="h-5 w-5" />
           </Button>
         )}
-        <p className="text-sm text-muted-foreground">{t("header.console")}</p>
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">{pageTitle}</h2>
+        </div>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-9 w-9 p-0" title={resolved === "dark" ? "Light mode" : "Dark mode"}>
-          {resolved === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate("/alerts")}
-          className={`relative h-9 w-9 p-0 ${location.pathname === "/alerts" ? "text-primary" : ""}`}
+          className={`relative h-9 w-9 p-0 ${location.pathname === "/alerts" ? "text-primary" : "text-muted-foreground"}`}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-4.5 w-4.5" />
           {unseen > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white shadow-sm shadow-danger/30">
               {unseen > 9 ? "9+" : unseen}
             </span>
           )}
         </Button>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <User className="h-4 w-4" />
-          <span className="hidden sm:inline">{username ?? "User"}</span>
+        <div className="mx-2 flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15">
+            <User className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <span className="text-xs font-medium text-foreground">{username ?? "User"}</span>
         </div>
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">{t("header.logout")}</span>
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="h-9 w-9 p-0 text-muted-foreground hover:text-danger" title={t("header.logout")}>
+          <LogOut className="h-4.5 w-4.5" />
         </Button>
       </div>
     </header>
   );
+}
+
+function getPageTitle(pathname: string, t: (key: string) => string): string {
+  const map: Record<string, string> = {
+    "/dashboard": "nav.dashboard",
+    "/system": "nav.system",
+    "/storage": "nav.storage",
+    "/shares": "nav.shares",
+    "/files": "nav.files",
+    "/docker": "nav.docker",
+    "/users": "nav.users",
+    "/logs": "nav.logs",
+    "/alerts": "nav.alerts",
+    "/settings": "nav.settings",
+  };
+  return t(map[pathname] ?? "header.console");
 }
