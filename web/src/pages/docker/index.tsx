@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchContainers,
@@ -41,6 +42,7 @@ import {
 } from "lucide-react";
 
 export default function DockerPage() {
+  const t = useTranslation();
   const [activeTab, setActiveTab] = useState<"containers" | "images" | "compose">("containers");
   const [logsContainer, setLogsContainer] = useState<{ id: string; name: string } | null>(null);
   const [logsCompose, setLogsCompose] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export default function DockerPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Docker</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("docker.title")}</h1>
         <p className="text-muted-foreground">Manage containers, images, and Compose projects</p>
       </div>
 
@@ -59,21 +61,21 @@ export default function DockerPage() {
           onClick={() => setActiveTab("containers")}
         >
           <Container className="mr-2 h-4 w-4" />
-          Containers
+          {t("docker.containers")}
         </Button>
         <Button
           variant={activeTab === "images" ? "default" : "outline"}
           onClick={() => setActiveTab("images")}
         >
           <HardDrive className="mr-2 h-4 w-4" />
-          Images
+          {t("docker.images")}
         </Button>
         <Button
           variant={activeTab === "compose" ? "default" : "outline"}
           onClick={() => setActiveTab("compose")}
         >
           <Layers className="mr-2 h-4 w-4" />
-          Compose
+          {t("docker.compose")}
         </Button>
       </div>
 
@@ -115,6 +117,7 @@ export default function DockerPage() {
 // ── Containers Tab ──
 
 function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) => void }) {
+  const t = useTranslation();
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -125,10 +128,10 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
       controlContainer(id, action),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["containers"] });
-      toast.success("Container " + variables.action + " successful");
+      toast.success(t("docker.containerAction").replace("{action}", variables.action));
     },
     onError: (_err, variables) => {
-      toast.error("Failed to " + variables.action + " container");
+      toast.error(t("docker.containerActionFailed").replace("{action}", variables.action));
     },
   });
 
@@ -139,8 +142,8 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {containersQuery.isLoading
-          ? "Loading containers..."
-          : running + " running / " + containers.length + " total"}
+          ? t("docker.loadingContainers")
+          : t("docker.runningTotal").replace("{running}", String(running)).replace("{total}", String(containers.length))}
       </p>
 
       {containersQuery.isError && (
@@ -173,7 +176,6 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
     </div>
   );
 }
-
 function ContainerRow({
   container, onAction, onViewLogs, isPending,
 }: {
@@ -182,6 +184,7 @@ function ContainerRow({
   onViewLogs: () => void;
   isPending: boolean;
 }) {
+  const t = useTranslation();
   return (
     <Card>
       <CardContent className="flex items-center justify-between py-4">
@@ -194,7 +197,7 @@ function ContainerRow({
         </div>
         <div className="flex items-center gap-2">
           <span className={"rounded-full px-2 py-0.5 text-xs " + (container.state === "running" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600")}>
-            {container.state}
+            {container.state === "running" ? t("docker.running") : container.state}
           </span>
           {container.state === "running" ? (
             <>
@@ -222,6 +225,7 @@ function ContainerRow({
 // ── Images Tab ──
 
 function ImagesTab() {
+  const t = useTranslation();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [pullName, setPullName] = useState("");
@@ -232,19 +236,19 @@ function ImagesTab() {
     mutationFn: () => pullImage(pullName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["images"] });
-      toast.success("Image pulled successfully");
+      toast.success(t("docker.pullSuccess"));
       setPullName("");
     },
-    onError: () => toast.error("Failed to pull image"),
+    onError: () => toast.error(t("docker.pullFailed")),
   });
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => removeImage(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["images"] });
-      toast.success("Image removed");
+      toast.success(t("docker.imageRemoved"));
     },
-    onError: () => toast.error("Failed to remove image"),
+    onError: () => toast.error(t("docker.removeFailed")),
   });
 
   const images = imagesQuery.data?.data ?? [];
@@ -253,13 +257,13 @@ function ImagesTab() {
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
-          placeholder="nginx:latest"
+          placeholder={t("docker.pullPlaceholder")}
           value={pullName}
           onChange={(e) => setPullName(e.target.value)}
           className="max-w-sm"
         />
         <Button onClick={() => pullMutation.mutate()} disabled={!pullName || pullMutation.isPending}>
-          <Download className="mr-2 h-4 w-4" /> Pull
+          <Download className="mr-2 h-4 w-4" /> {t("docker.pull")}
         </Button>
       </div>
 
@@ -301,6 +305,7 @@ function ImagesTab() {
 // ── Compose Tab ──
 
 function ComposeTab({ onViewLogs, onEditFile }: { onViewLogs: (name: string) => void; onEditFile: (path: string, name: string) => void }) {
+  const t = useTranslation();
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -312,10 +317,10 @@ function ComposeTab({ onViewLogs, onEditFile }: { onViewLogs: (name: string) => 
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["compose-projects"] });
       queryClient.invalidateQueries({ queryKey: ["compose-services"] });
-      toast.success("Compose project " + variables.action + " successful");
+      toast.success(t("docker.composeAction").replace("{action}", variables.action));
     },
     onError: (_err, variables) => {
-      toast.error("Failed to " + variables.action + " compose project");
+      toast.error(t("docker.composeActionFailed").replace("{action}", variables.action));
     },
   });
 
@@ -325,8 +330,8 @@ function ComposeTab({ onViewLogs, onEditFile }: { onViewLogs: (name: string) => 
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {projectsQuery.isLoading
-          ? "Loading compose projects..."
-          : projects.length + " project(s) found"}
+          ? t("docker.loadingCompose")
+          : t("docker.projectCount").replace("{count}", String(projects.length))}
       </p>
 
       {projectsQuery.isError && (
@@ -356,7 +361,7 @@ function ComposeTab({ onViewLogs, onEditFile }: { onViewLogs: (name: string) => 
               if (project.configFile) {
                 onEditFile(project.configFile, project.name);
               } else {
-                toast.error("No config file path available for this project");
+                toast.error(t("docker.noConfigPath"));
               }
             }}
             isPending={controlMutation.isPending}
@@ -376,6 +381,7 @@ function ComposeRow({
   onEditFile: () => void;
   isPending: boolean;
 }) {
+  const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const servicesQuery = useQuery({
     queryKey: ["compose-services", project.name],
@@ -395,26 +401,26 @@ function ComposeRow({
             <div>
               <p className="text-sm font-medium">{project.name}</p>
               <p className="text-xs text-muted-foreground">
-                {project.services} service(s) | {project.status}
+                {project.services} {t("docker.services")} | {project.status}
                 {project.configFile && (" | " + project.configFile)}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={onEditFile} className="h-8 px-2 text-xs" title="Edit compose file">
-              <FileCode className="mr-1 h-3 w-3" /> Edit
+            <Button variant="ghost" size="sm" onClick={onEditFile} className="h-8 px-2 text-xs" title={t("docker.edit")}>
+              <FileCode className="mr-1 h-3 w-3" /> {t("docker.edit")}
             </Button>
             {!isUp ? (
               <Button variant="ghost" size="sm" onClick={() => onAction("up")} disabled={isPending} className="h-8 px-2 text-xs">
-                <Play className="mr-1 h-3 w-3 text-green-600" /> Up
+                <Play className="mr-1 h-3 w-3 text-green-600" /> {t("docker.up")}
               </Button>
             ) : (
               <>
                 <Button variant="ghost" size="sm" onClick={() => onAction("down")} disabled={isPending} className="h-8 px-2 text-xs">
-                  <Square className="mr-1 h-3 w-3 text-red-600" /> Down
+                  <Square className="mr-1 h-3 w-3 text-red-600" /> {t("docker.down")}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onAction("restart")} disabled={isPending} className="h-8 px-2 text-xs">
-                  <RotateCcw className="mr-1 h-3 w-3 text-blue-600" /> Restart
+                  <RotateCcw className="mr-1 h-3 w-3 text-blue-600" /> {t("docker.restart")}
                 </Button>
               </>
             )}
@@ -426,10 +432,10 @@ function ComposeRow({
 
         {expanded && (
           <div className="mt-4 ml-7 space-y-2">
-            {servicesQuery.isLoading && <p className="text-sm text-muted-foreground">Loading services...</p>}
-            {servicesQuery.isError && <p className="text-sm text-destructive">Failed to load services.</p>}
+            {servicesQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.loadingServices")}</p>}
+            {servicesQuery.isError && <p className="text-sm text-destructive">{t("docker.failedServices")}</p>}
             {services.length === 0 && !servicesQuery.isLoading && (
-              <p className="text-sm text-muted-foreground">No services found.</p>
+              <p className="text-sm text-muted-foreground">{t("docker.noServices")}</p>
             )}
             {services.map((svc) => (
               <div key={svc.name} className="flex items-center justify-between rounded-lg border px-3 py-2">
@@ -456,8 +462,6 @@ function ComposeRow({
     </Card>
   );
 }
-
-// ── Modals ──
 
 function ContainerLogsModal({ id, name, onClose }: { id: string; name: string; onClose: () => void }) {
   const logsQuery = useQuery({
@@ -512,6 +516,7 @@ function ComposeLogsModal({ name, onClose }: { name: string; onClose: () => void
 // ── Compose File Editor Modal ──
 
 function FileEditorModal({ path, name, onClose }: { path: string; name: string; onClose: () => void }) {
+  const t = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
@@ -530,12 +535,12 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
   const saveMutation = useMutation({
     mutationFn: () => writeComposeFile(path, content),
     onSuccess: () => {
-      toast.success("File saved");
-      setResult({ type: "success", message: "File saved successfully" });
+      toast.success(t("docker.fileSaved"));
+      setResult({ type: "success", message: t("docker.fileSaved") });
     },
     onError: (err: Error) => {
-      toast.error("Failed to save file");
-      setResult({ type: "error", message: err.message || "Failed to save file" });
+      toast.error(t("docker.saveFailed"));
+      setResult({ type: "error", message: err.message || t("docker.saveFailed") });
     },
   });
 
@@ -545,13 +550,13 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
       return validateComposeFile(path);
     },
     onSuccess: () => {
-      setResult({ type: "success", message: "Validation passed!" });
-      toast.success("Compose file is valid");
+      setResult({ type: "success", message: t("docker.validatePassed") });
+      toast.success(t("docker.validateSuccess"));
     },
     onError: (err: Error & { response?: { data?: { error?: string } } }) => {
-      const msg = err?.response?.data?.error || err?.message || "Validation failed";
+      const msg = err?.response?.data?.error || err?.message || t("docker.validateFailed");
       setResult({ type: "error", message: msg });
-      toast.error("Validation failed");
+      toast.error(t("docker.validateFailed"));
     },
   });
 
@@ -563,13 +568,13 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["compose-projects"] });
       queryClient.invalidateQueries({ queryKey: ["compose-services"] });
-      setResult({ type: "success", message: "Deployment successful! Containers are starting..." });
-      toast.success("Compose project deployed");
+      setResult({ type: "success", message: t("docker.deploySuccess") });
+      toast.success(t("docker.deployToastSuccess"));
     },
     onError: (err: Error & { response?: { data?: { error?: string } } }) => {
-      const msg = err?.response?.data?.error || err?.message || "Deployment failed";
+      const msg = err?.response?.data?.error || err?.message || t("docker.deployFailed");
       setResult({ type: "error", message: msg });
-      toast.error("Deployment failed");
+      toast.error(t("docker.deployFailed"));
     },
   });
 
@@ -617,7 +622,7 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
                     disabled={saveMutation.isPending}
                   >
                     <Save className="mr-1 h-3 w-3" />
-                    {saveMutation.isPending ? "Saving..." : "Save"}
+                    {saveMutation.isPending ? t("docker.saving") : t("docker.save")}
                   </Button>
                   <Button
                     variant="outline"
@@ -626,7 +631,7 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
                     disabled={validateMutation.isPending}
                   >
                     <CheckCircle className="mr-1 h-3 w-3" />
-                    {validateMutation.isPending ? "Validating..." : "Validate"}
+                    {validateMutation.isPending ? t("docker.validating") : t("docker.validate")}
                   </Button>
                   <Button
                     size="sm"
@@ -634,7 +639,7 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
                     disabled={deployMutation.isPending}
                   >
                     <Rocket className="mr-1 h-3 w-3" />
-                    {deployMutation.isPending ? "Deploying..." : "Save & Deploy"}
+                    {deployMutation.isPending ? t("docker.deploying") : t("docker.deploy")}
                   </Button>
                 </div>
               </div>
@@ -645,5 +650,8 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
     </div>
   );
 }
+
+
+
 
 
