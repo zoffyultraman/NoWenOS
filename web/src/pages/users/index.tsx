@@ -57,7 +57,7 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("users.title")}</h1>
           <p className="text-muted-foreground">{t("users.subtitle")}</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
           <UserPlus className="mr-2 h-4 w-4" />{t("users.addUser")}
         </Button>
       </div>
@@ -100,7 +100,7 @@ export default function UsersPage() {
 
       {usersQuery.isLoading && <p className="text-sm text-muted-foreground">{t("users.loading")}</p>}
       {usersQuery.isError && (
-        <Card className="border-destructive"><CardContent className="pt-6"><p className="text-sm text-destructive">{t("users.failed")}</p></CardContent></Card>
+        <Card className="border-danger/30 bg-danger/5"><CardContent className="pt-6"><p className="text-sm text-danger">{t("users.failed")}</p></CardContent></Card>
       )}
       {users.length === 0 && !usersQuery.isLoading && (
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t("users.noUsers")}</p></CardContent></Card>
@@ -108,10 +108,10 @@ export default function UsersPage() {
 
       <div className="space-y-3">
         {users.map((user) => (
-          <Card key={user.username}>
+          <Card key={user.username} className="border-border bg-card transition-all duration-200 hover:border-border/80">
             <CardContent className="flex items-center justify-between py-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${user.role === "admin" ? "bg-cyan-500/10 text-cyan-400" : "bg-purple-500/10 text-purple-400"}`}>
                   {user.role === "admin" ? <Shield className="h-5 w-5" /> : <User className="h-5 w-5" />}
                 </div>
                 <div>
@@ -120,7 +120,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role === "admin" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${user.role === "admin" ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-400" : "border-slate-500/20 bg-slate-500/10 text-muted-foreground"}`}>
                   {user.role}
                 </span>
                 <Button variant="ghost" size="sm" onClick={() => setChangePwdUser(user.username)} className="h-8 w-8 p-0" title={t("users.changePassword")}>
@@ -194,3 +194,4 @@ function ChangePasswordDialog({ username, onClose }: { username: string; onClose
     </Card>
   );
 }
+
