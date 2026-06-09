@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/stores/toast";
 import { Share2, Plus, Trash2, X, FolderOpen, ToggleLeft, ToggleRight, Pencil } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const emptyForm: CreateShareRequest = {
   name: "",
@@ -21,6 +22,7 @@ const emptyForm: CreateShareRequest = {
 export default function SharesPage() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const t = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<CreateShareRequest>({ ...emptyForm });
@@ -36,9 +38,9 @@ export default function SharesPage() {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
       setShowForm(false);
       setForm({ ...emptyForm });
-      toast.success("Share created.");
+      toast.success(t("shares.created"));
     },
-    onError: (err: Error) => { toast.error(err.message || "Failed to create share."); },
+    onError: (err: Error) => { toast.error(err.message || t("shares.createFailed")); },
   });
 
   const updateMutation = useMutation({
@@ -48,27 +50,27 @@ export default function SharesPage() {
       setShowForm(false);
       setEditId(null);
       setForm({ ...emptyForm });
-      toast.success("Share updated.");
+      toast.success(t("shares.updated"));
     },
-    onError: (err: Error) => { toast.error(err.message || "Failed to update share."); },
+    onError: (err: Error) => { toast.error(err.message || t("shares.updateFailed")); },
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) => toggleShare(id, enabled),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
-      toast.success("Share toggled.");
+      toast.success(t("shares.toggled"));
     },
-    onError: (err: Error) => { toast.error(err.message || "Failed to toggle share."); },
+    onError: (err: Error) => { toast.error(err.message || t("shares.toggleFailed")); },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteShare,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
-      toast.success("Share deleted.");
+      toast.success(t("shares.deleted"));
     },
-    onError: (err: Error) => { toast.error(err.message || "Failed to delete share."); },
+    onError: (err: Error) => { toast.error(err.message || t("shares.deleteFailed")); },
   });
 
   const shares = sharesQuery.data?.data ?? [];
@@ -99,7 +101,7 @@ export default function SharesPage() {
   }
 
   function handleDelete(id: number, name: string) {
-    if (confirm(`Delete share "${name}"?`)) {
+    if (confirm(t("shares.deleteConfirm").replace("{name}", name))) {
       deleteMutation.mutate(id);
     }
   }
@@ -112,12 +114,12 @@ export default function SharesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Shares</h1>
-          <p className="text-muted-foreground">Manage network file shares (Samba / WebDAV / NFS).</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("shares.title")}</h1>
+          <p className="text-muted-foreground">{t("shares.subtitle")}</p>
         </div>
         <Button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ ...emptyForm }); }}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Share
+          {t("shares.addShare")}
         </Button>
       </div>
 
@@ -128,8 +130,8 @@ export default function SharesPage() {
             <CardContent className="flex items-center gap-3 py-3">
               <div className={"h-3 w-3 rounded-full " + (samba.running ? "bg-green-500" : samba.installed ? "bg-amber-500" : "bg-red-500")} />
               <div>
-                <span className="text-sm font-medium">Samba</span>
-                <p className="text-xs text-muted-foreground">{samba.running ? "Running" : samba.installed ? "Installed (stopped)" : "Not installed"}</p>
+                <span className="text-sm font-medium">{t("shares.samba")}</span>
+                <p className="text-xs text-muted-foreground">{samba.running ? t("shares.running") : samba.installed ? t("shares.installedStopped") : t("shares.notInstalled")}</p>
               </div>
             </CardContent>
           </Card>
@@ -139,8 +141,8 @@ export default function SharesPage() {
             <CardContent className="flex items-center gap-3 py-3">
               <div className={"h-3 w-3 rounded-full " + (webdavStatus.running ? "bg-green-500" : webdavStatus.installed ? "bg-amber-500" : "bg-red-500")} />
               <div>
-                <span className="text-sm font-medium">WebDAV</span>
-                <p className="text-xs text-muted-foreground">{webdavStatus.running ? "Running" : webdavStatus.installed ? "Installed (stopped)" : "Not installed"}</p>
+                <span className="text-sm font-medium">{t("shares.webdav")}</span>
+                <p className="text-xs text-muted-foreground">{webdavStatus.running ? t("shares.running") : webdavStatus.installed ? t("shares.installedStopped") : t("shares.notInstalled")}</p>
               </div>
             </CardContent>
           </Card>
@@ -150,8 +152,8 @@ export default function SharesPage() {
             <CardContent className="flex items-center gap-3 py-3">
               <div className={"h-3 w-3 rounded-full " + (nfsStatus.running ? "bg-green-500" : nfsStatus.installed ? "bg-amber-500" : "bg-red-500")} />
               <div>
-                <span className="text-sm font-medium">NFS</span>
-                <p className="text-xs text-muted-foreground">{nfsStatus.running ? "Running" : nfsStatus.installed ? "Installed (stopped)" : "Not installed"}</p>
+                <span className="text-sm font-medium">{t("shares.nfs")}</span>
+                <p className="text-xs text-muted-foreground">{nfsStatus.running ? t("shares.running") : nfsStatus.installed ? t("shares.installedStopped") : t("shares.notInstalled")}</p>
               </div>
             </CardContent>
           </Card>
@@ -162,7 +164,7 @@ export default function SharesPage() {
       {showForm && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle>{editId !== null ? "Edit Share" : "New Share"}</CardTitle>
+            <CardTitle>{editId !== null ? t("shares.editShare") : t("shares.newShare")}</CardTitle>
             <Button variant="ghost" size="sm" onClick={() => { setShowForm(false); setEditId(null); }}>
               <X className="h-4 w-4" />
             </Button>
@@ -182,29 +184,29 @@ export default function SharesPage() {
                   <Label htmlFor="share-protocol">Protocol</Label>
                   <select id="share-protocol" value={form.protocol} onChange={(e) => handleChange("protocol", e.target.value)}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <option value="smb">Samba (SMB)</option>
-                    <option value="webdav">WebDAV</option>
-                    <option value="nfs">NFS</option>
+                    <option value="smb">{t("shares.protocolSmb")}</option>
+                    <option value="webdav">{t("shares.protocolWebdav")}</option>
+                    <option value="nfs">{t("shares.protocolNfs")}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="share-comment">Comment</Label>
-                  <Input id="share-comment" value={form.comment} onChange={(e) => handleChange("comment", e.target.value)} placeholder="Optional description" />
+                  <Label htmlFor="share-comment">{t("shares.comment")}</Label>
+                  <Input id="share-comment" value={form.comment} onChange={(e) => handleChange("comment", e.target.value)} placeholder={t("shares.optionalComment")} />
                 </div>
               </div>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.readOnly} onChange={(e) => handleChange("readOnly", e.target.checked)} className="h-4 w-4 rounded border" />
-                  Read Only
+                  {t("shares.readOnly")}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.guest} onChange={(e) => handleChange("guest", e.target.checked)} className="h-4 w-4 rounded border" />
-                  Guest Access
+                  {t("shares.guestAccess")}
                 </label>
               </div>
               <div className="flex items-center gap-3">
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editId !== null ? "Update Share" : "Create Share"}
+                  {editId !== null ? t("shares.updateShare") : t("shares.createShare")}
                 </Button>
                 <Button variant="outline" type="button" onClick={() => { setShowForm(false); setEditId(null); }}>Cancel</Button>
               </div>
@@ -214,15 +216,15 @@ export default function SharesPage() {
       )}
 
       {/* Share List */}
-      {sharesQuery.isLoading && <p className="text-sm text-muted-foreground">Loading shares...</p>}
+      {sharesQuery.isLoading && <p className="text-sm text-muted-foreground">t("shares.loading")</p>}
       {sharesQuery.isError && (
-        <Card className="border-destructive"><CardContent className="pt-6"><p className="text-sm text-destructive">Failed to load shares.</p></CardContent></Card>
+        <Card className="border-destructive"><CardContent className="pt-6"><p className="text-sm text-destructive">t("shares.failed")</p></CardContent></Card>
       )}
       {shares.length === 0 && !sharesQuery.isLoading && (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">No shares configured.</p>
-            <p className="text-xs text-muted-foreground mt-1">Click "Add Share" to create your first network share.</p>
+            <p className="text-sm text-muted-foreground">{t("shares.noShares")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("shares.firstShare")}</p>
           </CardContent>
         </Card>
       )}
@@ -249,18 +251,18 @@ export default function SharesPage() {
 
               <div className="flex items-center gap-2">
                 {share.readOnly && (
-                  <span className="rounded-full px-2 py-0.5 text-xs bg-amber-100 text-amber-700">Read Only</span>
+                  <span className="rounded-full px-2 py-0.5 text-xs bg-amber-100 text-amber-700">{t("shares.readOnly")}</span>
                 )}
                 {share.guest && (
-                  <span className="rounded-full px-2 py-0.5 text-xs bg-purple-100 text-purple-700">Guest</span>
+                  <span className="rounded-full px-2 py-0.5 text-xs bg-purple-100 text-purple-700">{t("shares.guest")}</span>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: share.id, enabled: !share.enabled })} className="h-8 w-8 p-0" title={share.enabled ? "Disable" : "Enable"}>
+                <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: share.id, enabled: !share.enabled })} className="h-8 w-8 p-0" title={share.enabled ? t("common.disable") : t("common.enable")}>
                   {share.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleEdit(share)} className="h-8 w-8 p-0" title="Edit">
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(share)} className="h-8 w-8 p-0" title={t("common.edit")}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(share.id, share.name)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title="Delete">
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(share.id, share.name)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("common.delete")}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -271,4 +273,6 @@ export default function SharesPage() {
     </div>
   );
 }
+
+
 
