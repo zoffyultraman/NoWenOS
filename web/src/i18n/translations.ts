@@ -304,6 +304,12 @@ const translations: Record<string, Record<Locale, string>> = {
   // Settings (补充)
   "settings.saved": { en: "Settings saved.", zh: "设置已保存" },
   "settings.saveFailed": { en: "Failed to save settings.", zh: "保存设置失败" },
+  "settings.debug": { en: "Debug", zh: "调试" },
+  "settings.info": { en: "Info", zh: "信息" },
+  "settings.warn": { en: "Warn", zh: "警告" },
+  "settings.error": { en: "Error", zh: "错误" },
+  "settings.language": { en: "Language", zh: "语言" },
+  "settings.languageDesc": { en: "Select display language", zh: "选择界面显示语言" },
 };
 
 export function t(key: string, locale: Locale): string {
