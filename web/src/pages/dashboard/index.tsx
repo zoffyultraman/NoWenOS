@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchSystemInfo, fetchSystemStats, fetchNetworkStats, fetchProcesses } from "@/features/system/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Cpu, HardDrive, MemoryStick, Server, Clock, Network, List } from "lucide-react";
+import { Activity, Cpu, HardDrive, MemoryStick, Server, Clock, Network, List, Wifi, ArrowDown, ArrowUp } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function DashboardPage() {
@@ -17,151 +17,250 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("dashboard.title")}</h1>
-        <p className="text-muted-foreground">{t("dashboard.subtitle")}</p>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5">
+          <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+          <span className="text-xs font-medium text-muted-foreground">
+            {systemQuery.isLoading ? "..." : systemQuery.isError ? t("dashboard.error") : t("dashboard.connected")}
+          </span>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("dashboard.system")}</CardTitle>
-            <Server className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemQuery.isLoading ? "..." : systemQuery.data?.data?.name ?? "NoWenOS"}</div>
-            <p className="text-xs text-muted-foreground">v{systemQuery.data?.data?.version ?? "0.1.0"}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("dashboard.apiStatus")}</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemQuery.isLoading ? "..." : systemQuery.isError ? t("dashboard.error") : t("dashboard.connected")}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("dashboard.uptime")}</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statsQuery.isLoading ? "..." : stats?.uptime ?? "N/A"}</div>
-          </CardContent>
-        </Card>
+      {/* System Overview Cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <OverviewCard
+          icon={<Server className="h-5 w-5" />}
+          label={t("dashboard.system")}
+          value={systemQuery.isLoading ? "..." : systemQuery.data?.data?.name ?? "NoWenOS"}
+          sub={`v${systemQuery.data?.data?.version ?? "0.1.0"}`}
+          color="cyan"
+        />
+        <OverviewCard
+          icon={<Activity className="h-5 w-5" />}
+          label={t("dashboard.apiStatus")}
+          value={systemQuery.isLoading ? "..." : systemQuery.isError ? t("dashboard.error") : t("dashboard.connected")}
+          color={systemQuery.isError ? "red" : "green"}
+        />
+        <OverviewCard
+          icon={<Clock className="h-5 w-5" />}
+          label={t("dashboard.uptime")}
+          value={statsQuery.isLoading ? "..." : stats?.uptime ?? "N/A"}
+          color="purple"
+        />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("dashboard.cpu")}</CardTitle>
-            <Cpu className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statsQuery.isLoading ? "..." : `${(stats?.cpu.usage ?? 0).toFixed(1)}%`}</div>
-            <div className="mt-2 h-2 w-full rounded-full bg-muted"><div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: `${stats?.cpu.usage ?? 0}%` }} /></div>
-            <p className="mt-1 text-xs text-muted-foreground">{stats?.cpu.cores ?? 0} {t("dashboard.cores")}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("dashboard.memory")}</CardTitle>
-            <MemoryStick className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statsQuery.isLoading ? "..." : `${(stats?.memory.usage ?? 0).toFixed(1)}%`}</div>
-            <div className="mt-2 h-2 w-full rounded-full bg-muted"><div className="h-2 rounded-full bg-green-500 transition-all" style={{ width: `${stats?.memory.usage ?? 0}%` }} /></div>
-            <p className="mt-1 text-xs text-muted-foreground">{stats?.memory.used ?? "N/A"} / {stats?.memory.total ?? "N/A"}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("dashboard.disk")}</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statsQuery.isLoading ? "..." : `${(stats?.disk.usage ?? 0).toFixed(1)}%`}</div>
-            <div className="mt-2 h-2 w-full rounded-full bg-muted"><div className="h-2 rounded-full bg-orange-500 transition-all" style={{ width: `${stats?.disk.usage ?? 0}%` }} /></div>
-            <p className="mt-1 text-xs text-muted-foreground">{stats?.disk.used ?? "N/A"} / {stats?.disk.total ?? "N/A"}</p>
-          </CardContent>
-        </Card>
+      {/* Resource Gauges */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <GaugeCard
+          icon={<Cpu className="h-5 w-5" />}
+          label={t("dashboard.cpu")}
+          value={stats?.cpu.usage ?? 0}
+          detail={`${stats?.cpu.cores ?? 0} ${t("dashboard.cores")}`}
+          color="cyan"
+          loading={statsQuery.isLoading}
+        />
+        <GaugeCard
+          icon={<MemoryStick className="h-5 w-5" />}
+          label={t("dashboard.memory")}
+          value={stats?.memory.usage ?? 0}
+          detail={`${stats?.memory.used ?? "N/A"} / ${stats?.memory.total ?? "N/A"}`}
+          color="green"
+          loading={statsQuery.isLoading}
+        />
+        <GaugeCard
+          icon={<HardDrive className="h-5 w-5" />}
+          label={t("dashboard.disk")}
+          value={stats?.disk.usage ?? 0}
+          detail={`${stats?.disk.used ?? "N/A"} / ${stats?.disk.total ?? "N/A"}`}
+          color="orange"
+          loading={statsQuery.isLoading}
+        />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t("dashboard.network")}</CardTitle>
-          <Network className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {networkQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("dashboard.loading")}</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><p className="text-sm text-muted-foreground">{t("dashboard.totalRx")}</p><p className="text-2xl font-bold">{network?.totalRx ?? "N/A"}</p></div>
-              <div><p className="text-sm text-muted-foreground">{t("dashboard.totalTx")}</p><p className="text-2xl font-bold">{network?.totalTx ?? "N/A"}</p></div>
-            </div>
-          )}
-          {network && network.interfaces.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">{t("dashboard.interfaces")}</p>
-              {network.interfaces.map((iface) => (
-                <div key={iface.name} className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm">
-                  <span className="font-medium">{iface.name}</span>
-                  <div className="flex gap-4 text-muted-foreground"><span>↓ {iface.rx}</span><span>↑ {iface.tx}</span></div>
+      {/* Network + Processes */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Network Card */}
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10">
+                <Network className="h-4 w-4 text-cyan-400" />
+              </div>
+              {t("dashboard.network")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {networkQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">{t("dashboard.loading")}</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-border bg-muted/50 p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <ArrowDown className="h-3 w-3 text-cyan-400" />
+                    {t("dashboard.totalRx")}
+                  </div>
+                  <p className="mt-1 text-lg font-bold text-foreground">{network?.totalRx ?? "N/A"}</p>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div className="rounded-xl border border-border bg-muted/50 p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <ArrowUp className="h-3 w-3 text-purple-400" />
+                    {t("dashboard.totalTx")}
+                  </div>
+                  <p className="mt-1 text-lg font-bold text-foreground">{network?.totalTx ?? "N/A"}</p>
+                </div>
+              </div>
+            )}
+            {network && network.interfaces.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("dashboard.interfaces")}</p>
+                {network.interfaces.map((iface) => (
+                  <div key={iface.name} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Wifi className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{iface.name}</span>
+                    </div>
+                    <div className="flex gap-4 font-mono text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><ArrowDown className="h-3 w-3 text-cyan-400" />{iface.rx}</span>
+                      <span className="flex items-center gap-1"><ArrowUp className="h-3 w-3 text-purple-400" />{iface.tx}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t("dashboard.topProcesses")}</CardTitle>
-          <List className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {processesQuery.isLoading && <p className="text-sm text-muted-foreground">{t("dashboard.loadingProcesses")}</p>}
-          {processesQuery.isError && <p className="text-sm text-destructive">{t("dashboard.failedProcesses")}</p>}
-          {processes.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                    <th className="pb-2 pr-4">PID</th>
-                    <th className="pb-2 pr-4">Name</th>
-                    <th className="pb-2 pr-4 text-right">CPU %</th>
-                    <th className="pb-2 pr-4 text-right">Memory</th>
-                    <th className="pb-2">Command</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {processes.map((proc) => (
-                    <tr key={proc.pid} className="border-b border-muted/50 hover:bg-muted/30 transition-colors">
-                      <td className="py-1.5 pr-4 font-mono text-xs">{proc.pid}</td>
-                      <td className="py-1.5 pr-4 font-medium">{proc.name}</td>
-                      <td className="py-1.5 pr-4 text-right font-mono text-xs">{proc.cpu > 0 ? proc.cpu.toFixed(1) + "%" : "\u2014"}</td>
-                      <td className="py-1.5 pr-4 text-right font-mono text-xs">{proc.memory > 0 ? proc.memory.toFixed(1) + " MB" : "\u2014"}</td>
-                      <td className="py-1.5 text-xs text-muted-foreground truncate max-w-xs">{proc.command}</td>
+        {/* Processes Card */}
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500/10">
+                <List className="h-4 w-4 text-purple-400" />
+              </div>
+              {t("dashboard.topProcesses")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {processesQuery.isLoading && <p className="text-sm text-muted-foreground">{t("dashboard.loadingProcesses")}</p>}
+            {processesQuery.isError && <p className="text-sm text-destructive">{t("dashboard.failedProcesses")}</p>}
+            {processes.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <th className="pb-2 pr-4">PID</th>
+                      <th className="pb-2 pr-4">Name</th>
+                      <th className="pb-2 pr-4 text-right">CPU %</th>
+                      <th className="pb-2 pr-4 text-right">MEM</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {processes.length === 0 && !processesQuery.isLoading && <p className="text-sm text-muted-foreground">{t("dashboard.noProcesses")}</p>}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody>
+                    {processes.map((proc) => (
+                      <tr key={proc.pid} className="border-b border-border/50 transition-colors hover:bg-muted/30">
+                        <td className="py-1.5 pr-4 font-mono text-xs text-muted-foreground">{proc.pid}</td>
+                        <td className="py-1.5 pr-4 font-medium text-foreground">{proc.name}</td>
+                        <td className="py-1.5 pr-4 text-right">
+                          {proc.cpu > 0 ? (
+                            <span className={proc.cpu > 50 ? "font-mono text-xs font-medium text-warning" : "font-mono text-xs text-foreground"}>
+                              {proc.cpu.toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+                          )}
+                        </td>
+                        <td className="py-1.5 pr-4 text-right font-mono text-xs text-muted-foreground">
+                          {proc.memory > 0 ? `${proc.memory.toFixed(1)} MB` : "\u2014"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {processes.length === 0 && !processesQuery.isLoading && (
+              <p className="text-sm text-muted-foreground">{t("dashboard.noProcesses")}</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
+      {/* Error State */}
       {systemQuery.isError && (
-        <Card className="border-destructive"><CardContent className="pt-6"><p className="text-sm text-destructive">{t("dashboard.failedSystem")}</p></CardContent></Card>
+        <Card className="border-danger/30 bg-danger/5">
+          <CardContent className="pt-6">
+            <p className="text-sm text-danger">{t("dashboard.failedSystem")}</p>
+          </CardContent>
+        </Card>
       )}
     </div>
+  );
+}
+
+// ── Cyber NAS Sub-components ──
+
+const colorMap: Record<string, { bg: string; text: string; glow: string; bar: string; barBg: string }> = {
+  cyan: { bg: "bg-cyan-500/10", text: "text-cyan-400", glow: "shadow-cyan-500/20", bar: "bg-gradient-to-r from-cyan-500 to-cyan-400", barBg: "bg-cyan-500/10" },
+  green: { bg: "bg-green-500/10", text: "text-green-400", glow: "shadow-green-500/20", bar: "bg-gradient-to-r from-green-500 to-green-400", barBg: "bg-green-500/10" },
+  orange: { bg: "bg-orange-500/10", text: "text-orange-400", glow: "shadow-orange-500/20", bar: "bg-gradient-to-r from-orange-500 to-orange-400", barBg: "bg-orange-500/10" },
+  purple: { bg: "bg-purple-500/10", text: "text-purple-400", glow: "shadow-purple-500/20", bar: "bg-gradient-to-r from-purple-500 to-purple-400", barBg: "bg-purple-500/10" },
+  red: { bg: "bg-red-500/10", text: "text-red-400", glow: "shadow-red-500/20", bar: "bg-gradient-to-r from-red-500 to-red-400", barBg: "bg-red-500/10" },
+};
+
+function OverviewCard({ icon, label, value, sub, color }: {
+  icon: React.ReactNode; label: string; value: string; sub?: string; color: string;
+}) {
+  const c = colorMap[color] ?? colorMap.cyan;
+  return (
+    <Card className="border-border bg-card transition-all duration-200 hover:border-border/80 hover:bg-card/80">
+      <CardContent className="pt-5 pb-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${c.bg} ${c.glow}`}>
+            <span className={c.text}>{icon}</span>
+          </div>
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+        </div>
+        <p className="text-xl font-bold text-foreground truncate">{value}</p>
+        {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function GaugeCard({ icon, label, value, detail, color, loading }: {
+  icon: React.ReactNode; label: string; value: number; detail: string; color: string; loading: boolean;
+}) {
+  const c = colorMap[color] ?? colorMap.cyan;
+  const pct = Math.min(100, Math.max(0, value));
+  const isHigh = pct > 85;
+
+  return (
+    <Card className={`border-border bg-card transition-all duration-200 hover:border-border/80 ${isHigh ? "border-danger/30" : ""}`}>
+      <CardContent className="pt-5 pb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.bg}`}>
+              <span className={c.text}>{icon}</span>
+            </div>
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+          </div>
+          <span className={`text-2xl font-bold tabular-nums ${isHigh ? "text-danger" : "text-foreground"}`}>
+            {loading ? "..." : `${pct.toFixed(1)}%`}
+          </span>
+        </div>
+        {/* Gauge bar */}
+        <div className={`h-2 w-full rounded-full ${c.barBg} overflow-hidden`}>
+          <div
+            className={`h-full rounded-full transition-all duration-700 ease-out ${isHigh ? "bg-gradient-to-r from-red-500 to-red-400" : c.bar}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+      </CardContent>
+    </Card>
   );
 }
