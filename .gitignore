@@ -27,3 +27,9 @@ Thumbs.db
 
 # go
 server/bin/
+
+# Runtime databases
+*.db
+*.db-shm
+*.db-wal
+server/internal/auth/data/
