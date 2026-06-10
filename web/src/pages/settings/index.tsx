@@ -49,7 +49,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("settings.title")}</h1>
         <p className="text-muted-foreground">{t("settings.subtitle")}</p>

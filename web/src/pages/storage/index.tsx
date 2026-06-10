@@ -12,7 +12,7 @@ export default function StoragePage() {
   const partitions = disks.filter((d) => d.type === "part");
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("storage.title")}</h1>
