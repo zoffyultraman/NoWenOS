@@ -1,17 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import LoginPage from "@/pages/login";
-import DashboardPage from "@/pages/dashboard";
-import StoragePage from "@/pages/storage";
-import DockerPage from "@/pages/docker";
-import FilesPage from "@/pages/files";
-import UsersPage from "@/pages/users";
-import LogsPage from "@/pages/logs";
-import SystemPage from "@/pages/system";
-import SettingsPage from "@/pages/settings";
-import SharesPage from "@/pages/shares";
-import AlertsPage from "@/pages/alerts";
 import { useSessionStore } from "@/stores/session";
-import { ShellLayout } from "@/components/layout/ShellLayout";
+import { Desktop } from "@/desktop";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useSessionStore((state) => state.token);
@@ -21,28 +11,27 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Desktop shell — all apps open as windows inside the desktop
+function DesktopPage() {
+  return <Desktop />;
+}
+
 const router = createBrowserRouter([
-  { path: "/", element: <Navigate to="/dashboard" replace /> },
+  { path: "/", element: <Navigate to="/desktop" replace /> },
   { path: "/login", element: <LoginPage /> },
   {
+    path: "/desktop",
     element: (
       <ProtectedRoute>
-        <ShellLayout />
+        <DesktopPage />
       </ProtectedRoute>
     ),
-    children: [
-      { path: "/dashboard", element: <DashboardPage /> },
-      { path: "/storage", element: <StoragePage /> },
-      { path: "/shares", element: <SharesPage /> },
-      { path: "/files", element: <FilesPage /> },
-      { path: "/docker", element: <DockerPage /> },
-      { path: "/users", element: <UsersPage /> },
-      { path: "/logs", element: <LogsPage /> },
-      { path: "/alerts", element: <AlertsPage /> },
-      { path: "/system", element: <SystemPage /> },
-      { path: "/settings", element: <SettingsPage /> },
-    ],
   },
+  // Legacy routes redirect to desktop
+  ...["/dashboard", "/storage", "/shares", "/files", "/docker", "/users", "/logs", "/alerts", "/system", "/settings"].map((path) => ({
+    path,
+    element: <Navigate to="/desktop" replace />,
+  })),
 ]);
 
 export function AppRouter() {
