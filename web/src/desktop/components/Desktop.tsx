@@ -3,6 +3,8 @@ import { useDesktopStore } from "@/stores/desktop";
 import { TopBar } from "./TopBar";
 import { Dock } from "./Dock";
 import { WindowFrame } from "./WindowFrame";
+import { AppLauncher } from "./AppLauncher";
+import { ContextMenu } from "./ContextMenu";
 
 export function Desktop() {
   const windows = useDesktopStore((s) => s.windows);
@@ -29,6 +31,12 @@ export function Desktop() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Context Menu */}
+      <ContextMenu />
+
+      {/* App Launcher */}
+      <AppLauncher />
 
       {/* Dock */}
       <Dock />
