@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSystemInfo, fetchSystemStats, fetchNetworkStats, fetchProcesses, fetchStatsHistory } from "@/features/system/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
