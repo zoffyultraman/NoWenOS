@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    purge)
+        echo "Purging NoWenOS data and configuration..."
+        rm -rf /var/lib/nowenos
+        rm -rf /var/log/nowenos
+        rm -rf /etc/nowenos
+
+        # Remove service user
+        if id -u nowenos >/dev/null 2>&1; then
+            userdel nowenos 2>/dev/null || true
+        fi
+
+        # Clean up systemd
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            systemctl daemon-reload || true
+        fi
+        ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        # On plain remove, keep user data in /var/lib/nowenos
+        # Reload systemd to pick up the unit removal
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            systemctl daemon-reload || true
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+exit 0

@@ -21,10 +21,15 @@ import (
 	"nowenos-server/internal/systemadapter"
 	"nowenos-server/internal/appcenter"
 	"nowenos-server/internal/proxy"
+	"nowenos-server/static"
+	"nowenos-server/internal/security"
 )
 
 func New() *gin.Engine {
 	r := gin.Default()
+
+	r.Use(security.CORSMiddleware())
+	r.Use(security.RateLimitMiddleware())
 
 	r.GET("/api/v1/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -387,7 +392,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": shares.GetNFSStatus()})
 		})
 
-		api.POST("/shares", func(c *gin.Context) {
+		api.POST("/shares", requireWrite(), func(c *gin.Context) {
 			var req shares.CreateShareRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -489,7 +494,7 @@ func New() *gin.Engine {
 			c.File(filePath)
 		})
 
-		api.POST("/files/upload", func(c *gin.Context) {
+		api.POST("/files/upload", requireWrite(), func(c *gin.Context) {
 			dirPath := c.Query("path")
 			if dirPath == "" {
 				dirPath = "."
@@ -511,7 +516,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": entry})
 		})
 
-		api.DELETE("/files/delete", func(c *gin.Context) {
+		api.DELETE("/files/delete", requireWrite(), func(c *gin.Context) {
 			targetPath := c.Query("path")
 			if targetPath == "" {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Path required"})
@@ -526,7 +531,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		api.POST("/files/mkdir", func(c *gin.Context) {
+		api.POST("/files/mkdir", requireWrite(), func(c *gin.Context) {
 			var req struct {
 				ParentPath string `json:"parentPath"`
 				DirName    string `json:"dirName"`
@@ -595,7 +600,7 @@ func New() *gin.Engine {
 		})
 
 		// 鈹€鈹€ File Rename / Move 鈹€鈹€
-		api.POST("/files/rename", func(c *gin.Context) {
+		api.POST("/files/rename", requireWrite(), func(c *gin.Context) {
 			var req struct {
 				Path    string `json:"path"`
 				NewName string `json:"newName"`
@@ -612,7 +617,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": entry})
 		})
 
-		api.POST("/files/move", func(c *gin.Context) {
+		api.POST("/files/move", requireWrite(), func(c *gin.Context) {
 			var req struct {
 				SourcePath string `json:"sourcePath"`
 				DestDir    string `json:"destDir"`
@@ -1022,7 +1027,38 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "reloaded"}})
 		})
 
+	static.ServeStatic(r)
+
 	return r
+}
+
+
+func requireRole(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, _ := c.Get("role")
+		roleStr, _ := role.(string)
+		for _, r := range roles {
+			if r == roleStr {
+				c.Next()
+				return
+			}
+		}
+		c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+		c.Abort()
+	}
+}
+
+func requireWrite() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, _ := c.Get("role")
+		roleStr, _ := role.(string)
+		if roleStr == "viewer" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Viewers cannot perform write operations"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }
 
 func authMiddleware() gin.HandlerFunc {

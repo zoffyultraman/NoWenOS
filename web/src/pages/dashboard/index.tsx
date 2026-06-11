@@ -3,6 +3,8 @@ import { fetchSystemInfo, fetchSystemStats, fetchNetworkStats, fetchProcesses } 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Cpu, HardDrive, MemoryStick, Server, Clock, Network, List, Wifi, ArrowDown, ArrowUp } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { MiniChart } from "@/components/charts/MiniChart";
 
 export default function DashboardPage() {
   const t = useTranslation();
@@ -14,6 +16,12 @@ export default function DashboardPage() {
   const stats = statsQuery.data?.data;
   const network = networkQuery.data?.data;
   const processes = processesQuery.data?.data ?? [];
+  const { stats: wsStats, connected: wsConnected, cpuHistory, memoryHistory } = useWebSocket();
+
+  // Use WS data when available, fallback to polling
+  const cpuValue = wsStats?.cpu ?? stats?.cpu.usage ?? 0;
+  const memValue = wsStats?.memory ?? stats?.memory.usage ?? 0;
+  const diskValue = wsStats?.disk ?? stats?.disk.usage ?? 0;
 
   return (
     <div className="space-y-4 p-4">
@@ -24,9 +32,9 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5">
-          <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+          <div className={"h-2 w-2 rounded-full animate-pulse " + (wsConnected ? "bg-green-400" : "bg-amber-400")} />
           <span className="text-xs font-medium text-muted-foreground">
-            {systemQuery.isLoading ? "..." : systemQuery.isError ? t("dashboard.error") : t("dashboard.connected")}
+            {wsConnected ? t("dashboard.realtime") : t("dashboard.connected")}
           </span>
         </div>
       </div>
@@ -56,26 +64,30 @@ export default function DashboardPage() {
 
       {/* Resource Gauges */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <GaugeCard
+        <GaugeCardWithChart
           icon={<Cpu className="h-5 w-5" />}
           label={t("dashboard.cpu")}
-          value={stats?.cpu.usage ?? 0}
+          value={cpuValue}
           detail={`${stats?.cpu.cores ?? 0} ${t("dashboard.cores")}`}
           color="cyan"
           loading={statsQuery.isLoading}
+          chartData={cpuHistory}
+          chartColor="#06b6d4"
         />
-        <GaugeCard
+        <GaugeCardWithChart
           icon={<MemoryStick className="h-5 w-5" />}
           label={t("dashboard.memory")}
-          value={stats?.memory.usage ?? 0}
+          value={memValue}
           detail={`${stats?.memory.used ?? "N/A"} / ${stats?.memory.total ?? "N/A"}`}
           color="green"
           loading={statsQuery.isLoading}
+          chartData={memoryHistory}
+          chartColor="#22c55e"
         />
         <GaugeCard
           icon={<HardDrive className="h-5 w-5" />}
           label={t("dashboard.disk")}
-          value={stats?.disk.usage ?? 0}
+          value={diskValue}
           detail={`${stats?.disk.used ?? "N/A"} / ${stats?.disk.total ?? "N/A"}`}
           color="orange"
           loading={statsQuery.isLoading}

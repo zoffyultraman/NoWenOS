@@ -1,23 +1,40 @@
-﻿#!/bin/bash
+#!/bin/bash
 set -e
 
 case "$1" in
     configure)
-        # Create user if not exists
+        # Create service user if it does not exist
         if ! id -u nowenos >/dev/null 2>&1; then
             useradd --system --no-create-home --shell /usr/sbin/nologin nowenos
         fi
 
-        # Create data directories
+        # Create directories
         mkdir -p /var/lib/nowenos/trash
         mkdir -p /var/log/nowenos
+        mkdir -p /etc/nowenos
+
+        # Write default config if absent
+        if [ ! -f /etc/nowenos/nowenos.env ]; then
+            cat > /etc/nowenos/nowenos.env <<'ENVEOF'
+# NoWenOS Configuration
+PORT=8080
+GIN_MODE=release
+DB_PATH=/var/lib/nowenos/nowenos.db
+ENVEOF
+        fi
+
+        # Ownership and permissions
         chown -R nowenos:nowenos /var/lib/nowenos
         chown -R nowenos:nowenos /var/log/nowenos
+        chmod 750 /var/lib/nowenos /var/log/nowenos
+        chmod 640 /etc/nowenos/nowenos.env
 
-        # Enable and start service
-        systemctl daemon-reload
-        systemctl enable nowenos-api
-        systemctl start nowenos-api || true
+        # Reload and (re)start service
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            systemctl enable nowenos-api
+            systemctl restart nowenos-api || true
+        fi
         ;;
 esac
 

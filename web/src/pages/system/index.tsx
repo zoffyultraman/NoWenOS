@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { getVersion, checkForUpdate, type VersionInfo } from "@/features/update/api";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -10,7 +11,7 @@ export default function SystemPage() {
   const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null);
   const [checking, setChecking] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     getVersion().then(r => setVersionInfo(r.data)).catch(() => {});
   }, []);
 

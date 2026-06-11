@@ -13,6 +13,7 @@ export interface AppRegistration {
   defaultWidth?: number;
   defaultHeight?: number;
   singleton?: boolean;
+  requiredRole?: "admin" | "user";
 }
 
 const DashboardApp = lazy(() => import("@/pages/dashboard"));
@@ -35,12 +36,12 @@ export const appRegistry: AppRegistration[] = [
   { id: "storage", titleKey: "nav.storage", icon: HardDrive, component: StorageApp },
   { id: "shares", titleKey: "nav.shares", icon: Share2, component: SharesApp },
   { id: "files", titleKey: "nav.files", icon: FolderOpen, component: FilesApp, defaultWidth: 1000, defaultHeight: 650 },
-  { id: "docker", titleKey: "nav.docker", icon: Container, component: DockerApp },
-  { id: "users", titleKey: "nav.users", icon: Users, component: UsersApp },
+  { id: "docker", titleKey: "nav.docker", icon: Container, component: DockerApp, requiredRole: "admin" },
+  { id: "users", titleKey: "nav.users", icon: Users, component: UsersApp, requiredRole: "admin" },
   { id: "logs", titleKey: "nav.logs", icon: ScrollText, component: LogsApp },
   { id: "alerts", titleKey: "nav.alerts", icon: Bell, component: AlertsApp },
   { id: "recycle", titleKey: "nav.recycle", icon: Trash2, component: RecycleApp },
-  { id: "settings", titleKey: "nav.settings", icon: Settings, component: SettingsApp },
+  { id: "settings", titleKey: "nav.settings", icon: Settings, component: SettingsApp, requiredRole: "admin" },
   { id: "proxy", titleKey: "nav.proxy", icon: Network, component: ProxyApp },
   { id: "apps", titleKey: "nav.apps", icon: LayoutGrid, component: AppsApp, defaultWidth: 1000, defaultHeight: 650 },
 ];

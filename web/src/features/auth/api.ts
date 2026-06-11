@@ -16,3 +16,12 @@ export interface LoginResponse {
 export async function loginRequest(payload: LoginRequest) {
   return api.post<LoginResponse>("/auth/login", payload);
 }
+
+export interface CurrentUser {
+  username: string;
+  role: string;
+}
+
+export async function fetchCurrentUser() {
+  return api.get<{ data: CurrentUser }>("/auth/me");
+}

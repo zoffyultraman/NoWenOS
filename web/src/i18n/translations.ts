@@ -440,6 +440,18 @@ const translations: Record<string, Record<Locale, string>> = {
   "shares.permInactive": { en: "Inactive", zh: "停用" },
 
 
+
+  // Dashboard realtime
+  "dashboard.realtime": { en: "Real-time", zh: "实时" },
+
+  // File preview and drag-drop
+  "files.dropUpload": { en: "Drop files here to upload", zh: "拖拽文件到此处上传" },
+  "files.preview": { en: "Preview", zh: "预览" },
+  "files.previewNotAvailable": { en: "Preview not available", zh: "无法预览" },
+  "files.movedSuccess": { en: "File moved", zh: "文件已移动" },
+  "files.moveFailed": { en: "Move failed", zh: "移动失败" },
+
+
 };
 
 export function t(key: string, locale: Locale): string {

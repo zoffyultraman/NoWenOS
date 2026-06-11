@@ -1,4 +1,5 @@
 ﻿import { useDesktopStore } from "@/stores/desktop";
+import { usePermissionStore } from "@/stores/permissions";
 import { appRegistry } from "@/apps/registry";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,8 @@ export function Dock() {
     }
   }
 
-  const dockApps = appRegistry.filter((a) => DOCK_IDS.includes(a.id));
+  const { role } = usePermissionStore();
+  const dockApps = appRegistry.filter((a) => DOCK_IDS.includes(a.id) && (!a.requiredRole || a.requiredRole === role || role === "admin"));
 
   return (
     <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9998] flex items-end gap-1 rounded-2xl border border-border bg-background/80 backdrop-blur-xl px-2 py-1.5 shadow-lg">

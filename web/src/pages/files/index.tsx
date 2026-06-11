@@ -22,7 +22,9 @@ import {
   FolderPlus,
   ArrowLeft,
   Pencil,
+  Eye,
 } from "lucide-react";
+import { FilePreview } from "@/components/FilePreview";
 
 export default function FilesPage() {
   const t = useTranslation();
@@ -31,6 +33,8 @@ export default function FilesPage() {
   const [newDirName, setNewDirName] = useState("");
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
   const [fileInputEl, setFileInputEl] = useState<HTMLInputElement | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -95,6 +99,31 @@ export default function FilesPage() {
     },
     onError: () => toast.error(t("files.trashFailed")),
   });
+
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        uploadMutation.mutate({ path: currentPath, file: files[i] });
+      }
+    }
+  }
 
   const result = filesQuery.data?.data;
 
@@ -214,7 +243,15 @@ export default function FilesPage() {
       )}
 
       {result && result.entries.length > 0 && (
-        <Card className="border-border">
+        <Card className="border-border relative" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+          {isDragging && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/5">
+              <div className="flex flex-col items-center gap-2 text-primary">
+                <Upload className="h-8 w-8" />
+                <span className="text-sm font-medium">{t("files.dropUpload")}</span>
+              </div>
+            </div>
+          )}
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               <div className="grid grid-cols-[1fr_120px_180px_120px] px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
@@ -264,9 +301,14 @@ export default function FilesPage() {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     {!entry.isDir && (
-                      <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0">
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => setPreviewFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.preview")}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                     <Button
                       variant="ghost"
@@ -282,6 +324,9 @@ export default function FilesPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+      {previewFile && (
+        <FilePreview path={previewFile.path} name={previewFile.name} onClose={() => setPreviewFile(null)} />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchDisks, DiskInfo } from "@/features/storage/api";
+import { fetchDisks } from "@/features/storage/api";
+import type { DiskInfo } from "@/features/storage/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardDrive, Database, Server } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";

@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	# Pre-built binary is shipped in the source tree; nothing to compile.
+
+override_dh_auto_install:
+	install -D -m 0755 release/nowenos-api $(CURDIR)/debian/nowenos/usr/bin/nowenos-api
+
+override_dh_auto_test:
+	# No tests during packaging.

@@ -40,3 +40,5 @@ web/src/src/
 *.db-shm
 *.db-wal
 server/internal/auth/data/
+
+server/static/web/dist

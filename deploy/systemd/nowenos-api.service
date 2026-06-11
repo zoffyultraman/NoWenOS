@@ -1,4 +1,4 @@
-﻿[Unit]
+[Unit]
 Description=NoWenOS API Server
 After=network.target docker.service
 Wants=docker.service
@@ -14,10 +14,19 @@ WorkingDirectory=/var/lib/nowenos
 Environment=NOWENOS_PORT=8080
 Environment=NOWENOS_DB_PATH=/var/lib/nowenos/nowenos.db
 
+# Security hardening
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
 ReadWritePaths=/var/lib/nowenos /var/log/nowenos /etc/samba /etc/exports.nowenos /var/lib/nowenos/trash
+
+# Resource limits
+MemoryMax=512M
 
 [Install]
 WantedBy=multi-user.target

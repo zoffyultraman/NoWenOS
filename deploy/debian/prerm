@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    remove|upgrade|deconfigure)
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            if systemctl is-active --quiet nowenos-api 2>/dev/null; then
+                echo "Stopping nowenos-api service..."
+                systemctl stop nowenos-api || true
+            fi
+            if systemctl is-enabled --quiet nowenos-api 2>/dev/null; then
+                systemctl disable nowenos-api || true
+            fi
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+exit 0
