@@ -1,4 +1,4 @@
-package httpapi
+﻿package httpapi
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"nowenos-server/internal/audit"
+	"nowenos-server/internal/configmgr"
 	"nowenos-server/internal/auth"
 	"nowenos-server/internal/filemanager"
 	"nowenos-server/internal/logviewer"
@@ -15,6 +16,7 @@ import (
 	"nowenos-server/internal/settings"
 	"nowenos-server/internal/sysinfo"
 	"nowenos-server/internal/alerts"
+	"nowenos-server/internal/updater"
 	"nowenos-server/internal/shares"
 	"nowenos-server/internal/systemadapter"
 )
@@ -98,7 +100,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": disks})
 		})
 
-		// ── Docker Containers ──
+		// 鈹€鈹€ Docker Containers 鈹€鈹€
 		api.GET("/docker/containers", func(c *gin.Context) {
 			containers, err := systemadapter.GetContainers()
 			if err != nil {
@@ -140,7 +142,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"logs": logs}})
 		})
 
-		// ── Docker Images ──
+		// 鈹€鈹€ Docker Images 鈹€鈹€
 		api.GET("/docker/images", func(c *gin.Context) {
 			images, err := systemadapter.GetImages()
 			if err != nil {
@@ -178,7 +180,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		// ── Docker Compose ──
+		// 鈹€鈹€ Docker Compose 鈹€鈹€
 		api.GET("/docker/compose", func(c *gin.Context) {
 			projects, err := systemadapter.ListComposeProjects()
 			if err != nil {
@@ -244,7 +246,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"logs": logs}})
 		})
 
-		// ── Docker Compose File Editor ──
+		// 鈹€鈹€ Docker Compose File Editor 鈹€鈹€
 		api.GET("/docker/compose/file", func(c *gin.Context) {
 			path := c.Query("path")
 			content, err := systemadapter.ReadComposeFile(path)
@@ -302,7 +304,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deployed"}})
 		})
 
-		// ── Alerts ──
+		// 鈹€鈹€ Alerts 鈹€鈹€
 		api.GET("/alerts/rules", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"data": alerts.GetRules()})
 		})
@@ -366,7 +368,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		// ── Shares ──
+		// 鈹€鈹€ Shares 鈹€鈹€
 		api.GET("/shares", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"data": shares.GetShares()})
 		})
@@ -443,7 +445,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		// ── Files ──
+		// 鈹€鈹€ Files 鈹€鈹€
 		api.GET("/files/browse", func(c *gin.Context) {
 			dirPath := c.Query("path")
 			if dirPath == "" {
@@ -541,7 +543,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": entry})
 		})
 
-				// ── Recycle Bin ──
+				// 鈹€鈹€ Recycle Bin 鈹€鈹€
 		api.GET("/recycle-bin", func(c *gin.Context) {
 			items := recyclebin.GetItems()
 			c.JSON(http.StatusOK, gin.H{"data": items})
@@ -590,7 +592,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "emptied"}})
 		})
 
-		// ── File Rename / Move ──
+		// 鈹€鈹€ File Rename / Move 鈹€鈹€
 		api.POST("/files/rename", func(c *gin.Context) {
 			var req struct {
 				Path    string `json:"path"`
@@ -625,7 +627,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": entry})
 		})
 
-		// ── Users ──
+		// 鈹€鈹€ Users 鈹€鈹€
 		api.GET("/users", func(c *gin.Context) {
 			users := auth.GetUsers()
 			c.JSON(http.StatusOK, gin.H{"data": users})
@@ -678,8 +680,8 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		// ── Logs ──
-		// ── Logs ──
+		// 鈹€鈹€ Logs 鈹€鈹€
+		// 鈹€鈹€ Logs 鈹€鈹€
 		api.GET("/logs", func(c *gin.Context) {
 			source := c.Query("source")
 			limitStr := c.DefaultQuery("limit", "100")
@@ -699,7 +701,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": sources})
 		})
 
-		// ── Settings ──
+		// 鈹€鈹€ Settings 鈹€鈹€
 		api.GET("/settings", func(c *gin.Context) {
 			s := settings.Get()
 			c.JSON(http.StatusOK, gin.H{"data": s})
@@ -803,6 +805,44 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": audit.GetStats()})
 		})
 
+		// --- Config Export/Import ---
+		api.GET("/config/export", func(c *gin.Context) {
+			data, err := configmgr.Export()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.Header("Content-Disposition", "attachment; filename=nowenos-config.json")
+			c.JSON(http.StatusOK, data)
+		})
+
+		api.POST("/config/import", func(c *gin.Context) {
+			var data configmgr.ExportData
+			if err := c.ShouldBindJSON(&data); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid config data"})
+				return
+			}
+			if data.Version == 0 {
+				data.Version = 1
+			}
+			if err := configmgr.Import(&data); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "imported"}})
+		})
+
+
+		// --- Update Check ---
+		api.GET("/system/version", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"data": updater.GetVersionInfo()})
+		})
+
+		api.GET("/system/update-check", func(c *gin.Context) {
+			info := updater.CheckForUpdate()
+			c.JSON(http.StatusOK, gin.H{"data": info})
+		})
+
 	return r
 }
 
@@ -835,5 +875,7 @@ func authMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+
 
 
