@@ -369,21 +369,21 @@ const translations: Record<string, Record<Locale, string>> = {
   "logs.auditTab": { en: "Audit Logs", zh: "审计日志" },
 
   // Config Export/Import
-  "config.title": { en: "Configuration", zh: "????" },
-  "config.export": { en: "Export Configuration", zh: "????" },
-  "config.import": { en: "Import Configuration", zh: "????" },
-  "config.exportSuccess": { en: "Configuration exported", zh: "?????" },
-  "config.importSuccess": { en: "Configuration imported successfully", zh: "??????" },
-  "config.importFailed": { en: "Import failed", zh: "????" },
+  "config.title": { en: "Configuration", zh: "配置" },
+  "config.export": { en: "Export Configuration", zh: "导出配置" },
+  "config.import": { en: "Import Configuration", zh: "导入配置" },
+  "config.exportSuccess": { en: "Configuration exported", zh: "配置已导出" },
+  "config.importSuccess": { en: "Configuration imported successfully", zh: "配置已导入" },
+  "config.importFailed": { en: "Import failed", zh: "导入失败" },
 
   // Update Check
-  "update.current": { en: "Current Version", zh: "????" },
-  "update.check": { en: "Check for Updates", zh: "????" },
-  "update.available": { en: "Update Available", zh: "?????" },
-  "update.latest": { en: "Latest Version", zh: "????" },
-  "update.upToDate": { en: "You are up to date", zh: "??????" },
-  "update.viewRelease": { en: "View Release", zh: "????" },
-  "update.checking": { en: "Checking...", zh: "???..." },
+  "update.current": { en: "Current Version", zh: "当前版本" },
+  "update.check": { en: "Check for Updates", zh: "检查更新" },
+  "update.available": { en: "Update Available", zh: "有可用更新" },
+  "update.latest": { en: "Latest Version", zh: "最新版本" },
+  "update.upToDate": { en: "You are up to date", zh: "已是最新版本" },
+  "update.viewRelease": { en: "View Release", zh: "查看发布" },
+  "update.checking": { en: "Checking...", zh: "检查中..." },
 
 
   // Reverse Proxy
@@ -512,6 +512,20 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // Common
   "common.yes": { en: "Yes", zh: "是" },
+
+
+
+  // Apps (missing)
+  "apps.all": { en: "All", zh: "全部" },
+  "apps.install": { en: "Install", zh: "安装" },
+  "apps.installed": { en: "Installed", zh: "已安装" },
+  "apps.loading": { en: "Loading...", zh: "加载中..." },
+  "apps.title": { en: "App Center", zh: "应用中心" },
+  "apps.uninstall": { en: "Uninstall", zh: "卸载" },
+
+  // Shares (missing)
+  "shares.deleteConfirm": { en: "Delete share {name}?", zh: "删除共享 {name}？" },
+  "shares.firstShare": { en: "Create your first share to get started", zh: "创建第一个共享开始使用" },
 
 
 };
