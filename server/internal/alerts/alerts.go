@@ -33,6 +33,23 @@ type AlertEvent struct {
 	CreatedAt string `json:"createdAt"`
 }
 
+// NotificationChannel represents a notification delivery target.
+type NotificationChannel struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Type      string `json:"type"` // email, webhook, telegram
+	Config    string `json:"config"` // JSON config string
+	Enabled   bool   `json:"enabled"`
+	CreatedAt string `json:"createdAt"`
+}
+
+// CreateChannelRequest is the input for creating a notification channel.
+type CreateChannelRequest struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Config string `json:"config"`
+}
+
 type CreateRuleRequest struct {
 	Name      string  `json:"name"`
 	Metric    string  `json:"metric"`
@@ -56,7 +73,16 @@ func InitTable() {
 		enabled INTEGER NOT NULL DEFAULT 1,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	)`)
-	db.Exec(`CREATE TABLE IF NOT EXISTS alert_events (
+	db.Exec(`CREATE TABLE IF NOT EXISTS notification_channels (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		type TEXT NOT NULL,
+		config TEXT DEFAULT '{}',
+		enabled INTEGER NOT NULL DEFAULT 1,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	)`)
+
+		db.Exec(`CREATE TABLE IF NOT EXISTS alert_events (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		rule_id INTEGER NOT NULL,
 		rule_name TEXT NOT NULL,
@@ -260,6 +286,78 @@ func StartPeriodicCheck() {
 		}
 	}()
 }
+
+// GetChannels returns all notification channels.
+func GetChannels() []NotificationChannel {
+	db := database.GetDB()
+	rows, err := db.Query("SELECT id, name, type, config, enabled, created_at FROM notification_channels ORDER BY id")
+	if err != nil {
+		return []NotificationChannel{}
+	}
+	defer rows.Close()
+	channels := make([]NotificationChannel, 0)
+	for rows.Next() {
+		var ch NotificationChannel
+		var enabled int
+		if err := rows.Scan(&ch.ID, &ch.Name, &ch.Type, &ch.Config, &enabled, &ch.CreatedAt); err != nil {
+			continue
+		}
+		ch.Enabled = enabled == 1
+		channels = append(channels, ch)
+	}
+	return channels
+}
+
+// CreateChannel inserts a new notification channel.
+func CreateChannel(req CreateChannelRequest) (*NotificationChannel, error) {
+	if req.Name == "" || req.Type == "" {
+		return nil, errors.New("name and type are required")
+	}
+	validTypes := map[string]bool{"email": true, "webhook": true, "telegram": true}
+	if !validTypes[req.Type] {
+		return nil, errors.New("type must be email, webhook, or telegram")
+	}
+	if req.Config == "" {
+		req.Config = "{}"
+	}
+	db := database.GetDB()
+	result, err := db.Exec(
+		"INSERT INTO notification_channels (name, type, config) VALUES (?, ?, ?)",
+		req.Name, req.Type, req.Config,
+	)
+	if err != nil {
+		return nil, err
+	}
+	id, _ := result.LastInsertId()
+	var ch NotificationChannel
+	var enabled int
+	db.QueryRow("SELECT id, name, type, config, enabled, created_at FROM notification_channels WHERE id = ?", id).
+		Scan(&ch.ID, &ch.Name, &ch.Type, &ch.Config, &enabled, &ch.CreatedAt)
+	ch.Enabled = enabled == 1
+	return &ch, nil
+}
+
+// DeleteChannel removes a notification channel.
+func DeleteChannel(id int64) error {
+	db := database.GetDB()
+	result, err := db.Exec("DELETE FROM notification_channels WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.New("channel not found")
+	}
+	return nil
+}
+
+// ToggleChannel enables or disables a notification channel.
+func ToggleChannel(id int64, enabled bool) error {
+	db := database.GetDB()
+	_, err := db.Exec("UPDATE notification_channels SET enabled = ? WHERE id = ?", boolToInt(enabled), id)
+	return err
+}
+
 
 func boolToInt(b bool) int {
 	if b {

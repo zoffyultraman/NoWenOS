@@ -5,6 +5,7 @@ import (
 
 	"nowenos-server/internal/alerts"
 	"nowenos-server/internal/appcenter"
+	"nowenos-server/internal/proxy"
 	"nowenos-server/internal/audit"
 	"nowenos-server/internal/auth"
 	"nowenos-server/internal/config"
@@ -29,6 +30,7 @@ func main() {
 	recyclebin.InitTable()
 	audit.InitTable()
 	appcenter.InitTable()
+	proxy.InitTable()
 	alerts.StartPeriodicCheck()
 
 	r := httpapi.New()

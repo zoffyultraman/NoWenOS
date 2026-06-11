@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/stores/toast";
-import { Share2, Plus, Trash2, X, FolderOpen, ToggleLeft, ToggleRight, Pencil } from "lucide-react";
+import { Share2, Plus, Trash2, X, FolderOpen, ToggleLeft, ToggleRight, Pencil, Shield, Eye } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const emptyForm: CreateShareRequest = {
@@ -247,6 +247,27 @@ export default function SharesPage() {
                   </p>
                   {share.comment && <p className="text-xs text-muted-foreground">{share.comment}</p>}
                 </div>
+              </div>
+              {/* Permission Preview */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1">
+                  <Shield className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] font-medium">
+                    {share.guest ? t("shares.permGuest") : t("shares.permAuth")}
+                  </span>
+                </div>
+                <div className={"flex items-center gap-1 rounded-md px-2 py-1 " + (share.readOnly ? "border border-amber-500/20 bg-amber-500/10" : "border border-green-500/20 bg-green-500/10")}>
+                  <Eye className={"h-3 w-3 " + (share.readOnly ? "text-amber-500" : "text-green-500")} />
+                  <span className={"text-[10px] font-medium " + (share.readOnly ? "text-amber-500" : "text-green-500")}>
+                    {share.readOnly ? t("shares.permReadOnly") : t("shares.permReadWrite")}
+                  </span>
+                </div>
+                <div className={"flex items-center gap-1 rounded-md px-2 py-1 " + (share.enabled ? "border border-cyan-500/20 bg-cyan-500/10" : "border border-slate-500/20 bg-slate-500/10")}>
+                  <span className={"text-[10px] font-medium " + (share.enabled ? "text-cyan-500" : "text-slate-500")}>
+                    {share.enabled ? t("shares.permActive") : t("shares.permInactive")}
+                  </span>
+                </div>
+                <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-cyan-400">{share.protocol.toUpperCase()}</span>
               </div>
 
               <div className="flex items-center gap-2">

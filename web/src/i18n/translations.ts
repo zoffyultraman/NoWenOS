@@ -385,6 +385,61 @@ const translations: Record<string, Record<Locale, string>> = {
   "update.viewRelease": { en: "View Release", zh: "????" },
   "update.checking": { en: "Checking...", zh: "???..." },
 
+
+  // Reverse Proxy
+  "nav.proxy": { en: "Reverse Proxy", zh: "反向代理" },
+  "proxy.title": { en: "Reverse Proxy", zh: "反向代理" },
+  "proxy.subtitle": { en: "Manage reverse proxy rules", zh: "管理反向代理规则" },
+  "proxy.addRule": { en: "Add Rule", zh: "添加规则" },
+  "proxy.newRule": { en: "New Rule", zh: "新建规则" },
+  "proxy.editRule": { en: "Edit Rule", zh: "编辑规则" },
+  "proxy.domain": { en: "Domain", zh: "域名" },
+  "proxy.target": { en: "Target", zh: "目标" },
+  "proxy.protocol": { en: "Protocol", zh: "协议" },
+  "proxy.createRule": { en: "Create Rule", zh: "创建规则" },
+  "proxy.updateRule": { en: "Update Rule", zh: "更新规则" },
+  "proxy.reload": { en: "Reload", zh: "重载配置" },
+  "proxy.loading": { en: "Loading...", zh: "加载中..." },
+  "proxy.noRules": { en: "No proxy rules configured", zh: "未配置代理规则" },
+  "proxy.firstRule": { en: "Click Add Rule to get started", zh: "点击添加规则开始" },
+  "proxy.running": { en: "Running", zh: "运行中" },
+  "proxy.installedNotRunning": { en: "Installed, not running", zh: "已安装，未运行" },
+  "proxy.notInstalled": { en: "Not installed", zh: "未安装" },
+  "proxy.ruleCreated": { en: "Rule created", zh: "规则已创建" },
+  "proxy.ruleUpdated": { en: "Rule updated", zh: "规则已更新" },
+  "proxy.ruleDeleted": { en: "Rule deleted", zh: "规则已删除" },
+  "proxy.ruleToggled": { en: "Rule toggled", zh: "规则状态已切换" },
+  "proxy.reloaded": { en: "Configuration reloaded", zh: "配置已重载" },
+  "proxy.createFailed": { en: "Create failed", zh: "创建失败" },
+  "proxy.updateFailed": { en: "Update failed", zh: "更新失败" },
+  "proxy.deleteFailed": { en: "Delete failed", zh: "删除失败" },
+  "proxy.toggleFailed": { en: "Toggle failed", zh: "切换失败" },
+  "proxy.reloadFailed": { en: "Reload failed", zh: "重载失败" },
+  "proxy.deleteConfirm": { en: "Delete rule for {domain}?", zh: "删除 {domain} 的代理规则？" },
+
+
+
+  // Alert Notification Channels
+  "alerts.notificationChannels": { en: "Notification Channels", zh: "通知渠道" },
+  "alerts.rulesAndHistory": { en: "Rules & History", zh: "规则与历史" },
+  "alerts.addChannel": { en: "Add Channel", zh: "添加渠道" },
+  "alerts.channelName": { en: "Channel Name", zh: "渠道名称" },
+  "alerts.channelNamePlaceholder": { en: "e.g. Slack Alerts", zh: "例如 Slack 告警" },
+  "alerts.channelType": { en: "Channel Type", zh: "渠道类型" },
+  "alerts.channelCreated": { en: "Channel created", zh: "渠道已创建" },
+  "alerts.channelDeleted": { en: "Channel deleted", zh: "渠道已删除" },
+  "alerts.channelCreateFailed": { en: "Channel creation failed", zh: "渠道创建失败" },
+  "alerts.noChannels": { en: "No notification channels configured", zh: "未配置通知渠道" },
+
+  // Shares Permission Preview
+  "shares.permGuest": { en: "Guest Access", zh: "访客访问" },
+  "shares.permAuth": { en: "Auth Required", zh: "需要认证" },
+  "shares.permReadOnly": { en: "Read Only", zh: "只读" },
+  "shares.permReadWrite": { en: "Read/Write", zh: "读写" },
+  "shares.permActive": { en: "Active", zh: "活跃" },
+  "shares.permInactive": { en: "Inactive", zh: "停用" },
+
+
 };
 
 export function t(key: string, locale: Locale): string {

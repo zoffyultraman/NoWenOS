@@ -20,6 +20,7 @@ import (
 	"nowenos-server/internal/shares"
 	"nowenos-server/internal/systemadapter"
 	"nowenos-server/internal/appcenter"
+	"nowenos-server/internal/proxy"
 )
 
 func New() *gin.Engine {
@@ -885,6 +886,140 @@ func New() *gin.Engine {
 		api.GET("/system/update-check", func(c *gin.Context) {
 			info := updater.CheckForUpdate()
 			c.JSON(http.StatusOK, gin.H{"data": info})
+		})
+
+
+
+		// --- Notification Channels ---
+		api.GET("/alerts/channels", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"data": alerts.GetChannels()})
+		})
+
+		api.POST("/alerts/channels", func(c *gin.Context) {
+			var req alerts.CreateChannelRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			ch, err := alerts.CreateChannel(req)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": ch})
+		})
+
+		api.DELETE("/alerts/channels/:id", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err := alerts.DeleteChannel(id); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deleted"}})
+		})
+
+		api.PUT("/alerts/channels/:id/toggle", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req struct {
+				Enabled bool `json:"enabled"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			if err := alerts.ToggleChannel(id, req.Enabled); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "toggled"}})
+		})
+
+		// --- Reverse Proxy ---
+		api.GET("/proxy/rules", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"data": proxy.ListRules()})
+		})
+
+		api.POST("/proxy/rules", func(c *gin.Context) {
+			var req struct {
+				Domain   string `json:"domain"`
+				Target   string `json:"target"`
+				Protocol string `json:"protocol"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			rule, err := proxy.CreateRule(req.Domain, req.Target, req.Protocol)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": rule})
+		})
+
+		api.PUT("/proxy/rules/:id", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req struct {
+				Domain   string `json:"domain"`
+				Target   string `json:"target"`
+				Protocol string `json:"protocol"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			rule, err := proxy.UpdateRule(id, req.Domain, req.Target, req.Protocol)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": rule})
+		})
+
+		api.DELETE("/proxy/rules/:id", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err := proxy.DeleteRule(id); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deleted"}})
+		})
+
+		api.PUT("/proxy/rules/:id/toggle", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req struct {
+				Enabled bool `json:"enabled"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			if err := proxy.ToggleRule(id, req.Enabled); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "toggled"}})
+		})
+
+		api.GET("/proxy/status", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"data": proxy.GetStatus()})
+		})
+
+		api.GET("/proxy/config", func(c *gin.Context) {
+			cfg, err := proxy.GetCaddyConfig()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"caddyfile": cfg}})
+		})
+
+		api.POST("/proxy/reload", func(c *gin.Context) {
+			if err := proxy.ReloadCaddy(); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "reloaded"}})
 		})
 
 	return r

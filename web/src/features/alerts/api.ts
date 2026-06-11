@@ -58,3 +58,34 @@ export async function markAlertsSeen() {
 export async function clearAlertEvents() {
   return api.delete("/alerts/events");
 }
+
+export interface NotificationChannel {
+  id: number;
+  name: string;
+  type: string;
+  config: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface CreateChannelRequest {
+  name: string;
+  type: string;
+  config: string;
+}
+
+export async function fetchNotificationChannels() {
+  return api.get<{ data: NotificationChannel[] }>("/alerts/channels");
+}
+
+export async function createNotificationChannel(data: CreateChannelRequest) {
+  return api.post<{ data: NotificationChannel }>("/alerts/channels", data);
+}
+
+export async function deleteNotificationChannel(id: number) {
+  return api.delete("/alerts/channels/" + id);
+}
+
+export async function toggleNotificationChannel(id: number, enabled: boolean) {
+  return api.put("/alerts/channels/" + id + "/toggle", { enabled });
+}

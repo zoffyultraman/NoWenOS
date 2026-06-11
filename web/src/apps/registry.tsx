@@ -1,6 +1,6 @@
 ﻿import { lazy, type ComponentType } from "react";
 import {
-  LayoutDashboard, HardDrive, FolderOpen, Container, Users,
+  LayoutDashboard, HardDrive, FolderOpen, Container, Users, Network,
   ScrollText, Settings, Info, Share2, Bell, Trash2, LayoutGrid,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -27,6 +27,7 @@ const AlertsApp = lazy(() => import("@/pages/alerts"));
 const RecycleApp = lazy(() => import("@/pages/recycle"));
 const AppsApp = lazy(() => import("@/pages/apps"));
 const SettingsApp = lazy(() => import("@/pages/settings"));
+const ProxyApp = lazy(() => import("@/pages/proxy"));
 
 export const appRegistry: AppRegistration[] = [
   { id: "dashboard", titleKey: "nav.dashboard", icon: LayoutDashboard, component: DashboardApp, singleton: true },
@@ -40,6 +41,7 @@ export const appRegistry: AppRegistration[] = [
   { id: "alerts", titleKey: "nav.alerts", icon: Bell, component: AlertsApp },
   { id: "recycle", titleKey: "nav.recycle", icon: Trash2, component: RecycleApp },
   { id: "settings", titleKey: "nav.settings", icon: Settings, component: SettingsApp },
+  { id: "proxy", titleKey: "nav.proxy", icon: Network, component: ProxyApp },
   { id: "apps", titleKey: "nav.apps", icon: LayoutGrid, component: AppsApp, defaultWidth: 1000, defaultHeight: 650 },
 ];
 
