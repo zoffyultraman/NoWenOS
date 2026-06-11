@@ -123,5 +123,5 @@ export interface StatsHistoryResponse {
 }
 
 export async function fetchStatsHistory(minutes: number = 60) {
-  return api.get<StatsHistoryResponse>(/system/stats/history?minutes=);
+  return api.get<StatsHistoryResponse>(`/system/stats/history?minutes=${minutes}`);
 }
