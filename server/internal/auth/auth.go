@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -25,8 +26,17 @@ var (
 
 func initSecret() {
 	once.Do(func() {
+		keyPath := "data/secret.key"
+		os.MkdirAll("data", 0755)
+
+		if data, err := os.ReadFile(keyPath); err == nil && len(data) >= 32 {
+			secretKey = data[:32]
+			return
+		}
+
 		key := make([]byte, 32)
 		rand.Read(key)
+		os.WriteFile(keyPath, key, 0600)
 		secretKey = key
 	})
 }
