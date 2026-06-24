@@ -27,6 +27,7 @@ import (
 	"nowenos-server/internal/security"
 	"nowenos-server/internal/backup"
 	"nowenos-server/internal/twofa"
+	"nowenos-server/internal/cronmanager"
 )
 
 func New() *gin.Engine {
@@ -1280,6 +1281,76 @@ func New() *gin.Engine {
 				return
 			}
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "reloaded"}})
+		})
+
+		// --- Scheduled Tasks (Cron) ---
+		api.GET("/cron/tasks", func(c *gin.Context) {
+			tasks := cronmanager.GetTasks()
+			c.JSON(http.StatusOK, gin.H{"data": tasks})
+		})
+
+		api.POST("/cron/tasks", requireWrite(), func(c *gin.Context) {
+			var req cronmanager.CreateTaskRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			task, err := cronmanager.CreateTask(req)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": task})
+		})
+
+		api.PUT("/cron/tasks/:id", requireWrite(), func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req cronmanager.CreateTaskRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			task, err := cronmanager.UpdateTask(id, req)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": task})
+		})
+
+		api.DELETE("/cron/tasks/:id", requireWrite(), func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err := cronmanager.DeleteTask(id); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
+		})
+
+		api.POST("/cron/tasks/:id/toggle", requireWrite(), func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req struct {
+				Enabled bool `json:"enabled"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			if err := cronmanager.ToggleTask(id, req.Enabled); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
+		})
+
+		api.POST("/cron/tasks/:id/run", requireWrite(), func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			task, err := cronmanager.RunTask(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": task})
 		})
 
 	static.ServeStatic(r)
