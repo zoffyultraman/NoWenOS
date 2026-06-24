@@ -13,6 +13,7 @@ import (
 	"nowenos-server/internal/auth"
 	"nowenos-server/internal/filemanager"
 	"nowenos-server/internal/logviewer"
+	"nowenos-server/internal/logrotate"
 	"nowenos-server/internal/recyclebin"
 	"nowenos-server/internal/settings"
 	"nowenos-server/internal/statsstore"
@@ -1280,6 +1281,84 @@ func New() *gin.Engine {
 				return
 			}
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "reloaded"}})
+		})
+
+		// --- Logrotate ---
+		api.GET("/logrotate/configs", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"data": logrotate.GetConfigs()})
+		})
+
+		api.POST("/logrotate/configs", func(c *gin.Context) {
+			var req logrotate.CreateConfigRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			cfg, err := logrotate.CreateConfig(req)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": cfg})
+		})
+
+		api.PUT("/logrotate/configs/:id", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req logrotate.CreateConfigRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			cfg, err := logrotate.UpdateConfig(id, req)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": cfg})
+		})
+
+		api.DELETE("/logrotate/configs/:id", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err := logrotate.DeleteConfig(id); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deleted"}})
+		})
+
+		api.POST("/logrotate/configs/:id/toggle", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req struct {
+				Enabled bool `json:"enabled"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			if err := logrotate.ToggleConfig(id, req.Enabled); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "toggled"}})
+		})
+
+		api.POST("/logrotate/configs/:id/apply", requireRole("admin"), func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err := logrotate.ApplyConfig(id); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "applied"}})
+		})
+
+		api.POST("/logrotate/configs/:id/test", requireRole("admin"), func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			result, err := logrotate.TestRotation(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "output": result.Output})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": result})
 		})
 
 	static.ServeStatic(r)

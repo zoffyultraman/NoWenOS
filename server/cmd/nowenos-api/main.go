@@ -6,6 +6,7 @@ import (
 
 	"nowenos-server/internal/alerts"
 	"nowenos-server/internal/appcenter"
+	"nowenos-server/internal/logrotate"
 	"nowenos-server/internal/proxy"
 	"nowenos-server/internal/statsstore"
 	"nowenos-server/internal/ws"
@@ -39,6 +40,7 @@ func main() {
 	appcenter.InitTable()
 	proxy.InitTable()
 	twofa.InitDB()
+	logrotate.InitTable()
 	alerts.StartPeriodicCheck()
 	statsstore.InitTable()
 	go func() {
