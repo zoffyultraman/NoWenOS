@@ -5,7 +5,7 @@ const variantStyles: Record<ToastVariant, string> = {
   default: "bg-background border-border text-foreground",
   success: "bg-green-600 border-green-700 text-white",
   error: "bg-destructive border-red-700 text-white",
-  warning: "bg-amber-500 border-amber-600 text-white",
+  warning: "bg-amber-600 border-amber-700 text-white",
 };
 
 export function ToastContainer() {

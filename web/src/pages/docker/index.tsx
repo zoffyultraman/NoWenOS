@@ -52,7 +52,7 @@ export default function DockerPage() {
     <div className="space-y-4 p-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("docker.title")}</h1>
-        <p className="text-muted-foreground">Manage containers, images, and Compose projects</p>
+        <p className="text-muted-foreground">{t("docker.subtitle")}</p>
       </div>
 
       <div className="flex gap-2">
@@ -159,7 +159,7 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
       {containersQuery.isError && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
-            <p className="text-sm text-destructive">Failed to load containers.</p>
+            <p className="text-sm text-destructive">{t("docker.failedContainers")}</p>
           </CardContent>
         </Card>
       )}
@@ -167,7 +167,7 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
       {containers.length === 0 && !containersQuery.isLoading && (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">No containers found.</p>
+            <p className="text-sm text-muted-foreground">{t("docker.noContainers")}</p>
           </CardContent>
         </Card>
       )}
@@ -349,7 +349,7 @@ function ComposeTab({ onViewLogs, onEditFile }: { onViewLogs: (name: string) => 
       {projectsQuery.isError && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
-            <p className="text-sm text-destructive">Failed to load compose projects. Is Docker running?</p>
+            <p className="text-sm text-destructive">{t("docker.failedCompose")}</p>
           </CardContent>
         </Card>
       )}
@@ -476,6 +476,7 @@ function ComposeRow({
 }
 
 function ContainerLogsModal({ id, name, onClose }: { id: string; name: string; onClose: () => void }) {
+  const t = useTranslation();
   const logsQuery = useQuery({
     queryKey: ["container-logs", id],
     queryFn: () => fetchContainerLogs(id, 200),
@@ -486,14 +487,14 @@ function ContainerLogsModal({ id, name, onClose }: { id: string; name: string; o
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="mx-4 max-h-[80vh] w-full max-w-3xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-lg">Logs: {name}</CardTitle>
+          <CardTitle className="text-lg">{t("docker.logsTitle")}: {name}</CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
         </CardHeader>
         <CardContent>
-          {logsQuery.isLoading && <p className="text-sm text-muted-foreground">Loading logs...</p>}
-          {logsQuery.isError && <p className="text-sm text-destructive">Failed to load logs.</p>}
+          {logsQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.loadingLogs")}</p>}
+          {logsQuery.isError && <p className="text-sm text-destructive">{t("docker.failedLogs")}</p>}
           {logs && <pre className="max-h-[60vh] overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-50">{logs}</pre>}
-          {!logs && !logsQuery.isLoading && <p className="text-sm text-muted-foreground">No logs available.</p>}
+          {!logs && !logsQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.noLogs")}</p>}
         </CardContent>
       </Card>
     </div>
@@ -501,6 +502,7 @@ function ContainerLogsModal({ id, name, onClose }: { id: string; name: string; o
 }
 
 function ComposeLogsModal({ name, onClose }: { name: string; onClose: () => void }) {
+  const t = useTranslation();
   const logsQuery = useQuery({
     queryKey: ["compose-logs", name],
     queryFn: () => fetchComposeLogs(name, 200),
@@ -511,14 +513,14 @@ function ComposeLogsModal({ name, onClose }: { name: string; onClose: () => void
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="mx-4 max-h-[80vh] w-full max-w-3xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-lg">Compose Logs: {name}</CardTitle>
+          <CardTitle className="text-lg">{t("docker.composeLogs")}: {name}</CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
         </CardHeader>
         <CardContent>
-          {logsQuery.isLoading && <p className="text-sm text-muted-foreground">Loading logs...</p>}
-          {logsQuery.isError && <p className="text-sm text-destructive">Failed to load logs.</p>}
+          {logsQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.loadingLogs")}</p>}
+          {logsQuery.isError && <p className="text-sm text-destructive">{t("docker.failedLogs")}</p>}
           {logs && <pre className="max-h-[60vh] overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-50">{logs}</pre>}
-          {!logs && !logsQuery.isLoading && <p className="text-sm text-muted-foreground">No logs available.</p>}
+          {!logs && !logsQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.noLogs")}</p>}
         </CardContent>
       </Card>
     </div>
@@ -597,15 +599,15 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <FileCode className="h-5 w-5" />
-              Edit: {name}
+              {t("docker.edit")}: {name}
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1 font-mono">{path}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-3 overflow-hidden">
-          {fileQuery.isLoading && <p className="text-sm text-muted-foreground">Loading file...</p>}
-          {fileQuery.isError && <p className="text-sm text-destructive">Failed to load file. Check the path exists.</p>}
+          {fileQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.loadingFile")}</p>}
+          {fileQuery.isError && <p className="text-sm text-destructive">{t("docker.failedFile")}</p>}
 
           {!fileQuery.isLoading && !fileQuery.isError && (
             <>
@@ -624,7 +626,7 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
 
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
-                  {content.split("\n").length} lines
+                  {content.split("\n").length} {t("docker.lines")}
                 </p>
                 <div className="flex gap-2">
                   <Button

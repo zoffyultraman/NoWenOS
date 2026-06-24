@@ -454,6 +454,8 @@ const translations: Record<string, Record<Locale, string>> = {
   // File preview and drag-drop
   "files.dropUpload": { en: "Drop files here to upload", zh: "拖拽文件到此处上传" },
   "files.preview": { en: "Preview", zh: "预览" },
+  "files.download": { en: "Download", zh: "下载" },
+  "files.delete": { en: "Delete", zh: "删除" },
   "files.previewNotAvailable": { en: "Preview not available", zh: "无法预览" },
   "files.movedSuccess": { en: "File moved", zh: "文件已移动" },
   "files.moveFailed": { en: "Move failed", zh: "移动失败" },
@@ -515,6 +517,8 @@ const translations: Record<string, Record<Locale, string>> = {
   "users.newPwd": { en: "New Password", zh: "新密码" },
   "users.confirmPwd": { en: "Confirm Password", zh: "确认密码" },
   "users.saving": { en: "Saving...", zh: "保存中..." },
+  "users.passwordMismatch": { en: "Passwords do not match", zh: "两次密码不一致" },
+  "users.passwordTooShort": { en: "Password must be at least 4 characters", zh: "密码至少需要 4 个字符" },
 
   // Docker compose additions
   "docker.save": { en: "Save", zh: "保存" },
