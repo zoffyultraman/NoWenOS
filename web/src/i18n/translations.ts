@@ -476,6 +476,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "files.moveTo": { en: "Move to...", zh: "移动到..." },
   "files.moveToHere": { en: "Move here", zh: "移动到此处" },
   "files.selectDestination": { en: "Select destination folder", zh: "选择目标文件夹" },
+  "files.permissions": { en: "Permissions", zh: "权限" },
 
 
 

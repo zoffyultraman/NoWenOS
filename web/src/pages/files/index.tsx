@@ -66,6 +66,14 @@ function BreadcrumbNav({ path, onNavigate }: { path: string; onNavigate: (p: str
   );
 }
 
+interface SearchResult {
+  name: string;
+  path: string;
+  isDir: boolean;
+  size: number;
+  modTime: string;
+}
+
 export default function FilesPage() {
   const t = useTranslation();
   const [currentPath, setCurrentPath] = useState(".");
