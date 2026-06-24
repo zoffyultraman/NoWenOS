@@ -2,6 +2,7 @@ package dockerstats
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"strings"
 	"time"
@@ -80,7 +81,7 @@ func GetContainerStats() ([]ContainerStats, error) {
 	cmd := exec.Command("docker", "stats", "--no-stream", "--format", "{{json .}}")
 	out, err := cmd.Output()
 	if err != nil {
-		return []ContainerStats{}, nil
+		return nil, fmt.Errorf("docker stats failed: %w", err)
 	}
 
 	stats := make([]ContainerStats, 0)
@@ -116,11 +117,11 @@ func GetContainerStats() ([]ContainerStats, error) {
 	return stats, nil
 }
 
-// RecordStats fetches current stats and inserts them into the history table.
-func RecordStats() error {
+// RecordStats fetches current stats, inserts them into the history table, and returns the stats.
+func RecordStats() ([]ContainerStats, error) {
 	stats, err := GetContainerStats()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	db := database.GetDB()
@@ -134,7 +135,7 @@ func RecordStats() error {
 			s.MemoryPercent, s.NetRx, s.NetTx, s.BlockRead, s.BlockWrite, s.Pids,
 		)
 	}
-	return nil
+	return stats, nil
 }
 
 // GetHistory returns historical stats for a container from the last N minutes.

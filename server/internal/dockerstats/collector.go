@@ -1,7 +1,6 @@
 package dockerstats
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 )
@@ -23,17 +22,14 @@ func StartCollector() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			if err := RecordStats(); err != nil {
+			stats, err := RecordStats()
+			if err != nil {
 				log.Printf("docker stats collector: %v", err)
 				continue
 			}
 
 			// Broadcast real-time stats via WebSocket if broadcaster is set
-			if broadcast != nil {
-				stats, err := GetContainerStats()
-				if err != nil {
-					continue
-				}
+			if broadcast != nil && len(stats) > 0 {
 				broadcast("docker-stats", stats)
 			}
 		}
@@ -47,17 +43,4 @@ func StartCollector() {
 			Cleanup(7)
 		}
 	}()
-}
-
-// BroadcastDockerStats can be used by the ws package to include docker stats in broadcasts.
-func BroadcastDockerStats() {
-	stats, err := GetContainerStats()
-	if err != nil {
-		return
-	}
-	data, _ := json.Marshal(map[string]interface{}{
-		"type": "docker-stats",
-		"data": stats,
-	})
-	_ = data // The ws hub will handle actual broadcasting
 }

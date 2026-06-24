@@ -44,8 +44,8 @@ func (h *Hub) remove(c *Client) {
 }
 
 func (h *Hub) broadcast(msg []byte) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	for c := range h.clients {
 		select {
 		case c.send <- msg:
