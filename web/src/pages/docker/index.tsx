@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchContainers,
@@ -431,6 +432,7 @@ function ComposeRow({
 }) {
   const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const [composeConfirm, setComposeConfirm] = useState<{ action: "down" | "restart" } | null>(null);
   const servicesQuery = useQuery({
     queryKey: ["compose-services", project.name],
     queryFn: () => fetchComposeServices(project.name),
@@ -464,10 +466,10 @@ function ComposeRow({
               </Button>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={() => onAction("down")} disabled={isPending} className="h-8 px-2 text-xs">
+                <Button variant="ghost" size="sm" onClick={() => setComposeConfirm({ action: "down" })} disabled={isPending} className="h-8 px-2 text-xs">
                   <Square className="mr-1 h-3 w-3 text-red-600" /> {t("docker.down")}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => onAction("restart")} disabled={isPending} className="h-8 px-2 text-xs">
+                <Button variant="ghost" size="sm" onClick={() => setComposeConfirm({ action: "restart" })} disabled={isPending} className="h-8 px-2 text-xs">
                   <RotateCcw className="mr-1 h-3 w-3 text-blue-600" /> {t("docker.restart")}
                 </Button>
               </>
@@ -505,6 +507,15 @@ function ComposeRow({
               </div>
             ))}
           </div>
+        )}
+
+        {composeConfirm && (
+          <ConfirmDialog
+            title={t("common.confirm")}
+            message={t(composeConfirm.action === "down" ? "docker.composeDownConfirm" : "docker.composeRestartConfirm").replace("{name}", project.name)}
+            onConfirm={() => { onAction(composeConfirm.action); setComposeConfirm(null); }}
+            onCancel={() => setComposeConfirm(null)}
+          />
         )}
       </CardContent>
     </Card>

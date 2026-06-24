@@ -36,6 +36,7 @@ import {
   BellOff, Mail, Globe, Send, Link, Zap,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function AlertsPage() {
   const t = useTranslation();
@@ -54,6 +55,8 @@ export default function AlertsPage() {
   const [channelTab, setChannelTab] = useState(false);
   const [linkRuleId, setLinkRuleId] = useState<number | null>(null);
   const [selectedChannelIds, setSelectedChannelIds] = useState<number[]>([]);
+  const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<{ id: number; name: string } | null>(null);
+  const [deleteChannelConfirm, setDeleteChannelConfirm] = useState<{ id: number; name: string } | null>(null);
 
   const channelsQuery = useQuery({ queryKey: ["notification-channels"], queryFn: fetchNotificationChannels });
 
@@ -286,7 +289,7 @@ export default function AlertsPage() {
                       <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: rule.id, enabled: !rule.enabled })} className="h-8 w-8 p-0">
                         {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteRuleMutation.mutate(rule.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteRuleConfirm({ id: rule.id, name: rule.name })} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -409,7 +412,7 @@ export default function AlertsPage() {
                     <Button variant="ghost" size="sm" onClick={() => toggleChannelMutation.mutate({ id: ch.id, enabled: !ch.enabled })} className="h-8 w-8 p-0">
                       {ch.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteChannelMutation.mutate(ch.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteChannelConfirm({ id: ch.id, name: ch.name })} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -418,6 +421,24 @@ export default function AlertsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {deleteRuleConfirm && (
+        <ConfirmDialog
+          title={t("common.confirm")}
+          message={t("alerts.deleteRuleConfirm").replace("{name}", deleteRuleConfirm.name)}
+          onConfirm={() => { deleteRuleMutation.mutate(deleteRuleConfirm.id); setDeleteRuleConfirm(null); }}
+          onCancel={() => setDeleteRuleConfirm(null)}
+        />
+      )}
+
+      {deleteChannelConfirm && (
+        <ConfirmDialog
+          title={t("common.confirm")}
+          message={t("alerts.deleteChannelConfirm").replace("{name}", deleteChannelConfirm.name)}
+          onConfirm={() => { deleteChannelMutation.mutate(deleteChannelConfirm.id); setDeleteChannelConfirm(null); }}
+          onCancel={() => setDeleteChannelConfirm(null)}
+        />
       )}
 
       {/* Link Channels Dialog */}
