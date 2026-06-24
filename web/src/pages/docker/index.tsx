@@ -624,7 +624,7 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
 
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
-                  {content.split("\n").length} lines
+                  {content.split("\n").length} {t("docker.lines")}
                 </p>
                 <div className="flex gap-2">
                   <Button
