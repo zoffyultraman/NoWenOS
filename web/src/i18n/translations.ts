@@ -579,6 +579,12 @@ const translations: Record<string, Record<Locale, string>> = {
   "login.verify": { en: "Verify", zh: "验证" },
   "login.backToLogin": { en: "Back to login", zh: "返回登录" },
 
+  // Keyboard Shortcuts
+  "shortcuts.title": { en: "Keyboard Shortcuts", zh: "键盘快捷键" },
+  "shortcuts.newFolder": { en: "New Folder", zh: "新建文件夹" },
+  "shortcuts.upload": { en: "Upload", zh: "上传" },
+  "shortcuts.selectAll": { en: "Select All", zh: "全选" },
+  "shortcuts.delete": { en: "Delete", zh: "删除" },
 
 };
 
