@@ -208,17 +208,17 @@ export default function AlertsPage() {
                   <Label>{t("alerts.metric")}</Label>
                   <select value={form.metric} onChange={(e) => setForm({ ...form, metric: e.target.value })}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <option value="cpu">CPU (%)</option>
-                    <option value="memory">Memory (%)</option>
-                    <option value="disk">Disk (%)</option>
+                    <option value="cpu">{t("alerts.metricCpu")}</option>
+                    <option value="memory">{t("alerts.metricMemory")}</option>
+                    <option value="disk">{t("alerts.metricDisk")}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <Label>{t("alerts.operator")}</Label>
                   <select value={form.operator} onChange={(e) => setForm({ ...form, operator: e.target.value })}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <option value="gt">Greater than</option>
-                    <option value="lt">Less than</option>
+                    <option value="gt">{t("alerts.operatorGt")}</option>
+                    <option value="lt">{t("alerts.operatorLt")}</option>
                   </select>
                 </div>
                 <div className="space-y-2">

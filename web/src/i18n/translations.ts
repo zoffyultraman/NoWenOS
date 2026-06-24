@@ -308,6 +308,11 @@ const translations: Record<string, Record<Locale, string>> = {
   "alerts.deleteFailed": { en: "Failed to delete rule.", zh: "删除规则失败" },
   "alerts.historyCleared": { en: "Alert history cleared.", zh: "告警历史已清空" },
   "alerts.loading": { en: "Loading...", zh: "加载中..." },
+  "alerts.metricCpu": { en: "CPU (%)", zh: "CPU (%)" },
+  "alerts.metricMemory": { en: "Memory (%)", zh: "内存 (%)" },
+  "alerts.metricDisk": { en: "Disk (%)", zh: "磁盘 (%)" },
+  "alerts.operatorGt": { en: "Greater than", zh: "大于" },
+  "alerts.operatorLt": { en: "Less than", zh: "小于" },
 
   // Settings (补充)
   "settings.saved": { en: "Settings saved.", zh: "设置已保存" },
@@ -557,8 +562,6 @@ const translations: Record<string, Record<Locale, string>> = {
   "apps.uninstall": { en: "Uninstall", zh: "卸载" },
 
   // Shares (missing)
-  "shares.deleteConfirm": { en: "Delete share {name}?", zh: "删除共享 {name}？" },
-  "shares.firstShare": { en: "Create your first share to get started", zh: "创建第一个共享开始使用" },
 
   // 2FA
   "2fa.title": { en: "Two-Factor Authentication", zh: "双因素认证" },
