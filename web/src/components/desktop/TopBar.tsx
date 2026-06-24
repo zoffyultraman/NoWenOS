@@ -32,13 +32,13 @@ export function TopBar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[9999] flex h-10 items-center justify-between border-b border-border bg-background/90 px-3 backdrop-blur-md select-none">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={toggleAppLauncher} className="h-7 gap-1.5 px-2 text-xs font-semibold">
+      <div className="flex items-center gap-2 min-w-0">
+        <Button variant="ghost" size="sm" onClick={toggleAppLauncher} className="h-7 gap-1.5 px-2 text-xs font-semibold flex-shrink-0">
           <HardDrive className="h-3.5 w-3.5 text-primary" />
           <span>NoWenOS</span>
         </Button>
         {activeWindow && (
-          <span className="ml-2 text-xs text-muted-foreground truncate max-w-[200px]">{activeWindow.title}</span>
+          <span className="ml-2 text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-[200px] hidden sm:block">{activeWindow.title}</span>
         )}
       </div>
 
@@ -65,7 +65,7 @@ export function TopBar() {
         <div className="mx-1 h-4 w-px bg-border" />
         <div className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs">
           <User className="h-3 w-3 text-muted-foreground" />
-          <span className="text-foreground font-medium">{username ?? "User"}</span>
+          <span className="text-foreground font-medium hidden sm:inline">{username ?? "User"}</span>
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout} className="h-7 w-7 p-0 text-muted-foreground hover:text-danger" title={t("header.logout")}>
           <LogOut className="h-3.5 w-3.5" />

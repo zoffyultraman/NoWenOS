@@ -30,12 +30,12 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 p-4">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5">
+        <div className="flex items-center gap-2 self-start rounded-lg border border-border bg-card px-3 py-1.5">
           <div className={"h-2 w-2 rounded-full animate-pulse " + (wsConnected ? "bg-green-400" : "bg-amber-400")} />
           <span className="text-xs font-medium text-muted-foreground">
             {wsConnected ? t("dashboard.realtime") : t("dashboard.polling")}
@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">{t("dashboard.history")}</CardTitle>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               {[5, 15, 60, 360, 1440].map((m) => (
                 <button
                   key={m}
@@ -171,10 +171,10 @@ export default function DashboardPage() {
               <div className="space-y-1.5">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("dashboard.interfaces")}</p>
                 {network.interfaces.map((iface) => (
-                  <div key={iface.name} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <Wifi className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{iface.name}</span>
+                  <div key={iface.name} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Wifi className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground truncate">{iface.name}</span>
                     </div>
                     <div className="flex gap-4 font-mono text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><ArrowDown className="h-3 w-3 text-cyan-400" />{iface.rx}</span>

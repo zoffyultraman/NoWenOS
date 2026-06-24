@@ -61,14 +61,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-6">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 sm:p-6">
       {/* Background grid effect */}
       <div className="absolute inset-0 bg-grid opacity-50" />
       <div className="absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
 
       {/* Login card */}
       <div className="relative w-full max-w-sm">
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl shadow-black/20">
+        <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-2xl shadow-black/20">
           {/* Logo */}
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 shadow-lg shadow-cyan-500/25">

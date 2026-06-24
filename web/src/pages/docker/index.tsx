@@ -57,10 +57,11 @@ export default function DockerPage() {
         <p className="text-muted-foreground">{t("docker.subtitle")}</p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant={activeTab === "containers" ? "default" : "outline"}
           onClick={() => setActiveTab("containers")}
+          size="sm"
         >
           <Container className="mr-2 h-4 w-4" />
           {t("docker.containers")}
@@ -68,6 +69,7 @@ export default function DockerPage() {
         <Button
           variant={activeTab === "images" ? "default" : "outline"}
           onClick={() => setActiveTab("images")}
+          size="sm"
         >
           <HardDrive className="mr-2 h-4 w-4" />
           {t("docker.images")}
@@ -75,6 +77,7 @@ export default function DockerPage() {
         <Button
           variant={activeTab === "compose" ? "default" : "outline"}
           onClick={() => setActiveTab("compose")}
+          size="sm"
         >
           <Layers className="mr-2 h-4 w-4" />
           {t("docker.compose")}
@@ -220,15 +223,15 @@ function ContainerRow({
   const t = useTranslation();
   return (
     <Card>
-      <CardContent className="flex items-center justify-between py-4">
-        <div className="flex items-center gap-3">
-          <div className={"h-2.5 w-2.5 rounded-full " + (container.state === "running" ? "bg-green-500" : "bg-slate-300")} />
-          <div>
-            <p className="text-sm font-medium">{container.name}</p>
-            <p className="text-xs text-muted-foreground">{container.image}</p>
+      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={"h-2.5 w-2.5 flex-shrink-0 rounded-full " + (container.state === "running" ? "bg-green-500" : "bg-slate-300")} />
+          <div className="min-w-0">
+            <p className="text-sm font-medium truncate">{container.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{container.image}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className={container.state === "running"
             ? "rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400"
             : "rounded-full border border-slate-500/20 bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"}>
@@ -291,14 +294,14 @@ function ImagesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           placeholder={t("docker.pullPlaceholder")}
           value={pullName}
           onChange={(e) => setPullName(e.target.value)}
-          className="max-w-sm"
+          className="sm:max-w-sm"
         />
-        <Button onClick={() => pullMutation.mutate()} disabled={!pullName || pullMutation.isPending}>
+        <Button onClick={() => pullMutation.mutate()} disabled={!pullName || pullMutation.isPending} className="flex-shrink-0">
           <Download className="mr-2 h-4 w-4" /> {t("docker.pull")}
         </Button>
       </div>
@@ -322,10 +325,10 @@ function ImagesTab() {
       <div className="space-y-3">
         {images.map((image) => (
           <Card key={image.id}>
-            <CardContent className="flex items-center justify-between py-4">
-              <div>
-                <p className="text-sm font-medium">{image.repository}:{image.tag}</p>
-                <p className="text-xs text-muted-foreground">{image.id} | {image.size} | {image.created}</p>
+            <CardContent className="flex items-center justify-between gap-3 py-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{image.repository}:{image.tag}</p>
+                <p className="text-xs text-muted-foreground truncate">{image.id} | {image.size} | {image.created}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setRemoveImageConfirm({ id: image.id, name: `${image.repository}:${image.tag}` })} disabled={removeMutation.isPending} className="h-8 w-8 p-0">
                 <Trash2 className="h-4 w-4 text-red-600" />
@@ -444,25 +447,25 @@ function ComposeRow({
   return (
     <Card>
       <CardContent className="py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-            {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-            <div className={"h-2.5 w-2.5 rounded-full " + (isUp ? "bg-green-500" : "bg-slate-300")} />
-            <div>
-              <p className="text-sm font-medium">{project.name}</p>
-              <p className="text-xs text-muted-foreground">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => setExpanded(!expanded)}>
+            {expanded ? <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
+            <div className={"h-2.5 w-2.5 flex-shrink-0 rounded-full " + (isUp ? "bg-green-500" : "bg-slate-300")} />
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{project.name}</p>
+              <p className="text-xs text-muted-foreground truncate">
                 {project.services} {t("docker.services")} | {project.status}
                 {project.configFile && (" | " + project.configFile)}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={onEditFile} className="h-8 px-2 text-xs" title={t("docker.edit")}>
-              <FileCode className="mr-1 h-3 w-3" /> {t("docker.edit")}
+              <FileCode className="mr-1 h-3 w-3" /> <span className="hidden sm:inline">{t("docker.edit")}</span>
             </Button>
             {!isUp ? (
               <Button variant="ghost" size="sm" onClick={() => onAction("up")} disabled={isPending} className="h-8 px-2 text-xs">
-                <Play className="mr-1 h-3 w-3 text-green-600" /> {t("docker.up")}
+                <Play className="mr-1 h-3 w-3 text-green-600" /> <span className="hidden sm:inline">{t("docker.up")}</span>
               </Button>
             ) : (
               <>
@@ -488,15 +491,15 @@ function ComposeRow({
               <p className="text-sm text-muted-foreground">{t("docker.noServices")}</p>
             )}
             {services.map((svc) => (
-              <div key={svc.name} className="flex items-center justify-between rounded-lg border px-3 py-2">
-                <div className="flex items-center gap-3">
-                  <div className={"h-2 w-2 rounded-full " + (svc.state === "running" ? "bg-green-500" : "bg-slate-300")} />
-                  <div>
-                    <p className="text-sm font-medium">{svc.name}</p>
-                    <p className="text-xs text-muted-foreground">{svc.image}</p>
+              <div key={svc.name} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border px-3 py-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={"h-2 w-2 flex-shrink-0 rounded-full " + (svc.state === "running" ? "bg-green-500" : "bg-slate-300")} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{svc.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{svc.image}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   {svc.ports && (
                     <span className="text-xs text-muted-foreground font-mono">{svc.ports}</span>
                   )}
@@ -531,8 +534,8 @@ function ContainerLogsModal({ id, name, onClose }: { id: string; name: string; o
   const logs = logsQuery.data?.data?.logs ?? "";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="mx-4 max-h-[80vh] w-full max-w-3xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+      <Card className="max-h-[80vh] w-full max-w-3xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-lg">{t("docker.logsTitle")}: {name}</CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
@@ -557,8 +560,8 @@ function ComposeLogsModal({ name, onClose }: { name: string; onClose: () => void
   const logs = logsQuery.data?.data?.logs ?? "";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="mx-4 max-h-[80vh] w-full max-w-3xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+      <Card className="max-h-[80vh] w-full max-w-3xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-lg">{t("docker.composeLogs")}: {name}</CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
@@ -640,8 +643,8 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="mx-4 flex max-h-[85vh] w-full max-w-4xl flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+      <Card className="flex max-h-[85vh] w-full max-w-4xl flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
