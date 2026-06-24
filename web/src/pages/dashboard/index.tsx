@@ -120,11 +120,11 @@ export default function DashboardPage() {
           {historyData.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground mb-1">CPU %</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("dashboard.cpu")} %</p>
                 <MiniChart data={historyData.map((r) => r.cpu)} color="#06b6d4" height={60} />
               </div>
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground mb-1">Memory %</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("dashboard.memory")} %</p>
                 <MiniChart data={historyData.map((r) => r.memory)} color="#22c55e" height={60} />
               </div>
             </div>
@@ -205,10 +205,10 @@ export default function DashboardPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <th className="pb-2 pr-4">PID</th>
-                      <th className="pb-2 pr-4">Name</th>
-                      <th className="pb-2 pr-4 text-right">CPU %</th>
-                      <th className="pb-2 pr-4 text-right">MEM</th>
+                      <th className="pb-2 pr-4">{t("dashboard.pid")}</th>
+                      <th className="pb-2 pr-4">{t("dashboard.processName")}</th>
+                      <th className="pb-2 pr-4 text-right">{t("dashboard.cpu")} %</th>
+                      <th className="pb-2 pr-4 text-right">{t("dashboard.mem")}</th>
                     </tr>
                   </thead>
                   <tbody>

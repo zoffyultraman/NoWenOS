@@ -147,10 +147,10 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
           <>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-400">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-              {running} running
+              {running} {t("docker.running")}
             </span>
             <span className="rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              {containers.length} total
+              {containers.length} {t("docker.total")}
             </span>
           </>
         )}
@@ -282,7 +282,7 @@ function ImagesTab() {
       {imagesQuery.isError && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
-            <p className="text-sm text-destructive">Failed to load images.</p>
+            <p className="text-sm text-destructive">{t("docker.failedImages")}</p>
           </CardContent>
         </Card>
       )}
@@ -290,7 +290,7 @@ function ImagesTab() {
       {images.length === 0 && !imagesQuery.isLoading && (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">No images found.</p>
+            <p className="text-sm text-muted-foreground">{t("docker.noImages")}</p>
           </CardContent>
         </Card>
       )}
@@ -357,7 +357,7 @@ function ComposeTab({ onViewLogs, onEditFile }: { onViewLogs: (name: string) => 
       {projects.length === 0 && !projectsQuery.isLoading && (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">No compose projects found.</p>
+            <p className="text-sm text-muted-foreground">{t("docker.noCompose")}</p>
           </CardContent>
         </Card>
       )}
