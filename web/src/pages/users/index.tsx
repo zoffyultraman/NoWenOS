@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/stores/toast";
 import { UserPlus, Trash2, User, Shield, KeyRound, X, Users, Plus, UserMinus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -151,6 +152,7 @@ function GroupsSection() {
   const [newGroupComment, setNewGroupComment] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
   const [newMember, setNewMember] = useState("");
+  const [deleteGroupConfirm, setDeleteGroupConfirm] = useState<{ id: number; name: string } | null>(null);
 
   const groupsQuery = useQuery({ queryKey: ["groups"], queryFn: fetchGroups });
   const membersQuery = useQuery({
@@ -256,7 +258,7 @@ function GroupsSection() {
               <Button
                 variant="ghost" size="sm"
                 className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                onClick={(e) => { e.stopPropagation(); deleteGroupMutation.mutate(group.id); }}
+                onClick={(e) => { e.stopPropagation(); setDeleteGroupConfirm({ id: group.id, name: group.name }); }}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -264,6 +266,15 @@ function GroupsSection() {
           </Card>
         ))}
       </div>
+
+      {deleteGroupConfirm && (
+        <ConfirmDialog
+          title={t("common.confirm")}
+          message={t("groups.deleteConfirm").replace("{name}", deleteGroupConfirm.name)}
+          onConfirm={() => { deleteGroupMutation.mutate(deleteGroupConfirm.id); setDeleteGroupConfirm(null); }}
+          onCancel={() => setDeleteGroupConfirm(null)}
+        />
+      )}
 
       {selectedGroup !== null && selectedGroupInfo && (
         <Card>

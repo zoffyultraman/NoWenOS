@@ -571,6 +571,13 @@ const translations: Record<string, Record<Locale, string>> = {
   "2fa.codeLength": { en: "Code must be 6 digits", zh: "验证码必须为 6 位数字" },
   "2fa.enterCode": { en: "Please enter a code", zh: "请输入验证码" },
 
+  // Delete confirmations
+  "alerts.deleteRuleConfirm": { en: "Delete rule \"{name}\"?", zh: "删除规则 \"{name}\"？" },
+  "alerts.deleteChannelConfirm": { en: "Delete channel \"{name}\"?", zh: "删除渠道 \"{name}\"？" },
+  "docker.composeDownConfirm": { en: "Stop and remove compose project \"{name}\"?", zh: "停止并移除 Compose 项目 \"{name}\"？" },
+  "docker.composeRestartConfirm": { en: "Restart compose project \"{name}\"?", zh: "重启 Compose 项目 \"{name}\"？" },
+  "groups.deleteConfirm": { en: "Delete group \"{name}\"?", zh: "删除组 \"{name}\"？" },
+
   // Login 2FA
   "login.2faTitle": { en: "Two-Factor Authentication", zh: "双因素认证" },
   "login.2faSubtitle": { en: "Enter the code from your authenticator app", zh: "输入认证器应用中的验证码" },
