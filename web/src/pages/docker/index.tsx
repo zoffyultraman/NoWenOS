@@ -40,8 +40,8 @@ import {
   Save,
   CheckCircle,
   Rocket,
+  X,
 } from "lucide-react";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function DockerPage() {
   const t = useTranslation();
@@ -665,75 +665,26 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
               spellCheck={false}
             />
 
-              {result && (
-                <div className={"rounded-lg p-3 text-sm " + (result.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200")}>
-                  <pre className="whitespace-pre-wrap break-all text-xs">{result.message}</pre>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {content.split("\n").length} {t("docker.lines")}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending}
-                  >
-                    <Save className="mr-1 h-3 w-3" />
-                    {saveMutation.isPending ? t("docker.saving") : t("docker.save")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => validateMutation.mutate()}
-                    disabled={validateMutation.isPending}
-                  >
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    {validateMutation.isPending ? t("docker.validating") : t("docker.validate")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => deployMutation.mutate()}
-                    disabled={deployMutation.isPending}
-                  >
-                    <Rocket className="mr-1 h-3 w-3" />
-                    {deployMutation.isPending ? t("docker.deploying") : t("docker.deploy")}
-                  </Button>
-                </div>
+            {result && (
+              <div className={"rounded-lg p-3 text-sm " + (result.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200")}>
+                <pre className="whitespace-pre-wrap break-all text-xs">{result.message}</pre>
               </div>
             )}
 
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                {content.split("\n").length} lines
+                {content.split("\n").length} {t("docker.lines")}
               </p>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending}
-                >
+                <Button variant="outline" size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
                   <Save className="mr-1 h-3 w-3" />
                   {saveMutation.isPending ? t("docker.saving") : t("docker.save")}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => validateMutation.mutate()}
-                  disabled={validateMutation.isPending}
-                >
+                <Button variant="outline" size="sm" onClick={() => validateMutation.mutate()} disabled={validateMutation.isPending}>
                   <CheckCircle className="mr-1 h-3 w-3" />
                   {validateMutation.isPending ? t("docker.validating") : t("docker.validate")}
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => deployMutation.mutate()}
-                  disabled={deployMutation.isPending}
-                >
+                <Button size="sm" onClick={() => deployMutation.mutate()} disabled={deployMutation.isPending}>
                   <Rocket className="mr-1 h-3 w-3" />
                   {deployMutation.isPending ? t("docker.deploying") : t("docker.deploy")}
                 </Button>
@@ -742,7 +693,7 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
           </>
         )}
       </div>
-    </Modal>
+    </Card>
   );
 }
 

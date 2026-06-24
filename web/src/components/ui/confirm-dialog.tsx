@@ -3,68 +3,66 @@ import { Button } from "./button";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface ConfirmDialogProps {
-  open: boolean;
-  onClose: () => void;
+  open?: boolean;
+  onClose?: () => void;
+  onCancel?: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message?: string;
+  description?: string;
   confirmLabel?: string;
-  variant?: "danger" | "default";
+  cancelLabel?: string;
+  variant?: "danger" | "default" | "destructive";
   loading?: boolean;
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, message, confirmLabel, variant = "danger", loading }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  open,
+  onClose,
+  onCancel,
+  onConfirm,
+  title,
+  message,
+  description,
+  confirmLabel,
+  cancelLabel,
+  variant = "danger",
+  loading,
+}: ConfirmDialogProps) {
   const t = useTranslation();
+  const handleClose = onClose || onCancel || (() => {});
+  const displayMessage = message || description || "";
+  const variantStyle = variant === "danger" || variant === "destructive" ? "destructive" : "default";
+
+  // If open prop is provided, use controlled mode with Modal
+  if (open !== undefined) {
+    return (
+      <Modal open={open} onClose={handleClose} title={title} size="sm">
+        <p className="text-sm text-muted-foreground mb-6">{displayMessage}</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleClose}>
+            {cancelLabel || t("common.cancel")}
+          </Button>
+          <Button variant={variantStyle} onClick={onConfirm} disabled={loading}>
+            {confirmLabel || t("common.confirm")}
+          </Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Conditional rendering mode (no open prop)
   return (
-    <Modal open={open} onClose={onClose} title={title} size="sm">
-      <p className="text-sm text-muted-foreground mb-6">{message}</p>
+    <Modal open={true} onClose={handleClose} title={title} size="sm">
+      <p className="text-sm text-muted-foreground mb-6">{displayMessage}</p>
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
-        <Button variant={variant === "danger" ? "destructive" : "default"} onClick={onConfirm} disabled={loading}>
+        <Button variant="outline" onClick={handleClose}>
+          {cancelLabel || t("common.cancel")}
+        </Button>
+        <Button variant={variantStyle} onClick={onConfirm} disabled={loading}>
           {confirmLabel || t("common.confirm")}
         </Button>
       </div>
     </Modal>
-import { Button } from "./button";
-import { Card, CardContent } from "./card";
-
-interface ConfirmDialogProps {
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: "default" | "destructive";
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-export function ConfirmDialog({
-  title,
-  description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
-  variant = "destructive",
-  onConfirm,
-  onCancel,
-}: ConfirmDialogProps) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel}>
-      <Card className="w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-        <CardContent className="pt-6 space-y-4">
-          <div className="space-y-2">
-            <h3 className="font-semibold text-lg">{title}</h3>
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={onCancel}>
-              {cancelLabel}
-            </Button>
-            <Button variant={variant} size="sm" onClick={onConfirm}>
-              {confirmLabel}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
   );
 }
