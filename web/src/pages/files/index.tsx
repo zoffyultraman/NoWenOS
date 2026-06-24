@@ -236,19 +236,19 @@ export default function FilesPage() {
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{t("files.title")}</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t("files.title")}</h1>
           {result && (
             <span className="text-xs text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5 font-medium">
               {result.entries.length} {result.entries.length === 1 ? "item" : "items"}
             </span>
           )}
-          <span className="font-mono text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-1.5">
+          <span className="hidden sm:inline font-mono text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-1.5">
             {result?.path ?? currentPath}
           </span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleGoUp} disabled={!result?.parent} className="rounded-xl border-border bg-muted/30 hover:bg-muted/50">
             <ArrowLeft className="mr-1 h-3 w-3" />
             {t("files.up")}
@@ -366,22 +366,22 @@ export default function FilesPage() {
           )}
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              <div className="grid grid-cols-[36px_1fr_120px_180px_120px] px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
+              <div className="grid grid-cols-[36px_1fr_120px] md:grid-cols-[36px_1fr_120px_180px_120px] px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
                 <span className="flex items-center justify-center">
                   <button onClick={toggleSelectAll} className="h-4 w-4">
                     {selectedPaths.size > 0 && selectedPaths.size === (result?.entries.length ?? 0) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
                   </button>
                 </span>
                 <span>{t("files.name")}</span>
-                <span className="text-right">{t("files.size")}</span>
-                <span className="text-right">{t("files.modified")}</span>
                 <span className="text-right">{t("files.actions")}</span>
+                <span className="hidden md:block text-right">{t("files.size")}</span>
+                <span className="hidden md:block text-right">{t("files.modified")}</span>
               </div>
 
               {result.entries.map((entry) => (
                 <div
                   key={entry.path}
-                  className="grid grid-cols-[36px_1fr_120px_180px_120px] items-center px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                  className="grid grid-cols-[36px_1fr_120px] md:grid-cols-[36px_1fr_120px_180px_120px] items-center px-4 py-2.5 hover:bg-muted/30 transition-colors"
                 >
                   <span className="flex items-center justify-center">
                     <button onClick={() => toggleSelect(entry.path)}>
@@ -403,21 +403,17 @@ export default function FilesPage() {
                   ) : (
                     <button
                       type="button"
-                      className="flex items-center gap-2 text-left"
+                      className="flex items-center gap-2 text-left min-w-0"
                       onClick={() => entry.isDir && handleNavigate(entry.path)}
                     >
                       {entry.isDir ? (
-                        <Folder className="h-4 w-4 text-cyan-400" />
+                        <Folder className="h-4 w-4 flex-shrink-0 text-cyan-400" />
                       ) : (
-                        <File className="h-4 w-4 text-muted-foreground/60" />
+                        <File className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
                       )}
-                      <span className={entry.isDir ? "font-medium" : ""}>{entry.name}</span>
+                      <span className={"truncate " + (entry.isDir ? "font-medium" : "")}>{entry.name}</span>
                     </button>
                   )}
-                  <span className="text-right text-sm text-muted-foreground">
-                    {entry.isDir ? "\u2014" : formatSize(entry.size)}
-                  </span>
-                  <span className="text-right text-sm text-muted-foreground">{entry.modTime}</span>
                   <div className="text-right">
                     <Button variant="ghost" size="sm" onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); }} className="h-8 w-8 p-0" title={t("files.rename")}>
                       <Pencil className="h-4 w-4" />
@@ -435,7 +431,7 @@ export default function FilesPage() {
                         <Button variant="ghost" size="sm" onClick={() => setPreviewFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.preview")}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0 hidden sm:inline-flex">
                           <Download className="h-4 w-4" />
                         </Button>
                       </>
@@ -452,12 +448,16 @@ export default function FilesPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setPermissionsFile({ path: entry.path, name: entry.name })}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 hidden sm:inline-flex"
                       title={t("files.permissions")}
                     >
                       <Shield className="h-4 w-4" />
                     </Button>
                   </div>
+                  <span className="hidden md:block text-right text-sm text-muted-foreground">
+                    {entry.isDir ? "\u2014" : formatSize(entry.size)}
+                  </span>
+                  <span className="hidden md:block text-right text-sm text-muted-foreground">{entry.modTime}</span>
                 </div>
               ))}
             </div>

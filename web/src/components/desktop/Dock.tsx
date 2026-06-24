@@ -25,7 +25,7 @@ export function Dock() {
   const dockApps = appRegistry.filter((a) => DOCK_IDS.includes(a.id) && (!a.requiredRole || a.requiredRole === role || role === "admin"));
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9998] flex items-end gap-1 rounded-2xl border border-border bg-background/80 backdrop-blur-xl px-2 py-1.5 shadow-lg">
+    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9998] flex items-end gap-0.5 sm:gap-1 rounded-2xl border border-border bg-background/80 backdrop-blur-xl px-1.5 sm:px-2 py-1.5 shadow-lg max-w-[calc(100vw-1.5rem)] overflow-x-auto">
       {dockApps.map((app) => {
         const isOpen = windows.some((w) => w.appId === app.id && !w.minimized);
         const isActive = windows.some((w) => w.appId === app.id && w.id === activeWindowId);
@@ -36,7 +36,7 @@ export function Dock() {
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleClick(app.id, app.titleKey)}
-            className={cn("group relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors", isActive ? "bg-primary/15 text-primary" : isOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+            className={cn("group relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl transition-colors flex-shrink-0", isActive ? "bg-primary/15 text-primary" : isOpen ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
             title={t(app.titleKey)}
           >
             <Icon className="h-5 w-5" />
