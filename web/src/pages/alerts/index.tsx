@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchAlertRules,
@@ -7,6 +7,9 @@ import {
   createNotificationChannel,
   deleteNotificationChannel,
   toggleNotificationChannel,
+  testNotificationChannel,
+  linkRuleChannels,
+  fetchRuleChannels,
   toggleAlertRule,
   deleteAlertRule,
   fetchAlertEvents,
@@ -29,7 +32,7 @@ import {
   ToggleLeft,
   ToggleRight,
   CheckCheck,
-  BellOff, Mail, Globe, Send,
+  BellOff, Mail, Globe, Send, Link, Zap,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -48,8 +51,16 @@ export default function AlertsPage() {
   const [showChannelForm, setShowChannelForm] = useState(false);
   const [channelForm, setChannelForm] = useState<CreateChannelRequest>({ name: "", type: "webhook", config: "" });
   const [channelTab, setChannelTab] = useState(false);
+  const [linkRuleId, setLinkRuleId] = useState<number | null>(null);
+  const [selectedChannelIds, setSelectedChannelIds] = useState<number[]>([]);
 
   const channelsQuery = useQuery({ queryKey: ["notification-channels"], queryFn: fetchNotificationChannels });
+
+  const ruleChannelsQuery = useQuery({
+    queryKey: ["rule-channels", linkRuleId],
+    queryFn: () => fetchRuleChannels(linkRuleId!),
+    enabled: linkRuleId !== null,
+  });
   const rulesQuery = useQuery({ queryKey: ["alert-rules"], queryFn: fetchAlertRules });
   const eventsQuery = useQuery({
     queryKey: ["alert-events"],
@@ -120,10 +131,44 @@ export default function AlertsPage() {
     },
   });
 
+  const linkChannelsMutation = useMutation({
+    mutationFn: ({ ruleId, channelIds }: { ruleId: number; channelIds: number[] }) => linkRuleChannels(ruleId, channelIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rule-channels"] });
+      setLinkRuleId(null);
+      toast.success(t("alerts.channelsLinked"));
+    },
+    onError: (err: Error) => toast.error(err.message || t("alerts.linkFailed")),
+  });
+
+  const testChannelMutation = useMutation({
+    mutationFn: testNotificationChannel,
+    onSuccess: () => toast.success(t("alerts.testSent")),
+    onError: (err: Error) => toast.error(err.message || t("alerts.testFailed")),
+  });
+
   const channels = channelsQuery.data?.data ?? [];
   const rules = rulesQuery.data?.data ?? [];
   const events = eventsQuery.data?.data?.events ?? [];
   const unseen = eventsQuery.data?.data?.unseen ?? 0;
+
+  const ruleChannelIds = ruleChannelsQuery.data?.data ?? [];
+
+  useEffect(() => {
+    if (linkRuleId !== null && ruleChannelsQuery.isSuccess) {
+      setSelectedChannelIds(ruleChannelIds);
+    }
+  }, [linkRuleId, ruleChannelsQuery.isSuccess]);
+
+  function openLinkDialog(ruleId: number) {
+    setLinkRuleId(ruleId);
+  }
+
+  function toggleChannelSelection(chId: number) {
+    setSelectedChannelIds((prev) =>
+      prev.includes(chId) ? prev.filter((id) => id !== chId) : [...prev, chId]
+    );
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -234,6 +279,9 @@ export default function AlertsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => openLinkDialog(rule.id)} className="h-8 w-8 p-0" title={t("alerts.linkChannels")}>
+                        <Link className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: rule.id, enabled: !rule.enabled })} className="h-8 w-8 p-0">
                         {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
                       </Button>
@@ -354,6 +402,9 @@ export default function AlertsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => testChannelMutation.mutate(ch.id)} className="h-8 w-8 p-0" title={t("alerts.testChannel")} disabled={testChannelMutation.isPending}>
+                      <Zap className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => toggleChannelMutation.mutate({ id: ch.id, enabled: !ch.enabled })} className="h-8 w-8 p-0">
                       {ch.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
                     </Button>
@@ -366,6 +417,60 @@ export default function AlertsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Link Channels Dialog */}
+      {linkRuleId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setLinkRuleId(null)}>
+          <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle>{t("alerts.linkChannels")}</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setLinkRuleId(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {ruleChannelsQuery.isLoading ? (
+                <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+              ) : channels.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("alerts.noChannels")}</p>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {channels.map((ch) => (
+                    <label
+                      key={ch.id}
+                      className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-accent/50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedChannelIds.includes(ch.id)}
+                        onChange={() => toggleChannelSelection(ch.id)}
+                        className="h-4 w-4 rounded"
+                      />
+                      {ch.type === "email" ? <Mail className="h-4 w-4 text-blue-400" /> : ch.type === "telegram" ? <Send className="h-4 w-4 text-sky-400" /> : <Globe className="h-4 w-4 text-indigo-400" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{ch.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{ch.type}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 mt-4">
+                <Button
+                  size="sm"
+                  onClick={() => linkChannelsMutation.mutate({ ruleId: linkRuleId, channelIds: selectedChannelIds })}
+                  disabled={linkChannelsMutation.isPending}
+                >
+                  {linkChannelsMutation.isPending ? t("common.loading") : t("alerts.saveLink")}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setLinkRuleId(null)}>
+                  {t("common.cancel")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
     </div>

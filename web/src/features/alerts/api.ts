@@ -89,3 +89,15 @@ export async function deleteNotificationChannel(id: number) {
 export async function toggleNotificationChannel(id: number, enabled: boolean) {
   return api.put("/alerts/channels/" + id + "/toggle", { enabled });
 }
+
+export async function testNotificationChannel(id: number) {
+  return api.post<{ data: { status: string } }>(`/alerts/channels/${id}/test`);
+}
+
+export async function linkRuleChannels(ruleId: number, channelIds: number[]) {
+  return api.post<{ data: { status: string } }>(`/alerts/rules/${ruleId}/channels`, { channelIds });
+}
+
+export async function fetchRuleChannels(ruleId: number) {
+  return api.get<{ data: number[] }>(`/alerts/rules/${ruleId}/channels`);
+}
