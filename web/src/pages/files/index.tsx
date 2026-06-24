@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
   browseFiles,
   uploadFile,
@@ -245,6 +246,25 @@ export default function FilesPage() {
     const dest = currentPath + "/archive-" + Date.now() + ".tar.gz";
     compressMutation.mutate({ paths: Array.from(selectedPaths), dest });
   }
+
+  useKeyboardShortcuts({
+    "mod+n": () => setShowMkdir(true),
+    "mod+u": () => fileInputEl?.click(),
+    "mod+a": () => {
+      toggleSelectAll();
+    },
+    "delete": () => {
+      if (selectedPaths.size > 0) handleBatchDelete();
+    },
+    "backspace": () => {
+      if (selectedPaths.size > 0) handleBatchDelete();
+    },
+    "escape": () => {
+      setSelectedPaths(new Set());
+      setSearchResults(null);
+      setSearchQuery("");
+    },
+  });
 
   const result = filesQuery.data?.data;
 
