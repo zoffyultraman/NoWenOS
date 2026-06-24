@@ -31,8 +31,10 @@ import {
   Package,
   CheckSquare,
   Square,
+  Shield,
 } from "lucide-react";
 import { FilePreview } from "@/components/FilePreview";
+import PermissionsDialog from "@/features/files/PermissionsDialog";
 
 export default function FilesPage() {
   const t = useTranslation();
@@ -46,6 +48,7 @@ export default function FilesPage() {
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
+  const [permissionsFile, setPermissionsFile] = useState<{ path: string; name: string } | null>(null);
   const [fileInputEl, setFileInputEl] = useState<HTMLInputElement | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -440,6 +443,15 @@ export default function FilesPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPermissionsFile({ path: entry.path, name: entry.name })}
+                      className="h-8 w-8 p-0"
+                      title={t("files.permissions")}
+                    >
+                      <Shield className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -449,6 +461,9 @@ export default function FilesPage() {
       )}
       {previewFile && (
         <FilePreview path={previewFile.path} name={previewFile.name} onClose={() => setPreviewFile(null)} />
+      )}
+      {permissionsFile && (
+        <PermissionsDialog path={permissionsFile.path} onClose={() => setPermissionsFile(null)} />
       )}
     </div>
   );

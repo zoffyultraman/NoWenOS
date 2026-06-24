@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useToast } from "@/stores/toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLocaleStore } from "@/stores/locale";
+import TwoFactorCard from "./TwoFactorCard";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -134,6 +135,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 2FA Card */}
+          <TwoFactorCard />
 
           {/* System Settings Card */}
           <Card className="border-border bg-card">

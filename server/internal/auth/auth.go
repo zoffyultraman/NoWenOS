@@ -114,6 +114,28 @@ func Login(req LoginRequest) (*LoginResponse, error) {
 	}, nil
 }
 
+// ValidateCredentials checks if the username and password are correct
+// without generating a token. Used for 2FA flow where we need to
+// validate credentials before asking for a TOTP code.
+func ValidateCredentials(username, password string) error {
+	db := database.GetDB()
+	var storedPassword string
+
+	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
+	if err == sql.ErrNoRows {
+		return ErrInvalidCredentials
+	}
+	if err != nil {
+		return err
+	}
+
+	if storedPassword != password {
+		return ErrInvalidCredentials
+	}
+
+	return nil
+}
+
 func GetUsers() []UserInfo {
 	db := database.GetDB()
 	rows, err := db.Query("SELECT username, role FROM users ORDER BY id")

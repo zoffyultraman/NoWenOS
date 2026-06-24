@@ -2,12 +2,12 @@ import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, HardDrive, FolderOpen, Container, Users,
-  Share2, ScrollText, Bell, Settings, MonitorDot,
+  Share2, ScrollText, Bell, Settings, MonitorDot, Link,
 } from "lucide-react";
 
 // Lazy import wrappers
 import { DashboardApp, FilesApp, StorageApp, DockerApp, UsersApp,
-  SharesApp, LogsApp, AlertsApp, SystemApp, SettingsApp } from "./apps";
+  SharesApp, LogsApp, AlertsApp, SystemApp, SettingsApp, FileSharesApp } from "./apps";
 
 export interface AppDefinition {
   id: string;
@@ -82,6 +82,18 @@ export const appRegistry: AppDefinition[] = [
     minHeight: 400,
     dock: true,
     color: "green",
+  },
+  {
+    id: "fileshares",
+    titleKey: "nav.fileshares",
+    icon: Link,
+    component: FileSharesApp,
+    defaultWidth: 900,
+    defaultHeight: 650,
+    minWidth: 600,
+    minHeight: 400,
+    dock: false,
+    color: "cyan",
   },
   {
     id: "users",

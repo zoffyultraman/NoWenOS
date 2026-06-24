@@ -5,7 +5,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-const DOCK_IDS = ["dashboard", "files", "docker", "storage", "users", "settings", "apps", "recycle", "proxy"];
+const DOCK_IDS = ["dashboard", "files", "docker", "storage", "users", "settings", "apps", "recycle", "proxy", "firewall"];
 
 export function Dock() {
   const t = useTranslation();

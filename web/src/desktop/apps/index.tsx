@@ -8,6 +8,7 @@ import LogsPage from "@/pages/logs";
 import AlertsPage from "@/pages/alerts";
 import SystemPage from "@/pages/system";
 import SettingsPage from "@/pages/settings";
+import ShareListPage from "@/features/fileshare/ShareListPage";
 
 // Thin wrappers that re-use existing page components inside windows
 export function DashboardApp() { return <DashboardPage />; }
@@ -20,3 +21,4 @@ export function LogsApp() { return <LogsPage />; }
 export function AlertsApp() { return <AlertsPage />; }
 export function SystemApp() { return <SystemPage />; }
 export function SettingsApp() { return <SettingsPage />; }
+export function FileSharesApp() { return <ShareListPage />; }

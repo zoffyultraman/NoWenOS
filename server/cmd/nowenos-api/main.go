@@ -18,6 +18,7 @@ import (
 	"nowenos-server/internal/recyclebin"
 	"nowenos-server/internal/shares"
 	"nowenos-server/internal/backup"
+	"nowenos-server/internal/twofa"
 )
 
 func main() {
@@ -37,6 +38,7 @@ func main() {
 	audit.InitTable()
 	appcenter.InitTable()
 	proxy.InitTable()
+	twofa.InitDB()
 	alerts.StartPeriodicCheck()
 	statsstore.InitTable()
 	go func() {

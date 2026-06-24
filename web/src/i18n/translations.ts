@@ -527,6 +527,48 @@ const translations: Record<string, Record<Locale, string>> = {
   "shares.deleteConfirm": { en: "Delete share {name}?", zh: "删除共享 {name}？" },
   "shares.firstShare": { en: "Create your first share to get started", zh: "创建第一个共享开始使用" },
 
+  // 2FA
+  "2fa.title": { en: "Two-Factor Authentication", zh: "双因素认证" },
+  "2fa.description": { en: "Add an extra layer of security to your account", zh: "为您的账户添加额外的安全保障" },
+  "2fa.enable": { en: "Enable 2FA", zh: "启用 2FA" },
+  "2fa.enabling": { en: "Enabling...", zh: "启用中..." },
+  "2fa.disable": { en: "Disable 2FA", zh: "禁用 2FA" },
+  "2fa.statusEnabled": { en: "Two-factor authentication is enabled", zh: "双因素认证已启用" },
+  "2fa.enableDescription": { en: "Protect your account with an authenticator app like Google Authenticator or Authy", zh: "使用 Google Authenticator 或 Authy 等认证器应用保护您的账户" },
+  "2fa.scanQR": { en: "Scan this QR code with your authenticator app", zh: "使用认证器应用扫描此二维码" },
+  "2fa.manualEntry": { en: "Manual Entry Key", zh: "手动输入密钥" },
+  "2fa.manualEntryHelp": { en: "If you can't scan the QR code, enter this key manually in your authenticator app", zh: "如果无法扫描二维码，请在认证器应用中手动输入此密钥" },
+  "2fa.continue": { en: "Continue", zh: "继续" },
+  "2fa.enterCodeFromApp": { en: "Enter the 6-digit code from your authenticator app", zh: "输入认证器应用中的 6 位验证码" },
+  "2fa.verify": { en: "Verify", zh: "验证" },
+  "2fa.saveBackupCodes": { en: "Save Your Backup Codes", zh: "保存您的备份码" },
+  "2fa.backupCodesWarning": { en: "These codes can be used to access your account if you lose your authenticator device. Each code can only be used once.", zh: "如果丢失认证设备，可以使用这些代码访问您的账户。每个代码只能使用一次。" },
+  "2fa.copyCodes": { en: "Copy Codes", zh: "复制代码" },
+  "2fa.downloadCodes": { en: "Download Codes", zh: "下载代码" },
+  "2fa.finishSetup": { en: "I've Saved My Backup Codes", zh: "我已保存备份码" },
+  "2fa.setupComplete": { en: "Two-factor authentication has been enabled successfully", zh: "双因素认证已成功启用" },
+  "2fa.disableConfirm": { en: "Are you sure you want to disable 2FA?", zh: "确定要禁用 2FA 吗？" },
+  "2fa.disableDescription": { en: "Enter your TOTP code or a backup code to confirm", zh: "输入您的 TOTP 码或备份码以确认" },
+  "2fa.codeOrBackup": { en: "TOTP code or backup code", zh: "TOTP 码或备份码" },
+  "2fa.enableFailed": { en: "Failed to enable 2FA", zh: "启用 2FA 失败" },
+  "2fa.verifyFailed": { en: "Verification failed", zh: "验证失败" },
+  "2fa.disableFailed": { en: "Failed to disable 2FA", zh: "禁用 2FA 失败" },
+  "2fa.enabledSuccess": { en: "2FA enabled successfully", zh: "2FA 已成功启用" },
+  "2fa.disabledSuccess": { en: "2FA disabled successfully", zh: "2FA 已成功禁用" },
+  "2fa.secretCopied": { en: "Secret key copied", zh: "密钥已复制" },
+  "2fa.codesCopied": { en: "Backup codes copied", zh: "备份码已复制" },
+  "2fa.codesDownloaded": { en: "Backup codes downloaded", zh: "备份码已下载" },
+  "2fa.codeLength": { en: "Code must be 6 digits", zh: "验证码必须为 6 位数字" },
+  "2fa.enterCode": { en: "Please enter a code", zh: "请输入验证码" },
+
+  // Login 2FA
+  "login.2faTitle": { en: "Two-Factor Authentication", zh: "双因素认证" },
+  "login.2faSubtitle": { en: "Enter the code from your authenticator app", zh: "输入认证器应用中的验证码" },
+  "login.2faCode": { en: "Authentication Code", zh: "认证码" },
+  "login.2faHelp": { en: "Enter the 6-digit code or a backup code", zh: "输入 6 位验证码或备份码" },
+  "login.verify": { en: "Verify", zh: "验证" },
+  "login.backToLogin": { en: "Back to login", zh: "返回登录" },
+
 
 };
 

@@ -109,6 +109,24 @@ function getToken(): string | null {
   return null;
 }
 
+export interface FileDetails {
+  name: string;
+  path: string;
+  isDir: boolean;
+  size: number;
+  modTime: string;
+  mode: string;
+  modeOctal: string;
+  owner: string;
+  group: string;
+  uid: number;
+  gid: number;
+}
+
+export interface FileDetailsResponse {
+  data: FileDetails;
+}
+
 export interface RenameResponse {
   data: FileEntry;
 }
@@ -135,4 +153,16 @@ export async function compressFiles(paths: string[], destPath: string) {
 
 export async function extractFile(archivePath: string, destDir: string) {
   return api.post("/files/extract", { archivePath, destDir });
+}
+
+export async function getFileInfo(path: string) {
+  return api.get<FileDetailsResponse>(`/files/info?path=${encodeURIComponent(path)}`);
+}
+
+export async function changePermissions(path: string, mode: string, recursive: boolean) {
+  return api.put<{ data: { status: string } }>("/files/permissions", { path, mode, recursive });
+}
+
+export async function changeOwner(path: string, owner: string, group: string, recursive: boolean) {
+  return api.put<{ data: { status: string } }>("/files/owner", { path, owner, group, recursive });
 }

@@ -61,6 +61,13 @@ func createTables() {
 			value TEXT NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`,
+		`CREATE TABLE IF NOT EXISTS user_2fa (
+			user_id TEXT PRIMARY KEY,
+			secret TEXT NOT NULL,
+			enabled INTEGER NOT NULL DEFAULT 0,
+			backup_codes TEXT NOT NULL DEFAULT '[]',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
 	}
 
 	for _, query := range queries {
@@ -105,6 +112,13 @@ func InitTestDB() {
 			value TEXT NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`,
+		`CREATE TABLE IF NOT EXISTS user_2fa (
+			user_id TEXT PRIMARY KEY,
+			secret TEXT NOT NULL,
+			enabled INTEGER NOT NULL DEFAULT 0,
+			backup_codes TEXT NOT NULL DEFAULT '[]',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
 	}
 	for _, q := range queries {
 		db.Exec(q)

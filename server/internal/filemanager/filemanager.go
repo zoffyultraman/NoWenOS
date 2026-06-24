@@ -7,18 +7,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+	"syscall"
 )
 
 var (
-	ErrPathRequired  = errors.New("path is required")
-	ErrPathNotFound  = errors.New("path not found")
-	ErrNotDirectory  = errors.New("path is not a directory")
-	ErrNotFile       = errors.New("path is not a file")
-	ErrFileExists    = errors.New("file already exists")
-	ErrDeleteFailed  = errors.New("delete failed")
+	ErrPathRequired      = errors.New("path is required")
+	ErrPathNotFound      = errors.New("path not found")
+	ErrNotDirectory      = errors.New("path is not a directory")
+	ErrNotFile           = errors.New("path is not a file")
+	ErrFileExists        = errors.New("file already exists")
+	ErrDeleteFailed      = errors.New("delete failed")
+	ErrInvalidMode       = errors.New("invalid permission mode")
+	ErrChmodFailed       = errors.New("chmod failed")
+	ErrChownFailed       = errors.New("chown failed")
 )
 
 type FileEntry struct {
@@ -544,6 +550,349 @@ func ExtractFile(archivePath, destDir string) error {
 				return err
 			}
 			outFile.Close()
+		}
+	}
+
+	return nil
+}
+
+// FileDetails contains extended file information including permissions and ownership.
+type FileDetails struct {
+	Name      string `json:"name"`
+	Path      string `json:"path"`
+	IsDir     bool   `json:"isDir"`
+	Size      int64  `json:"size"`
+	ModTime   string `json:"modTime"`
+	Mode      string `json:"mode"`      // e.g. "rwxr-xr-x"
+	ModeOctal string `json:"modeOctal"` // e.g. "755"
+	Owner     string `json:"owner"`
+	Group     string `json:"group"`
+	UID       uint32 `json:"uid"`
+	GID       uint32 `json:"gid"`
+}
+
+// GetFileDetails returns detailed file info including permissions, owner and group.
+func GetFileDetails(filePath string) (*FileDetails, error) {
+	if filePath == "" {
+		return nil, ErrPathRequired
+	}
+
+	filePath = filepath.Clean(filePath)
+
+	info, err := os.Lstat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrPathNotFound
+		}
+		return nil, err
+	}
+
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return &FileDetails{
+			Name:      info.Name(),
+			Path:      filePath,
+			IsDir:     info.IsDir(),
+			Size:      info.Size(),
+			ModTime:   info.ModTime().Format("2006-01-02 15:04:05"),
+			Mode:      info.Mode().Perm().String(),
+			ModeOctal: fmt.Sprintf("%04o", info.Mode().Perm()),
+		}, nil
+	}
+
+	ownerName := lookupUsername(stat.Uid)
+	groupName := lookupGroupname(stat.Gid)
+
+	return &FileDetails{
+		Name:      info.Name(),
+		Path:      filePath,
+		IsDir:     info.IsDir(),
+		Size:      info.Size(),
+		ModTime:   info.ModTime().Format("2006-01-02 15:04:05"),
+		Mode:      formatPermission(info.Mode().Perm()),
+		ModeOctal: fmt.Sprintf("%04o", info.Mode().Perm()),
+		Owner:     ownerName,
+		Group:     groupName,
+		UID:       stat.Uid,
+		GID:       stat.Gid,
+	}, nil
+}
+
+func lookupUsername(uid uint32) string {
+	u, err := user.LookupId(strconv.FormatUint(uint64(uid), 10))
+	if err != nil {
+		return strconv.FormatUint(uint64(uid), 10)
+	}
+	return u.Username
+}
+
+func lookupGroupname(gid uint32) string {
+	g, err := user.LookupGroupId(strconv.FormatUint(uint64(gid), 10))
+	if err != nil {
+		return strconv.FormatUint(uint64(gid), 10)
+	}
+	return g.Name
+}
+
+func formatPermission(mode os.FileMode) string {
+	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s",
+		boolStr(mode&0400 != 0, "r", "-"),
+		boolStr(mode&0200 != 0, "w", "-"),
+		boolStr(mode&0100 != 0, "x", "-"),
+		boolStr(mode&040 != 0, "r", "-"),
+		boolStr(mode&020 != 0, "w", "-"),
+		boolStr(mode&010 != 0, "x", "-"),
+		boolStr(mode&04 != 0, "r", "-"),
+		boolStr(mode&02 != 0, "w", "-"),
+		boolStr(mode&01 != 0, "x", "-"),
+	)
+}
+
+func boolStr(cond bool, yes, no string) string {
+	if cond {
+		return yes
+	}
+	return no
+}
+
+// ParseMode parses a permission mode string. Supports octal (e.g. "755") and symbolic (e.g. "u+x,go-w").
+func ParseMode(modeStr string) (os.FileMode, error) {
+	modeStr = strings.TrimSpace(modeStr)
+	if modeStr == "" {
+		return 0, ErrInvalidMode
+	}
+
+	// Try octal first
+	if mode, err := parseOctalMode(modeStr); err == nil {
+		return mode, nil
+	}
+
+	// Try symbolic mode
+	return parseSymbolicMode(modeStr)
+}
+
+func parseOctalMode(s string) (os.FileMode, error) {
+	// Allow 3 or 4 digit octal
+	if len(s) == 3 || len(s) == 4 {
+		val, err := strconv.ParseUint(s, 8, 32)
+		if err != nil {
+			return 0, err
+		}
+		return os.FileMode(val), nil
+	}
+	return 0, fmt.Errorf("not octal")
+}
+
+func parseSymbolicMode(modeStr string) (os.FileMode, error) {
+	// Symbolic mode: u+r,g-w,o=rx  etc.
+	parts := strings.Split(modeStr, ",")
+	var result os.FileMode
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if len(part) < 2 {
+			return 0, ErrInvalidMode
+		}
+
+		// Determine the operator position
+		var opIdx int
+		for i, ch := range part {
+			if ch == '+' || ch == '-' || ch == '=' {
+				opIdx = i
+				break
+			}
+		}
+		if opIdx == 0 {
+			return 0, ErrInvalidMode
+		}
+
+		who := part[:opIdx]
+		op := rune(part[opIdx])
+		perms := part[opIdx+1:]
+
+		var permBits os.FileMode
+		for _, p := range perms {
+			switch p {
+			case 'r':
+				permBits |= 4
+			case 'w':
+				permBits |= 2
+			case 'x':
+				permBits |= 1
+			default:
+				return 0, ErrInvalidMode
+			}
+		}
+
+		var userBits os.FileMode
+		for _, w := range who {
+			switch w {
+			case 'u':
+				userBits |= 0700
+			case 'g':
+				userBits |= 0070
+			case 'o':
+				userBits |= 0007
+			case 'a':
+				userBits |= 0777
+			default:
+				return 0, ErrInvalidMode
+			}
+		}
+
+		// Apply permissions
+		var fullPerm os.FileMode
+		if userBits&0700 != 0 {
+			fullPerm |= permBits << 6
+		}
+		if userBits&0070 != 0 {
+			fullPerm |= permBits << 3
+		}
+		if userBits&0007 != 0 {
+			fullPerm |= permBits
+		}
+
+		switch op {
+		case '+':
+			result |= fullPerm
+		case '-':
+			result &^= fullPerm
+		case '=':
+			var clearMask os.FileMode
+			if userBits&0700 != 0 {
+				clearMask |= 0700
+			}
+			if userBits&0070 != 0 {
+				clearMask |= 0070
+			}
+			if userBits&0007 != 0 {
+				clearMask |= 0007
+			}
+			result &^= clearMask
+			result |= fullPerm
+		}
+	}
+
+	return result, nil
+}
+
+// ChangePermissions changes the permissions of a file or directory.
+// modeStr supports octal ("755") and symbolic ("u+x,go-w") formats.
+// If recursive is true and the target is a directory, permissions are applied recursively.
+func ChangePermissions(path string, modeStr string, recursive bool) error {
+	if path == "" {
+		return ErrPathRequired
+	}
+
+	path = filepath.Clean(path)
+
+	info, err := os.Lstat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ErrPathNotFound
+		}
+		return err
+	}
+
+	mode, err := ParseMode(modeStr)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrInvalidMode, err)
+	}
+
+	if err := os.Chmod(path, mode); err != nil {
+		return fmt.Errorf("%w: %s", ErrChmodFailed, err)
+	}
+
+	if recursive && info.IsDir() {
+		err := filepath.Walk(path, func(walkPath string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return nil
+			}
+			if walkPath == path {
+				return nil
+			}
+			if e := os.Chmod(walkPath, mode); e != nil {
+				return nil
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ChangeOwner changes the owner and/or group of a file or directory.
+// Pass empty string to keep the current owner or group.
+// If recursive is true and the target is a directory, ownership is applied recursively.
+func ChangeOwner(path string, ownerName string, groupName string, recursive bool) error {
+	if path == "" {
+		return ErrPathRequired
+	}
+
+	path = filepath.Clean(path)
+
+	info, err := os.Lstat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ErrPathNotFound
+		}
+		return err
+	}
+
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return errors.New("cannot determine current ownership")
+	}
+
+	uid := int(stat.Uid)
+	gid := int(stat.Gid)
+
+	if ownerName != "" {
+		u, err := user.Lookup(ownerName)
+		if err != nil {
+			return fmt.Errorf("user not found: %s", ownerName)
+		}
+		uidVal, err := strconv.Atoi(u.Uid)
+		if err != nil {
+			return fmt.Errorf("invalid uid for user: %s", ownerName)
+		}
+		uid = uidVal
+	}
+
+	if groupName != "" {
+		g, err := user.LookupGroup(groupName)
+		if err != nil {
+			return fmt.Errorf("group not found: %s", groupName)
+		}
+		gidVal, err := strconv.Atoi(g.Gid)
+		if err != nil {
+			return fmt.Errorf("invalid gid for group: %s", groupName)
+		}
+		gid = gidVal
+	}
+
+	if err := os.Lchown(path, uid, gid); err != nil {
+		return fmt.Errorf("%w: %s", ErrChownFailed, err)
+	}
+
+	if recursive && info.IsDir() {
+		err := filepath.Walk(path, func(walkPath string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return nil
+			}
+			if walkPath == path {
+				return nil
+			}
+			if e := os.Lchown(walkPath, uid, gid); e != nil {
+				return nil
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 
