@@ -40,6 +40,9 @@ const translations: Record<string, Record<Locale, string>> = {
   "dashboard.failedProcesses": { en: "Failed to load processes.", zh: "加载进程失败" },
   "dashboard.noProcesses": { en: "No process data available.", zh: "无进程数据" },
   "dashboard.failedSystem": { en: "Failed to load system info from backend.", zh: "从后端加载系统信息失败" },
+  "dashboard.pid": { en: "PID", zh: "PID" },
+  "dashboard.processName": { en: "Name", zh: "名称" },
+  "dashboard.mem": { en: "MEM", zh: "内存" },
 
   // Storage
   "storage.title": { en: "Storage", zh: "存储" },
