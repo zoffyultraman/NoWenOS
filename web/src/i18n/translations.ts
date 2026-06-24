@@ -189,6 +189,10 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // Files (补充)
   "files.deleteConfirm": { en: "Delete \"{name}\"?", zh: "删除 \"{name}\"？" },
+  "files.item": { en: "item", zh: "项" },
+  "files.items": { en: "items", zh: "项" },
+  "files.selected": { en: "selected", zh: "已选择" },
+  "files.closeResults": { en: "Close results", zh: "关闭结果" },
 
   // Docker (补充)
   "docker.loadingContainers": { en: "Loading containers...", zh: "加载容器..." },

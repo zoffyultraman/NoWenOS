@@ -104,32 +104,8 @@ func Browse(dirPath string) (*BrowseResult, error) {
 	}, nil
 }
 
-func GetFileInfo(filePath string) (*FileEntry, error) {
-	if filePath == "" {
-		return nil, ErrPathRequired
-	}
-
-	filePath = filepath.Clean(filePath)
-
-	info, err := os.Stat(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, ErrPathNotFound
-		}
-		return nil, err
-	}
-
-	if info.IsDir() {
-		return nil, ErrNotFile
-	}
-
-	return &FileEntry{
-		Name:    info.Name(),
-		Path:    filePath,
-		IsDir:   false,
-		Size:    info.Size(),
-		ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
-	}, nil
+func GetFileInfo(filePath string) (*FileDetails, error) {
+	return GetFileDetails(filePath)
 }
 
 func OpenFile(filePath string) (*os.File, error) {
