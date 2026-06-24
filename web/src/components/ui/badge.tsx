@@ -11,10 +11,10 @@ const variantStyles: Record<BadgeVariant, string> = {
   muted: "bg-muted text-muted-foreground border-border",
 };
 
-interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
 }
 
 export function Badge({ className, variant = "default", ...props }: BadgeProps) {
-  return <div className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium", variantStyles[variant], className)} {...props} />;
+  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium", variantStyles[variant], className)} {...props} />;
 }
