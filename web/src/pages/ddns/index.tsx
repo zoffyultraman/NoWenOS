@@ -18,10 +18,10 @@ import {
 } from "lucide-react";
 
 const PROVIDERS = [
-  { value: "cloudflare", label: "Cloudflare", labelKey: "" },
-  { value: "dyndns", label: "DynDNS", labelKey: "" },
-  { value: "noip", label: "No-IP", labelKey: "" },
-  { value: "duckdns", label: "DuckDNS", labelKey: "" },
+  { value: "cloudflare", label: "Cloudflare" },
+  { value: "dyndns", label: "DynDNS" },
+  { value: "noip", label: "No-IP" },
+  { value: "duckdns", label: "DuckDNS" },
   { value: "custom", label: "Custom Script", labelKey: "ddns.customScript" },
 ];
 
