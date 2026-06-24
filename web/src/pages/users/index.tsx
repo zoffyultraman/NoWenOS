@@ -326,8 +326,8 @@ function ChangePasswordDialog({ username, onClose }: { username: string; onClose
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword !== confirmPassword) { toast.error("Passwords do not match"); return; }
-    if (newPassword.length < 4) { toast.error("Password must be at least 4 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error(t("users.passwordMismatch")); return; }
+    if (newPassword.length < 4) { toast.error(t("users.passwordTooShort")); return; }
     changePwdMutation.mutate();
   }
 

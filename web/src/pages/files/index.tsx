@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -33,11 +33,38 @@ import {
   Square,
   Shield,
   FolderInput,
+  MoreVertical,
 } from "lucide-react";
 import { FilePreview } from "@/components/FilePreview";
 import PermissionsDialog from "@/features/files/PermissionsDialog";
 import MoveDialog from "@/features/files/MoveDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
+function BreadcrumbNav({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
+  const parts = path.split("/").filter(Boolean);
+  const segments: { label: string; path: string }[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    segments.push({
+      label: parts[i],
+      path: parts.slice(0, i + 1).join("/"),
+    });
+  }
+  return (
+    <div className="flex items-center gap-1 text-sm overflow-x-auto">
+      <button onClick={() => onNavigate(".")} className="text-muted-foreground hover:text-foreground shrink-0">~</button>
+      {segments.map((seg, i) => (
+        <span key={seg.path} className="flex items-center gap-1 shrink-0">
+          <span className="text-muted-foreground">/</span>
+          {i === segments.length - 1 ? (
+            <span className="font-medium text-foreground">{seg.label}</span>
+          ) : (
+            <button onClick={() => onNavigate(seg.path)} className="text-muted-foreground hover:text-foreground">{seg.label}</button>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function FilesPage() {
   const t = useTranslation();
@@ -56,6 +83,7 @@ export default function FilesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ path: string; name: string } | null>(null);
   const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
   const [fileInputEl, setFileInputEl] = useState<HTMLInputElement | null>(null);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -138,6 +166,13 @@ export default function FilesPage() {
     },
     onError: () => toast.error(t("files.trashFailed")),
   });
+
+  useEffect(() => {
+    if (!openMenu) return;
+    const close = () => setOpenMenu(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openMenu]);
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -259,9 +294,7 @@ export default function FilesPage() {
               {result.entries.length} {result.entries.length === 1 ? t("files.item") : t("files.items")}
             </span>
           )}
-          <span className="font-mono text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-1.5">
-            {result?.path ?? currentPath}
-          </span>
+          <BreadcrumbNav path={result?.path ?? currentPath} onNavigate={handleNavigate} />
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleGoUp} disabled={!result?.parent} className="rounded-xl border-border bg-muted/30 hover:bg-muted/50">
@@ -330,7 +363,7 @@ export default function FilesPage() {
       {result && result.entries.length > 0 && (
         <Card className="border-border relative" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
           {/* Search bar */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 px-4 pt-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
@@ -361,10 +394,22 @@ export default function FilesPage() {
             <p className="text-xs font-medium text-muted-foreground mb-2">{t("files.searchResults")} ({searchResults.length})</p>
             {searchResults.length === 0 && <p className="text-xs text-muted-foreground">{t("files.noResults")}</p>}
             {searchResults.map((f: any) => (
-              <div key={f.path} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50 text-sm">
+              <button
+                key={f.path}
+                onClick={() => {
+                  if (f.isDir) {
+                    handleNavigate(f.path);
+                    setSearchResults(null);
+                    setSearchQuery("");
+                  } else {
+                    setPreviewFile({ path: f.path, name: f.name });
+                  }
+                }}
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50 text-sm w-full text-left"
+              >
                 {f.isDir ? <Folder className="h-3.5 w-3.5 text-cyan-400" /> : <File className="h-3.5 w-3.5 text-muted-foreground" />}
                 <span className="truncate">{f.path}</span>
-              </div>
+              </button>
             ))}
             <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">{t("files.closeResults")}</button>
           </CardContent>
@@ -433,24 +478,13 @@ export default function FilesPage() {
                     {entry.isDir ? "\u2014" : formatSize(entry.size)}
                   </span>
                   <span className="text-right text-sm text-muted-foreground">{entry.modTime}</span>
-                  <div className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); }} className="h-8 w-8 p-0" title={t("files.rename")}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setMovingFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.moveTo")}>
-                      <FolderInput className="h-4 w-4" />
-                    </Button>
-                    {!entry.isDir && entry.name.endsWith(".tar.gz") && (
-                      <Button variant="ghost" size="sm" onClick={() => extractMutation.mutate({ path: entry.path, dir: currentPath })} className="h-8 w-8 p-0" title={t("files.extract")}>
-                        <Package className="h-4 w-4" />
-                      </Button>
-                    )}
+                  <div className="text-right flex items-center justify-end gap-0.5">
                     {!entry.isDir && (
                       <>
                         <Button variant="ghost" size="sm" onClick={() => setPreviewFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.preview")}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0" title={t("files.download")}>
                           <Download className="h-4 w-4" />
                         </Button>
                       </>
@@ -461,17 +495,32 @@ export default function FilesPage() {
                       onClick={() => handleDelete(entry.path, entry.name)}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     >
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.path)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("files.delete")}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPermissionsFile({ path: entry.path, name: entry.name })}
-                      className="h-8 w-8 p-0"
-                      title={t("files.permissions")}
-                    >
-                      <Shield className="h-4 w-4" />
-                    </Button>
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" onClick={() => setOpenMenu(openMenu === entry.path ? null : entry.path)} className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                      {openMenu === entry.path && (
+                        <div className="absolute right-0 top-8 z-20 w-40 rounded-lg border border-border bg-card shadow-lg py-1">
+                          <button onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
+                            <Pencil className="h-3.5 w-3.5" /> {t("files.rename")}
+                          </button>
+                          <button onClick={() => { setMovingFile({ path: entry.path, name: entry.name }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
+                            <FolderInput className="h-3.5 w-3.5" /> {t("files.moveTo")}
+                          </button>
+                          {!entry.isDir && entry.name.endsWith(".tar.gz") && (
+                            <button onClick={() => { extractMutation.mutate({ path: entry.path, dir: currentPath }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
+                              <Package className="h-3.5 w-3.5" /> {t("files.extract")}
+                            </button>
+                          )}
+                          <button onClick={() => { setPermissionsFile({ path: entry.path, name: entry.name }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
+                            <Shield className="h-3.5 w-3.5" /> {t("files.permissions")}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

@@ -383,7 +383,7 @@ export default function AlertsPage() {
                   <Button size="sm" className="h-7 text-xs" onClick={() => createChannelMutation.mutate(channelForm)} disabled={createChannelMutation.isPending}>
                     {t("alerts.addChannel")}
                   </Button>
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowChannelForm(false)}>Cancel</Button>
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowChannelForm(false)}>{t("common.cancel")}</Button>
                 </div>
               </div>
             )}
