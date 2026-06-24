@@ -6,13 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/smtp"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
 
 	"nowenos-server/internal/database"
+)
+
+var httpClient = &http.Client{Timeout: 10 * time.Second}
 	"nowenos-server/internal/sysinfo"
 )
 
@@ -421,6 +426,28 @@ func SendNotification(channel NotificationChannel, event AlertEvent) error {
 	}
 }
 
+func validateWebhookURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return errors.New("URL scheme must be http or https")
+	}
+	host := u.Hostname()
+	if host == "" {
+		return errors.New("URL host is empty")
+	}
+	// Block private/link-local IPs (SSRF protection)
+	ip := net.ParseIP(host)
+	if ip != nil {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return errors.New("URL targets a private/loopback address")
+		}
+	}
+	return nil
+}
+
 func sendWebhook(channel NotificationChannel, event AlertEvent) error {
 	var cfg struct {
 		URL string `json:"url"`
@@ -430,6 +457,9 @@ func sendWebhook(channel NotificationChannel, event AlertEvent) error {
 	}
 	if cfg.URL == "" {
 		return errors.New("webhook URL is empty")
+	}
+	if err := validateWebhookURL(cfg.URL); err != nil {
+		return fmt.Errorf("webhook URL rejected: %w", err)
 	}
 
 	payload := map[string]interface{}{
@@ -445,7 +475,7 @@ func sendWebhook(channel NotificationChannel, event AlertEvent) error {
 		return err
 	}
 
-	resp, err := http.Post(cfg.URL, "application/json", bytes.NewBuffer(body))
+	resp, err := httpClient.Post(cfg.URL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("webhook request failed: %w", err)
 	}
@@ -523,7 +553,7 @@ func sendTelegram(channel NotificationChannel, event AlertEvent) error {
 		return err
 	}
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+	resp, err := httpClient.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("telegram request failed: %w", err)
 	}
@@ -538,19 +568,29 @@ func sendTelegram(channel NotificationChannel, event AlertEvent) error {
 // LinkChannels sets the channels linked to a rule (replaces existing links).
 func LinkChannels(ruleID int64, channelIDs []int64) error {
 	db := database.GetDB()
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
 	// Verify rule exists
 	var count int
-	db.QueryRow("SELECT COUNT(*) FROM alert_rules WHERE id = ?", ruleID).Scan(&count)
+	tx.QueryRow("SELECT COUNT(*) FROM alert_rules WHERE id = ?", ruleID).Scan(&count)
 	if count == 0 {
 		return errors.New("rule not found")
 	}
 	// Remove existing links
-	db.Exec("DELETE FROM rule_channels WHERE rule_id = ?", ruleID)
+	if _, err := tx.Exec("DELETE FROM rule_channels WHERE rule_id = ?", ruleID); err != nil {
+		return fmt.Errorf("failed to remove existing links: %w", err)
+	}
 	// Insert new links
 	for _, chID := range channelIDs {
-		db.Exec("INSERT OR IGNORE INTO rule_channels (rule_id, channel_id) VALUES (?, ?)", ruleID, chID)
+		if _, err := tx.Exec("INSERT OR IGNORE INTO rule_channels (rule_id, channel_id) VALUES (?, ?)", ruleID, chID); err != nil {
+			return fmt.Errorf("failed to insert link: %w", err)
+		}
 	}
-	return nil
+	return tx.Commit()
 }
 
 // GetRuleChannels returns the channel IDs linked to a rule.
