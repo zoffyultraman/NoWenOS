@@ -71,7 +71,7 @@ export default function UsersPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label>{t("users.username")}</Label>
-                  <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="username" required />
+                  <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("users.usernamePlaceholder")} required />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("users.password")}</Label>
@@ -236,7 +236,7 @@ function GroupsSection() {
           <form onSubmit={handleCreateGroup} className="flex items-end gap-3">
             <div className="space-y-1 flex-1">
               <Label className="text-xs">{t("groups.name")}</Label>
-              <Input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="groupname" required />
+              <Input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder={t("groups.namePlaceholder")} required />
             </div>
             <div className="space-y-1 flex-1">
               <Label className="text-xs">{t("groups.comment")}</Label>

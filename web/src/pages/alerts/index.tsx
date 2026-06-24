@@ -374,7 +374,7 @@ export default function AlertsPage() {
                   </div>
                   <div>
                     <Label className="text-xs">
-                      {channelForm.type === "webhook" ? "URL" : channelForm.type === "email" ? "Email Address" : "Bot Token / Chat ID"}
+                      {channelForm.type === "webhook" ? t("alerts.fieldUrl") : channelForm.type === "email" ? t("alerts.fieldEmail") : t("alerts.fieldBotToken")}
                     </Label>
                     <Input value={channelForm.config} onChange={(e) => setChannelForm((p) => ({ ...p, config: e.target.value }))} placeholder={channelForm.type === "webhook" ? "https://hooks.example.com/..." : channelForm.type === "email" ? "admin@example.com" : "bot_token:chat_id"} className="mt-1 h-8 text-xs" />
                   </div>

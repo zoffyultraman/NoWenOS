@@ -366,6 +366,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "groups.members": { en: "Members", zh: "成员" },
   "groups.addMember": { en: "Add Member", zh: "添加成员" },
   "groups.noGroups": { en: "No groups created yet", zh: "尚未创建分组" },
+  "groups.namePlaceholder": { en: "groupname", zh: "组名" },
 
   // Audit
   "audit.title": { en: "Audit Log", zh: "审计日志" },
@@ -450,6 +451,9 @@ const translations: Record<string, Record<Locale, string>> = {
   "alerts.testChannel": { en: "Test", zh: "测试" },
   "alerts.testSent": { en: "Test notification sent", zh: "测试通知已发送" },
   "alerts.testFailed": { en: "Failed to send test notification", zh: "发送测试通知失败" },
+  "alerts.fieldUrl": { en: "URL", zh: "URL" },
+  "alerts.fieldEmail": { en: "Email Address", zh: "邮箱地址" },
+  "alerts.fieldBotToken": { en: "Bot Token / Chat ID", zh: "Bot Token / Chat ID" },
 
   // Shares Permission Preview
   "shares.permGuest": { en: "Guest Access", zh: "访客访问" },
