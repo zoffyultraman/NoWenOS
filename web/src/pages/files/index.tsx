@@ -32,9 +32,11 @@ import {
   CheckSquare,
   Square,
   Shield,
+  FolderInput,
 } from "lucide-react";
 import { FilePreview } from "@/components/FilePreview";
 import PermissionsDialog from "@/features/files/PermissionsDialog";
+import MoveDialog from "@/features/files/MoveDialog";
 
 export default function FilesPage() {
   const t = useTranslation();
@@ -49,6 +51,7 @@ export default function FilesPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
   const [permissionsFile, setPermissionsFile] = useState<{ path: string; name: string } | null>(null);
+  const [movingFile, setMovingFile] = useState<{ path: string; name: string } | null>(null);
   const [fileInputEl, setFileInputEl] = useState<HTMLInputElement | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -132,7 +135,6 @@ export default function FilesPage() {
     },
     onError: () => toast.error(t("files.trashFailed")),
   });
-
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -417,8 +419,11 @@ export default function FilesPage() {
                   </span>
                   <span className="text-right text-sm text-muted-foreground">{entry.modTime}</span>
                   <div className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); }} className="h-8 w-8 p-0">
+                    <Button variant="ghost" size="sm" onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); }} className="h-8 w-8 p-0" title={t("files.rename")}>
                       <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setMovingFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.moveTo")}>
+                      <FolderInput className="h-4 w-4" />
                     </Button>
                     {!entry.isDir && entry.name.endsWith(".tar.gz") && (
                       <Button variant="ghost" size="sm" onClick={() => extractMutation.mutate({ path: entry.path, dir: currentPath })} className="h-8 w-8 p-0" title={t("files.extract")}>
@@ -464,6 +469,17 @@ export default function FilesPage() {
       )}
       {permissionsFile && (
         <PermissionsDialog path={permissionsFile.path} onClose={() => setPermissionsFile(null)} />
+      )}
+      {movingFile && (
+        <MoveDialog
+          sourcePath={movingFile.path}
+          sourceName={movingFile.name}
+          onClose={() => setMovingFile(null)}
+          onMoved={() => {
+            queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
+            setMovingFile(null);
+          }}
+        />
       )}
     </div>
   );

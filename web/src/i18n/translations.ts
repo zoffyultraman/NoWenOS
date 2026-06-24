@@ -450,6 +450,9 @@ const translations: Record<string, Record<Locale, string>> = {
   "files.previewNotAvailable": { en: "Preview not available", zh: "无法预览" },
   "files.movedSuccess": { en: "File moved", zh: "文件已移动" },
   "files.moveFailed": { en: "Move failed", zh: "移动失败" },
+  "files.moveTo": { en: "Move to...", zh: "移动到..." },
+  "files.moveToHere": { en: "Move here", zh: "移动到此处" },
+  "files.selectDestination": { en: "Select destination folder", zh: "选择目标文件夹" },
 
 
 
