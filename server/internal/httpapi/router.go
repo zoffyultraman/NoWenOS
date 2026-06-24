@@ -1185,6 +1185,37 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "toggled"}})
 		})
 
+		api.POST("/alerts/channels/:id/test", func(c *gin.Context) {
+			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			if err := alerts.TestChannel(id); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "sent"}})
+		})
+
+		api.POST("/alerts/rules/:id/channels", func(c *gin.Context) {
+			ruleID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			var req struct {
+				ChannelIDs []int64 `json:"channelIds"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+			if err := alerts.LinkChannels(ruleID, req.ChannelIDs); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "linked"}})
+		})
+
+		api.GET("/alerts/rules/:id/channels", func(c *gin.Context) {
+			ruleID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+			channelIDs := alerts.GetRuleChannels(ruleID)
+			c.JSON(http.StatusOK, gin.H{"data": channelIDs})
+		})
+
 		// --- Backup & Restore ---
 		api.GET("/backups", func(c *gin.Context) {
 			backups, err := backup.ListBackups()

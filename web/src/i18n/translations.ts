@@ -431,6 +431,13 @@ const translations: Record<string, Record<Locale, string>> = {
   "alerts.channelDeleted": { en: "Channel deleted", zh: "渠道已删除" },
   "alerts.channelCreateFailed": { en: "Channel creation failed", zh: "渠道创建失败" },
   "alerts.noChannels": { en: "No notification channels configured", zh: "未配置通知渠道" },
+  "alerts.linkChannels": { en: "Link Channels", zh: "关联渠道" },
+  "alerts.saveLink": { en: "Save", zh: "保存" },
+  "alerts.channelsLinked": { en: "Channels linked to rule", zh: "渠道已关联到规则" },
+  "alerts.linkFailed": { en: "Failed to link channels", zh: "关联渠道失败" },
+  "alerts.testChannel": { en: "Test", zh: "测试" },
+  "alerts.testSent": { en: "Test notification sent", zh: "测试通知已发送" },
+  "alerts.testFailed": { en: "Failed to send test notification", zh: "发送测试通知失败" },
 
   // Shares Permission Preview
   "shares.permGuest": { en: "Guest Access", zh: "访客访问" },
