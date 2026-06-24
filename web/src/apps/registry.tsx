@@ -3,6 +3,7 @@ import {
   LayoutDashboard, HardDrive, FolderOpen, Container, Users, Network,
   ScrollText, Settings, Info, Share2, Bell, Trash2, LayoutGrid,
   ShieldCheck, Activity, Clock,
+  ShieldCheck, RefreshCw,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -33,6 +34,7 @@ const ProxyApp = lazy(() => import("@/pages/proxy"));
 const CertsApp = lazy(() => import("@/pages/certs"));
 const DockerStatsApp = lazy(() => import("@/pages/docker-stats"));
 const CronApp = lazy(() => import("@/pages/cron"));
+const LogRotateApp = lazy(() => import("@/pages/logrotate"));
 
 export const appRegistry: AppRegistration[] = [
   { id: "dashboard", titleKey: "nav.dashboard", icon: LayoutDashboard, component: DashboardApp, singleton: true },
@@ -51,6 +53,7 @@ export const appRegistry: AppRegistration[] = [
   { id: "certs", titleKey: "nav.certs", icon: ShieldCheck, component: CertsApp, requiredRole: "admin" },
   { id: "apps", titleKey: "nav.apps", icon: LayoutGrid, component: AppsApp, defaultWidth: 1000, defaultHeight: 650 },
   { id: "cron", titleKey: "nav.cron", icon: Clock, component: CronApp },
+  { id: "logrotate", titleKey: "nav.logrotate", icon: RefreshCw, component: LogRotateApp, requiredRole: "admin" },
 ];
 
 export function getAppById(appId: string): AppRegistration | undefined {

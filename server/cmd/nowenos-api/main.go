@@ -7,6 +7,7 @@ import (
 	"nowenos-server/internal/alerts"
 	"nowenos-server/internal/appcenter"
 	"nowenos-server/internal/dockerstats"
+	"nowenos-server/internal/logrotate"
 	"nowenos-server/internal/proxy"
 	"nowenos-server/internal/statsstore"
 	"nowenos-server/internal/ws"
@@ -43,6 +44,7 @@ func main() {
 	twofa.InitDB()
 	cronmanager.InitTable()
 	cronmanager.StartScheduler()
+	logrotate.InitTable()
 	alerts.StartPeriodicCheck()
 	statsstore.InitTable()
 	dockerstats.InitTable()
