@@ -419,6 +419,16 @@ func validatePostRotate(cmd string) error {
 	if strings.Contains(cmd, "\n") || strings.Contains(cmd, "\r") {
 		return fmt.Errorf("postRotate command must be a single line")
 	}
+
+	// Block dangerous commands to prevent injection
+	blockedCommands := []string{"rm ", "mkfs", "dd ", "fdisk", "parted", "wipefs", "chmod 777", "curl ", "wget ", "nc "}
+	lower := strings.ToLower(cmd)
+	for _, blocked := range blockedCommands {
+		if strings.Contains(lower, blocked) {
+			return fmt.Errorf("postRotate contains blocked command: %s", blocked)
+		}
+	}
+
 	return nil
 }
 

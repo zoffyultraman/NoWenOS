@@ -15,11 +15,10 @@ import (
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/sysinfo"
 )
 
 var httpClient = &http.Client{Timeout: 10 * time.Second}
-	"nowenos-server/internal/sysinfo"
-)
 
 type AlertRule struct {
 	ID        int64  `json:"id"`
