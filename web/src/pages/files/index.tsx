@@ -497,13 +497,7 @@ export default function FilesPage() {
                         </Button>
                       </>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(entry.path, entry.name)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.path)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("files.delete")}>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.path, entry.name)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("files.delete")}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
