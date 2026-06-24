@@ -524,6 +524,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "users.newUser": { en: "New User", zh: "新建用户" },
   "users.created": { en: "User created", zh: "用户已创建" },
   "users.createFailed": { en: "Create failed", zh: "创建失败" },
+  "users.deleteConfirm": { en: "Delete user \"{name}\"?", zh: "删除用户 \"{name}\"？" },
   "users.deleted": { en: "User deleted", zh: "用户已删除" },
   "users.deleteFailed": { en: "Delete failed", zh: "删除失败" },
   "users.changePwdTitle": { en: "Change Password", zh: "修改密码" },

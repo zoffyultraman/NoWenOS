@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/stores/toast";
 import { UserPlus, Trash2, User, Shield, KeyRound, X, Users, Plus, UserMinus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -19,6 +20,7 @@ export default function UsersPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
   const [changePwdUser, setChangePwdUser] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ username: string } | null>(null);
 
   const usersQuery = useQuery({ queryKey: ["users"], queryFn: fetchUsers });
 
@@ -46,9 +48,7 @@ export default function UsersPage() {
   }
 
   function handleDelete(name: string) {
-    if (confirm(`Delete user "${name}"?`)) {
-      deleteMutation.mutate(name);
-    }
+    setDeleteConfirm({ username: name });
   }
 
   return (
@@ -139,6 +139,20 @@ export default function UsersPage() {
       </div>
 
       <GroupsSection />
+
+      {deleteConfirm && (
+        <ConfirmDialog
+          title={t("common.delete")}
+          description={t("users.deleteConfirm").replace("{name}", deleteConfirm.username)}
+          confirmLabel={t("common.delete")}
+          cancelLabel={t("common.cancel")}
+          onConfirm={() => {
+            deleteMutation.mutate(deleteConfirm.username);
+            setDeleteConfirm(null);
+          }}
+          onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
     </div>
   );
 }
