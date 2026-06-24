@@ -55,6 +55,24 @@ func boolToInt(b bool) int {
 	return 0
 }
 
+// limitWriter is a writer that limits the number of bytes written.
+type limitWriter struct {
+	w    io.Writer
+	left int64
+}
+
+func (lw *limitWriter) Write(p []byte) (int, error) {
+	if lw.left <= 0 {
+		return len(p), nil // silently drop
+	}
+	if int64(len(p)) > lw.left {
+		p = p[:lw.left]
+	}
+	n, err := lw.w.Write(p)
+	lw.left -= int64(n)
+	return n, err
+}
+
 // InitTable creates the scheduled_tasks table.
 func InitTable() {
 	db := database.GetDB()
@@ -333,8 +351,8 @@ func executeCommand(command string) (string, error) {
 
 	cmd := exec.CommandContext(ctx, "sh", "-c", command)
 	var stdout, stderr bytes.Buffer
-	cmd.Stdout = io.LimitWriter(&stdout, maxOutputSize)
-	cmd.Stderr = io.LimitWriter(&stderr, maxOutputSize/4)
+	cmd.Stdout = &limitWriter{w: &stdout, left: maxOutputSize}
+	cmd.Stderr = &limitWriter{w: &stderr, left: maxOutputSize / 4}
 	err := cmd.Run()
 
 	output := stdout.String()

@@ -25,7 +25,40 @@ var (
 	ErrInvalidMode       = errors.New("invalid permission mode")
 	ErrChmodFailed       = errors.New("chmod failed")
 	ErrChownFailed       = errors.New("chown failed")
+	ErrAccessDenied      = errors.New("access denied")
+
+	// maxUploadSize is the default max upload size (10GB)
+	maxUploadSize int64 = 10 * 1024 * 1024 * 1024
+
+	// protectedPaths are system critical paths that cannot be deleted
+	protectedPaths = []string{"/etc", "/var", "/usr", "/boot", "/sys", "/proc", "/dev"}
 )
+
+// getFileRoot returns the allowed root directory for file operations.
+// Reads from NOWENOS_FILE_ROOT env var, defaults to "/".
+func getFileRoot() string {
+	if root := os.Getenv("NOWENOS_FILE_ROOT"); root != "" {
+		return filepath.Clean(root)
+	}
+	return "/"
+}
+
+// isWithinRoot checks if the given path is within the allowed root directory.
+func isWithinRoot(path string) error {
+	root := getFileRoot()
+	if root == "/" {
+		return nil // no restriction when root is /
+	}
+	cleanPath := filepath.Clean(path)
+	cleanRoot := filepath.Clean(root)
+	if cleanPath == cleanRoot {
+		return nil
+	}
+	if !strings.HasPrefix(cleanPath, cleanRoot+string(os.PathSeparator)) {
+		return ErrAccessDenied
+	}
+	return nil
+}
 
 type FileEntry struct {
 	Name    string `json:"name"`
@@ -47,6 +80,10 @@ func Browse(dirPath string) (*BrowseResult, error) {
 	}
 
 	dirPath = filepath.Clean(dirPath)
+
+	if err := isWithinRoot(dirPath); err != nil {
+		return nil, err
+	}
 
 	info, err := os.Stat(dirPath)
 	if err != nil {
@@ -111,6 +148,10 @@ func GetFileInfo(filePath string) (*FileEntry, error) {
 
 	filePath = filepath.Clean(filePath)
 
+	if err := isWithinRoot(filePath); err != nil {
+		return nil, err
+	}
+
 	info, err := os.Stat(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -139,6 +180,10 @@ func OpenFile(filePath string) (*os.File, error) {
 
 	filePath = filepath.Clean(filePath)
 
+	if err := isWithinRoot(filePath); err != nil {
+		return nil, err
+	}
+
 	info, err := os.Stat(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -160,6 +205,10 @@ func Upload(dirPath string, filename string, reader io.Reader) (*FileEntry, erro
 	}
 
 	dirPath = filepath.Clean(dirPath)
+
+	if err := isWithinRoot(dirPath); err != nil {
+		return nil, err
+	}
 
 	info, err := os.Stat(dirPath)
 	if err != nil {
@@ -187,7 +236,14 @@ func Upload(dirPath string, filename string, reader io.Reader) (*FileEntry, erro
 	}
 	defer dst.Close()
 
-	written, err := io.Copy(dst, reader)
+	// Limit upload size to prevent abuse
+	limitedReader := io.LimitReader(reader, maxUploadSize+1)
+	written, err := io.Copy(dst, limitedReader)
+	if written > maxUploadSize {
+		dst.Close()
+		os.Remove(targetPath)
+		return nil, fmt.Errorf("file too large: max upload size is %d bytes", maxUploadSize)
+	}
 	if err != nil {
 		os.Remove(targetPath)
 		return nil, err
@@ -218,6 +274,17 @@ func Delete(targetPath string) error {
 		return errors.New("cannot delete this path")
 	}
 
+	if err := isWithinRoot(targetPath); err != nil {
+		return err
+	}
+
+	// Protect system critical paths
+	for _, p := range protectedPaths {
+		if targetPath == p || strings.HasPrefix(targetPath, p+string(os.PathSeparator)) {
+			return fmt.Errorf("cannot delete system critical path: %s", targetPath)
+		}
+	}
+
 	info, err := os.Stat(targetPath)
 	if err != nil {
 		return ErrPathNotFound
@@ -236,6 +303,10 @@ func CreateDir(parentPath, dirName string) (*FileEntry, error) {
 	}
 
 	parentPath = filepath.Clean(parentPath)
+
+	if err := isWithinRoot(parentPath); err != nil {
+		return nil, err
+	}
 
 	info, err := os.Stat(parentPath)
 	if err != nil {
@@ -276,6 +347,10 @@ func Rename(oldPath, newName string) (*FileEntry, error) {
 		return nil, errors.New("invalid name")
 	}
 
+	if err := isWithinRoot(oldPath); err != nil {
+		return nil, err
+	}
+
 	info, err := os.Stat(oldPath)
 	if err != nil {
 		return nil, ErrPathNotFound
@@ -306,6 +381,13 @@ func Move(sourcePath, destDir string) (*FileEntry, error) {
 	}
 	sourcePath = filepath.Clean(sourcePath)
 	destDir = filepath.Clean(destDir)
+
+	if err := isWithinRoot(sourcePath); err != nil {
+		return nil, err
+	}
+	if err := isWithinRoot(destDir); err != nil {
+		return nil, err
+	}
 
 	info, err := os.Stat(sourcePath)
 	if err != nil {
@@ -347,6 +429,11 @@ func SearchFiles(rootPath, query string) ([]FileEntry, error) {
 	}
 
 	rootPath = filepath.Clean(rootPath)
+
+	if err := isWithinRoot(rootPath); err != nil {
+		return nil, err
+	}
+
 	info, err := os.Stat(rootPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -413,9 +500,16 @@ func CompressFiles(paths []string, destPath string) error {
 		return errors.New("destination must have .tar.gz extension")
 	}
 
+	if err := isWithinRoot(destPath); err != nil {
+		return err
+	}
+
 	// Validate all source paths exist
 	for _, p := range paths {
 		p = filepath.Clean(p)
+		if err := isWithinRoot(p); err != nil {
+			return err
+		}
 		if _, err := os.Stat(p); err != nil {
 			return fmt.Errorf("source path not found: %s", p)
 		}
@@ -493,6 +587,13 @@ func ExtractFile(archivePath, destDir string) error {
 
 	archivePath = filepath.Clean(archivePath)
 	destDir = filepath.Clean(destDir)
+
+	if err := isWithinRoot(archivePath); err != nil {
+		return err
+	}
+	if err := isWithinRoot(destDir); err != nil {
+		return err
+	}
 
 	if _, err := os.Stat(archivePath); err != nil {
 		return ErrPathNotFound
@@ -578,6 +679,10 @@ func GetFileDetails(filePath string) (*FileDetails, error) {
 	}
 
 	filePath = filepath.Clean(filePath)
+
+	if err := isWithinRoot(filePath); err != nil {
+		return nil, err
+	}
 
 	info, err := os.Lstat(filePath)
 	if err != nil {
@@ -786,6 +891,10 @@ func ChangePermissions(path string, modeStr string, recursive bool) error {
 
 	path = filepath.Clean(path)
 
+	if err := isWithinRoot(path); err != nil {
+		return err
+	}
+
 	info, err := os.Lstat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -833,6 +942,10 @@ func ChangeOwner(path string, ownerName string, groupName string, recursive bool
 	}
 
 	path = filepath.Clean(path)
+
+	if err := isWithinRoot(path); err != nil {
+		return err
+	}
 
 	info, err := os.Lstat(path)
 	if err != nil {

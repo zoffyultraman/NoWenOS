@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -139,7 +140,13 @@ func RestoreBackup(filePath string) error {
 
 		// Determine the target path. Backup stores paths relative to root
 		// for config (e.g. "/etc/nowenos/foo") and relative for DB ("data/nowenos.db").
-		target := header.Name
+		target := filepath.Clean(header.Name)
+
+		// Prevent path traversal: reject entries containing ".." components
+		// that could escape intended directories after cleaning.
+		if strings.Contains(target, "..") {
+			return fmt.Errorf("invalid archive entry: %s", header.Name)
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
