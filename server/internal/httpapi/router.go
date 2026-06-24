@@ -11,6 +11,7 @@ import (
 	"nowenos-server/internal/audit"
 	"nowenos-server/internal/configmgr"
 	"nowenos-server/internal/auth"
+	"nowenos-server/internal/dockerstats"
 	"nowenos-server/internal/filemanager"
 	"nowenos-server/internal/logviewer"
 	"nowenos-server/internal/recyclebin"
@@ -378,6 +379,37 @@ func New() *gin.Engine {
 				return
 			}
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deployed"}})
+		})
+
+		// ── Docker Stats ──
+		api.GET("/docker/stats", func(c *gin.Context) {
+			stats, err := dockerstats.GetContainerStats()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			if stats == nil {
+				stats = []dockerstats.ContainerStats{}
+			}
+			c.JSON(http.StatusOK, gin.H{"data": stats})
+		})
+
+		api.GET("/docker/stats/:id/history", func(c *gin.Context) {
+			id := c.Param("id")
+			minutesStr := c.DefaultQuery("minutes", "60")
+			minutes, err := strconv.Atoi(minutesStr)
+			if err != nil || minutes <= 0 {
+				minutes = 60
+			}
+			records, err := dockerstats.GetHistory(id, minutes)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			if records == nil {
+				records = []dockerstats.ContainerStatsHistory{}
+			}
+			c.JSON(http.StatusOK, gin.H{"data": records})
 		})
 
 		// 鈹€鈹€ Alerts 鈹€鈹€

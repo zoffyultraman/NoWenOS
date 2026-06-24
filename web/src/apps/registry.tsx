@@ -2,7 +2,7 @@
 import {
   LayoutDashboard, HardDrive, FolderOpen, Container, Users, Network,
   ScrollText, Settings, Info, Share2, Bell, Trash2, LayoutGrid,
-  ShieldCheck,
+  ShieldCheck, Activity,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -31,6 +31,7 @@ const AppsApp = lazy(() => import("@/pages/apps"));
 const SettingsApp = lazy(() => import("@/pages/settings"));
 const ProxyApp = lazy(() => import("@/pages/proxy"));
 const CertsApp = lazy(() => import("@/pages/certs"));
+const DockerStatsApp = lazy(() => import("@/pages/docker-stats"));
 
 export const appRegistry: AppRegistration[] = [
   { id: "dashboard", titleKey: "nav.dashboard", icon: LayoutDashboard, component: DashboardApp, singleton: true },
@@ -39,6 +40,7 @@ export const appRegistry: AppRegistration[] = [
   { id: "shares", titleKey: "nav.shares", icon: Share2, component: SharesApp },
   { id: "files", titleKey: "nav.files", icon: FolderOpen, component: FilesApp, defaultWidth: 1000, defaultHeight: 650 },
   { id: "docker", titleKey: "nav.docker", icon: Container, component: DockerApp, requiredRole: "admin" },
+  { id: "docker-stats", titleKey: "nav.dockerStats", icon: Activity, component: DockerStatsApp, requiredRole: "admin" },
   { id: "users", titleKey: "nav.users", icon: Users, component: UsersApp, requiredRole: "admin" },
   { id: "logs", titleKey: "nav.logs", icon: ScrollText, component: LogsApp },
   { id: "alerts", titleKey: "nav.alerts", icon: Bell, component: AlertsApp },

@@ -121,6 +121,16 @@ func (c *Client) writePump() {
 	}
 }
 
+// BroadcastMessage sends a typed message to all connected WebSocket clients.
+func BroadcastMessage(msgType string, data interface{}) {
+	msg := WSMessage{
+		Type: msgType,
+		Data: data,
+	}
+	b, _ := json.Marshal(msg)
+	hub.broadcast(b)
+}
+
 // StartBroadcast begins periodic stats broadcasting to all connected clients.
 func StartBroadcast() {
 	go func() {

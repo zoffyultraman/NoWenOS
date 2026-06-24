@@ -6,6 +6,7 @@ import (
 
 	"nowenos-server/internal/alerts"
 	"nowenos-server/internal/appcenter"
+	"nowenos-server/internal/dockerstats"
 	"nowenos-server/internal/proxy"
 	"nowenos-server/internal/statsstore"
 	"nowenos-server/internal/ws"
@@ -41,6 +42,7 @@ func main() {
 	twofa.InitDB()
 	alerts.StartPeriodicCheck()
 	statsstore.InitTable()
+	dockerstats.InitTable()
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()
@@ -48,6 +50,12 @@ func main() {
 			statsstore.Cleanup(7)
 		}
 	}()
+
+	// Set up the docker stats broadcaster to use the WS hub
+	dockerstats.SetBroadcaster(func(msgType string, data interface{}) {
+		ws.BroadcastMessage(msgType, data)
+	})
+	dockerstats.StartCollector()
 	ws.StartBroadcast()
 
 	r := httpapi.New()
