@@ -185,7 +185,7 @@ export default function NetworkPage() {
                           "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider " +
                           (iface.status === "up"
                             ? "border border-green-500/20 bg-green-500/10 text-green-400"
-                            : "border border-slate-500/20 bg-slate-500/10 text-slate-400")
+                            : "border border-border bg-muted text-muted-foreground")
                         }
                       >
                         {iface.status === "up" ? t("network.up") : t("network.down")}

@@ -246,6 +246,6 @@ function AuditStatusBadge({ status }: { status: string }) {
     login: "bg-purple-500/15 text-purple-400 border border-purple-500/20",
   };
   return (
-    <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${styles[status] ?? "bg-slate-500/15 text-muted-foreground border border-slate-500/20"}`}>{status}</span>
+    <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${styles[status] ?? "bg-muted text-muted-foreground border border-border"}`}>{status}</span>
   );
 }

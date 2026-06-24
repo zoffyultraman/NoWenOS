@@ -262,8 +262,8 @@ export default function SharesPage() {
                     {share.readOnly ? t("shares.permReadOnly") : t("shares.permReadWrite")}
                   </span>
                 </div>
-                <div className={"flex items-center gap-1 rounded-md px-2 py-1 " + (share.enabled ? "border border-cyan-500/20 bg-cyan-500/10" : "border border-slate-500/20 bg-slate-500/10")}>
-                  <span className={"text-[10px] font-medium " + (share.enabled ? "text-cyan-500" : "text-slate-500")}>
+                <div className={"flex items-center gap-1 rounded-md px-2 py-1 " + (share.enabled ? "border border-cyan-500/20 bg-cyan-500/10" : "border border-border bg-muted")}>
+                  <span className={"text-[10px] font-medium " + (share.enabled ? "text-cyan-500" : "text-muted-foreground")}>
                     {share.enabled ? t("shares.permActive") : t("shares.permInactive")}
                   </span>
                 </div>

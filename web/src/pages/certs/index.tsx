@@ -144,7 +144,7 @@ export default function CertsPage() {
       {status && (
         <Card className="border-border bg-muted/30">
           <CardContent className="flex items-center gap-3 py-3 px-4">
-            <div className={"h-2.5 w-2.5 rounded-full " + (status.certbotInstalled ? "bg-green-400 shadow-sm shadow-green-400/50" : "bg-slate-400 shadow-sm shadow-slate-400/50")} />
+            <div className={"h-2.5 w-2.5 rounded-full " + (status.certbotInstalled ? "bg-green-400 shadow-sm shadow-green-400/50" : "bg-muted-foreground shadow-sm shadow-muted-foreground/50")} />
             <span className="text-sm font-medium">Certbot</span>
             <span className="text-xs text-muted-foreground">
               {status.certbotInstalled ? t("certs.certbotInstalled") : t("certs.certbotNotInstalled")}
@@ -316,7 +316,7 @@ export default function CertsPage() {
                       <span className={"rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider " +
                         (cert.type === "letsencrypt"
                           ? "border-blue-500/20 bg-blue-500/10 text-blue-400"
-                          : "border-slate-500/20 bg-slate-500/10 text-muted-foreground")
+                          : "border-border bg-muted text-muted-foreground")
                       }>
                         {cert.type === "letsencrypt" ? "Let's Encrypt" : t("certs.selfSigned")}
                       </span>

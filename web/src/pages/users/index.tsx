@@ -122,7 +122,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${user.role === "admin" ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-400" : "border-slate-500/20 bg-slate-500/10 text-muted-foreground"}`}>
+                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${user.role === "admin" ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-400" : "border-border bg-muted text-muted-foreground"}`}>
                   {user.role}
                 </span>
                 <Button variant="ghost" size="sm" onClick={() => setChangePwdUser(user.username)} className="h-8 w-8 p-0" title={t("users.changePassword")}>

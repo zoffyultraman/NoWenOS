@@ -122,7 +122,7 @@ export default function ProxyPage() {
       {status && (
         <Card>
           <CardContent className="flex items-center gap-3 py-3">
-            <div className={"h-2.5 w-2.5 rounded-full " + (status.running ? "bg-green-400 shadow-sm shadow-green-400/50" : status.installed ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-slate-400 shadow-sm shadow-slate-400/50")} />
+            <div className={"h-2.5 w-2.5 rounded-full " + (status.running ? "bg-green-400 shadow-sm shadow-green-400/50" : status.installed ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-muted-foreground shadow-sm shadow-muted-foreground/50")} />
             <span className="text-sm font-medium">Caddy</span>
             <span className="text-xs text-muted-foreground">
               {status.installed ? (status.running ? t("proxy.running") : t("proxy.installedNotRunning")) : t("proxy.notInstalled")}

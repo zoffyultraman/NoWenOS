@@ -154,7 +154,7 @@ export default function DDNSPage() {
         <Card>
           <CardContent className="flex items-center gap-4 py-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <div className={"h-2.5 w-2.5 rounded-full " + (status.enabledConfigs > 0 ? "bg-green-400 shadow-sm shadow-green-400/50" : "bg-slate-400 shadow-sm shadow-slate-400/50")} />
+              <div className={"h-2.5 w-2.5 rounded-full " + (status.enabledConfigs > 0 ? "bg-green-400 shadow-sm shadow-green-400/50" : "bg-muted-foreground shadow-sm shadow-muted-foreground/50")} />
               <span className="text-sm font-medium">{t("ddns.statusTitle")}</span>
             </div>
             <span className="text-xs text-muted-foreground">
@@ -420,7 +420,7 @@ function StatusBadge({ enabled, ip }: { enabled: boolean; ip: string }) {
   const t = useTranslation();
   if (!enabled) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
         <AlertCircle className="h-3 w-3" />
         {t("ddns.statusDisabled")}
       </span>

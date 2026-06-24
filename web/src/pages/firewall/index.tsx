@@ -212,7 +212,7 @@ export default function FirewallPage() {
       {status && (
         <Card>
           <CardContent className="flex items-center gap-3 py-3">
-            <div className={"h-2.5 w-2.5 rounded-full " + (status.running ? "bg-green-400 shadow-sm shadow-green-400/50" : status.installed ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-slate-400 shadow-sm shadow-slate-400/50")} />
+            <div className={"h-2.5 w-2.5 rounded-full " + (status.running ? "bg-green-400 shadow-sm shadow-green-400/50" : status.installed ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-muted-foreground shadow-sm shadow-muted-foreground/50")} />
             <span className="text-sm font-medium">{t("firewall.backend")}: {status.backend === "none" ? t("firewall.noBackend") : status.backend}</span>
             <span className="text-xs text-muted-foreground">
               {status.installed ? (status.running ? t("firewall.running") : t("firewall.installedNotRunning")) : t("firewall.notInstalled")}

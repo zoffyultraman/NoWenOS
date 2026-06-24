@@ -234,7 +234,7 @@ function ContainerRow({
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={container.state === "running"
             ? "rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400"
-            : "rounded-full border border-slate-500/20 bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"}>
+            : "rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"}>
             {container.state === "running" ? t("docker.running") : container.state}
           </span>
           {container.state === "running" ? (
@@ -503,7 +503,7 @@ function ComposeRow({
                   {svc.ports && (
                     <span className="text-xs text-muted-foreground font-mono">{svc.ports}</span>
                   )}
-                  <span className={"rounded-full px-2 py-0.5 text-xs " + (svc.state === "running" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600")}>
+                  <span className={"rounded-full px-2 py-0.5 text-xs " + (svc.state === "running" ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground")}>
                     {svc.state}
                   </span>
                 </div>
