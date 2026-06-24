@@ -20,6 +20,7 @@ import (
 	"nowenos-server/internal/shares"
 	"nowenos-server/internal/backup"
 	"nowenos-server/internal/twofa"
+	"nowenos-server/internal/cronmanager"
 )
 
 func main() {
@@ -40,6 +41,8 @@ func main() {
 	appcenter.InitTable()
 	proxy.InitTable()
 	twofa.InitDB()
+	cronmanager.InitTable()
+	cronmanager.StartScheduler()
 	alerts.StartPeriodicCheck()
 	statsstore.InitTable()
 	dockerstats.InitTable()
