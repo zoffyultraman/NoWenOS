@@ -173,15 +173,15 @@ export default function SharesPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="share-name">Share Name</Label>
+                  <Label htmlFor="share-name">{t("shares.shareName")}</Label>
                   <Input id="share-name" value={form.name} onChange={(e) => handleChange("name", e.target.value)} placeholder="e.g. documents" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="share-path">Path</Label>
+                  <Label htmlFor="share-path">{t("shares.path")}</Label>
                   <Input id="share-path" value={form.path} onChange={(e) => handleChange("path", e.target.value)} placeholder="e.g. /srv/shares/documents" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="share-protocol">Protocol</Label>
+                  <Label htmlFor="share-protocol">{t("shares.protocol")}</Label>
                   <select id="share-protocol" value={form.protocol} onChange={(e) => handleChange("protocol", e.target.value)}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     <option value="smb">{t("shares.protocolSmb")}</option>
@@ -208,7 +208,7 @@ export default function SharesPage() {
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                   {editId !== null ? t("shares.updateShare") : t("shares.createShare")}
                 </Button>
-                <Button variant="outline" type="button" onClick={() => { setShowForm(false); setEditId(null); }}>Cancel</Button>
+                <Button variant="outline" type="button" onClick={() => { setShowForm(false); setEditId(null); }}>{t("common.cancel")}</Button>
               </div>
             </form>
           </CardContent>
@@ -216,9 +216,9 @@ export default function SharesPage() {
       )}
 
       {/* Share List */}
-      {sharesQuery.isLoading && <p className="text-sm text-muted-foreground">t("shares.loading")</p>}
+      {sharesQuery.isLoading && <p className="text-sm text-muted-foreground">{t("shares.loading")}</p>}
       {sharesQuery.isError && (
-        <Card className="border-danger/30 bg-danger/5"><CardContent className="pt-6"><p className="text-sm text-danger">t("shares.failed")</p></CardContent></Card>
+        <Card className="border-danger/30 bg-danger/5"><CardContent className="pt-6"><p className="text-sm text-danger">{t("shares.failed")}</p></CardContent></Card>
       )}
       {shares.length === 0 && !sharesQuery.isLoading && (
         <Card>

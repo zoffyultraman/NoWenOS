@@ -4,6 +4,7 @@ import { readFileContent, writeFileContent } from "@/features/files/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/stores/toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   X,
   Save,
@@ -23,6 +24,7 @@ interface FileEditorProps {
 
 export function FileEditor({ path, name, onClose }: FileEditorProps) {
   const toast = useToast();
+  const t = useTranslation();
   const [content, setContent] = useState("");
   const [originalContent, setOriginalContent] = useState("");
   const [isDirty, setIsDirty] = useState(false);
@@ -78,7 +80,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
       }
       if (e.key === "Escape") {
         if (isDirty) {
-          if (window.confirm("You have unsaved changes. Discard them?")) {
+          if (window.confirm(t("files.unsavedConfirm"))) {
             onClose();
           }
         } else {
@@ -112,18 +114,18 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
     onSuccess: (resp) => {
       setOriginalContent(content);
       setIsDirty(false);
-      toast.success("File saved successfully");
+      toast.success(t("files.savedSuccess"));
       if (resp?.data) {
         // Update modTime from server response
       }
     },
     onError: (err: Error) => {
-      toast.error(err.message || "Failed to save file");
+      toast.error(err.message || t("files.saveFailedEditor"));
     },
   });
 
   const handleRevert = useCallback(() => {
-    if (window.confirm("Revert all changes to the last saved version?")) {
+    if (window.confirm(t("files.revertConfirm"))) {
       setContent(originalContent);
       setIsDirty(false);
     }
@@ -185,7 +187,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold truncate">{name}</h3>
                 {isDirty && (
-                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400" title="Unsaved changes" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400" title={t("files.unsavedChanges")} />
                 )}
               </div>
               <p className="text-xs text-muted-foreground font-mono truncate">{path}</p>
@@ -197,7 +199,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
               className="h-8 w-8 p-0"
-              title="Editor settings"
+              title={t("files.editorSettings")}
             >
               <Settings2 className="h-4 w-4" />
             </Button>
@@ -217,7 +219,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
                 onChange={(e) => setAutoSave(e.target.checked)}
                 className="h-3.5 w-3.5 rounded border-border"
               />
-              <span className="text-muted-foreground">Auto-save (3s)</span>
+              <span className="text-muted-foreground">{t("files.autoSave")}</span>
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
@@ -226,10 +228,10 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
                 onChange={(e) => setWordWrap(e.target.checked)}
                 className="h-3.5 w-3.5 rounded border-border"
               />
-              <span className="text-muted-foreground">Word wrap</span>
+              <span className="text-muted-foreground">{t("files.wordWrap")}</span>
             </label>
             <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">Font size:</span>
+              <span className="text-muted-foreground">{t("files.fontSize")}:</span>
               <select
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
@@ -250,14 +252,14 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
           {fileQuery.isLoading && (
             <div className="flex items-center justify-center p-12 text-muted-foreground">
               <Clock className="mr-2 h-4 w-4 animate-spin" />
-              Loading file...
+              {t("files.loadingFile")}
             </div>
           )}
 
           {fileQuery.isError && (
             <div className="flex items-center justify-center p-12 text-destructive">
               <AlertCircle className="mr-2 h-4 w-4" />
-              Failed to load file. Check the path exists and is a text file (max 5MB).
+              {t("files.loadFailedEditor")}
             </div>
           )}
 
@@ -311,15 +313,15 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>{language}</span>
               <span className="text-muted-foreground/40">|</span>
-              <span>{lineCount} lines</span>
+              <span>{lineCount} {t("files.lines")}</span>
               <span className="text-muted-foreground/40">|</span>
-              <span>Ln {cursorLine}</span>
+              <span>{t("files.line")} {cursorLine}</span>
               {isDirty && (
                 <>
                   <span className="text-muted-foreground/40">|</span>
                   <span className="flex items-center gap-1 text-amber-500">
                     <AlertCircle className="h-3 w-3" />
-                    Modified
+                    {t("files.modifiedEditor")}
                   </span>
                 </>
               )}
@@ -328,7 +330,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
                   <span className="text-muted-foreground/40">|</span>
                   <span className="flex items-center gap-1 text-green-500">
                     <CheckCircle2 className="h-3 w-3" />
-                    Saved
+                    {t("files.saved")}
                   </span>
                 </>
               )}
@@ -342,7 +344,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
                   className="h-7 text-xs"
                 >
                   <RotateCcw className="mr-1 h-3 w-3" />
-                  Revert
+                  {t("files.revert")}
                 </Button>
               )}
               <Button
@@ -353,7 +355,7 @@ export function FileEditor({ path, name, onClose }: FileEditorProps) {
                 className="h-7 text-xs"
               >
                 <Save className="mr-1 h-3 w-3" />
-                {saveMutation.isPending ? "Saving..." : "Save"}
+                {saveMutation.isPending ? t("common.saving") : t("common.save")}
                 <kbd className="ml-1.5 rounded border border-border/50 bg-muted/50 px-1 py-0.5 text-[10px] font-mono text-muted-foreground">
                   Ctrl+S
                 </kbd>

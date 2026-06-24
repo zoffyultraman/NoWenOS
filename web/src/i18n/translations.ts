@@ -571,6 +571,48 @@ const translations: Record<string, Record<Locale, string>> = {
   "2fa.codeLength": { en: "Code must be 6 digits", zh: "验证码必须为 6 位数字" },
   "2fa.enterCode": { en: "Please enter a code", zh: "请输入验证码" },
 
+  // VPN (additional)
+  "vpn.copied": { en: "Copied", zh: "已复制" },
+  "vpn.copyConfig": { en: "Copy Config", zh: "复制配置" },
+
+  // DDNS StatusBadge
+  "ddns.statusDisabled": { en: "Disabled", zh: "已禁用" },
+  "ddns.statusPending": { en: "Pending", zh: "等待中" },
+  "ddns.statusActive": { en: "Active", zh: "活跃" },
+
+  // Logs (additional)
+  "logs.all": { en: "All", zh: "全部" },
+  "logs.error": { en: "Error", zh: "错误" },
+  "logs.warn": { en: "Warn", zh: "警告" },
+  "logs.info": { en: "Info", zh: "信息" },
+  "logs.debug": { en: "Debug", zh: "调试" },
+  "logs.limit": { en: "Limit", zh: "限制" },
+  "logs.logOutput": { en: "Log Output", zh: "日志输出" },
+  "logs.entries": { en: "entries", zh: "条" },
+  "logs.entriesCount": { en: "{count} entries", zh: "{count} 条" },
+
+  // File Editor
+  "files.unsavedChanges": { en: "Unsaved changes", zh: "未保存的更改" },
+  "files.unsavedConfirm": { en: "You have unsaved changes. Discard them?", zh: "有未保存的更改，确定丢弃？" },
+  "files.savedSuccess": { en: "File saved successfully", zh: "文件保存成功" },
+  "files.saveFailedEditor": { en: "Failed to save file", zh: "保存文件失败" },
+  "files.revertConfirm": { en: "Revert all changes to the last saved version?", zh: "还原所有更改到最后保存的版本？" },
+  "files.autoSave": { en: "Auto-save (3s)", zh: "自动保存 (3s)" },
+  "files.wordWrap": { en: "Word wrap", zh: "自动换行" },
+  "files.fontSize": { en: "Font size", zh: "字体大小" },
+  "files.loadingFile": { en: "Loading file...", zh: "加载文件..." },
+  "files.loadFailedEditor": { en: "Failed to load file. Check the path exists and is a text file (max 5MB).", zh: "加载文件失败。请检查路径是否存在且为文本文件（最大 5MB）。" },
+  "files.lines": { en: "lines", zh: "行" },
+  "files.line": { en: "Ln", zh: "行" },
+  "files.modifiedEditor": { en: "Modified", zh: "已修改" },
+  "files.saved": { en: "Saved", zh: "已保存" },
+  "files.revert": { en: "Revert", zh: "还原" },
+  "files.editorSettings": { en: "Editor settings", zh: "编辑器设置" },
+
+  // Common (additional)
+  "common.saving": { en: "Saving...", zh: "保存中..." },
+  "common.no": { en: "No", zh: "否" },
+
   // Login 2FA
   "login.2faTitle": { en: "Two-Factor Authentication", zh: "双因素认证" },
   "login.2faSubtitle": { en: "Enter the code from your authenticator app", zh: "输入认证器应用中的验证码" },
