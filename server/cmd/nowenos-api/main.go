@@ -31,6 +31,9 @@ func main() {
 	database.GetDB()
 	defer database.Close()
 
+	// Apply pending migrations before module InitTable calls
+	database.AutoMigrate()
+
 	// Initialize default users
 	auth.InitDB()
 	auth.InitGroupsTable()
