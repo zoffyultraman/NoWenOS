@@ -91,14 +91,16 @@ func RateLimitMiddleware() gin.HandlerFunc {
 // CORSMiddleware returns a gin middleware for CORS handling.
 func CORSMiddleware() gin.HandlerFunc {
 	origins := os.Getenv("NOWENOS_CORS_ORIGINS")
-	if origins == "" {
-		origins = "*" // default: allow all for self-hosted use
-	}
-
-	allowedOrigins := strings.Split(origins, ",")
 
 	return func(c *gin.Context) {
+		if origins == "" {
+			// No CORS origins configured; rely on browser same-origin policy
+			c.Next()
+			return
+		}
+
 		origin := c.GetHeader("Origin")
+		allowedOrigins := strings.Split(origins, ",")
 
 		allowed := false
 		for _, o := range allowedOrigins {
