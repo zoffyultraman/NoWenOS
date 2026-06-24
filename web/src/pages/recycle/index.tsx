@@ -104,7 +104,7 @@ export default function RecyclePage() {
       {items.length > 0 && (
         <Card className="border-border">
           <CardContent className="p-0">
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border overflow-x-auto">
               <div className="grid grid-cols-[1fr_180px_120px_140px] px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
                 <span>{t("files.name")}</span>
                 <span className="text-right">{t("recycle.originalPath")}</span>

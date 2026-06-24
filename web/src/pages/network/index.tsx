@@ -179,7 +179,7 @@ export default function NetworkPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">{iface.name}</p>
+                      <p className="font-medium truncate">{iface.name}</p>
                       <span
                         className={
                           "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider " +

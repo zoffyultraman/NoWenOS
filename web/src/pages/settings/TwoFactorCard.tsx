@@ -229,7 +229,7 @@ export default function TwoFactorCard() {
                   {qrCodeUrl ? (
                     <img
                       src={qrCodeUrl}
-                      alt="2FA QR Code"
+                      alt={t("settings.qrCodeAlt")}
                       width={200}
                       height={200}
                       className="block"

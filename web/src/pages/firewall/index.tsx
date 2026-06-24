@@ -319,7 +319,7 @@ export default function FirewallPage() {
                     <option value="tcp">TCP</option>
                     <option value="udp">UDP</option>
                     <option value="icmp">ICMP</option>
-                    <option value="any">Any</option>
+                    <option value="any">{t("firewall.any")}</option>
                   </select>
                 </div>
               </div>
@@ -423,7 +423,7 @@ export default function FirewallPage() {
                           className="inline-flex"
                           title={rule.enabled ? t("common.disable") : t("common.enable")}
                         >
-                          {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-500" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                          {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-500" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                         </button>
                       </td>
                       <td className="px-4 py-3">

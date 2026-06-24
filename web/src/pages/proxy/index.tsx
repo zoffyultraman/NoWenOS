@@ -188,12 +188,12 @@ export default function ProxyPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                    <p className="font-medium">{rule.domain}</p>
+                    <p className="font-medium truncate">{rule.domain}</p>
                     <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-indigo-400">
                       {rule.protocol.toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
                     {rule.protocol === "https" ? <Lock className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
                     {t("proxy.target")}: {rule.target}
                   </p>
@@ -201,7 +201,7 @@ export default function ProxyPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: rule.id, enabled: !rule.enabled })} className="h-8 w-8 p-0" title={rule.enabled ? t("common.disable") : t("common.enable")}>
-                  {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                  {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleEdit(rule)} className="h-8 w-8 p-0" title={t("common.edit")}>
                   <Pencil className="h-4 w-4" />

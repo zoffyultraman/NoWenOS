@@ -292,7 +292,7 @@ export default function LogRotatePage() {
                     >
                       {cfg.enabled
                         ? <ToggleRight className="h-5 w-5 text-green-600" />
-                        : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                        : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                     </Button>
                     <Button
                       variant="ghost"

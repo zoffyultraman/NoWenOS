@@ -117,7 +117,7 @@ export default function UsersPage() {
                   {user.role === "admin" ? <Shield className="h-5 w-5" /> : <User className="h-5 w-5" />}
                 </div>
                 <div>
-                  <p className="font-medium">{user.username}</p>
+                  <p className="font-medium truncate">{user.username}</p>
                   <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                 </div>
               </div>

@@ -720,6 +720,10 @@ const translations: Record<string, Record<Locale, string>> = {
   "logrotate.applyFailed": { en: "Failed to apply config", zh: "应用配置失败" },
   "logrotate.testFailed": { en: "Test run failed", zh: "测试运行失败" },
 
+  // P5 i18n fixes
+  "ddns.customScript": { en: "Custom Script", zh: "自定义脚本" },
+  "firewall.any": { en: "Any", zh: "任意" },
+  "settings.qrCodeAlt": { en: "2FA QR Code", zh: "2FA 二维码" },
 
 };
 

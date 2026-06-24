@@ -80,7 +80,7 @@ export default function LogsPage() {
       {activeTab === "system" && (
         <>
           {/* Level Filter Cards */}
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <LevelCard label={t("logs.all")} count={allEntries.length} active={levelFilter === null} onClick={() => setLevelFilter(null)} color="slate" />
             <LevelCard label={t("logs.error")} count={levelCounts.error} active={levelFilter === "error"} onClick={() => setLevelFilter(levelFilter === "error" ? null : "error")} color="red" icon={<AlertCircle className="h-3.5 w-3.5" />} />
             <LevelCard label={t("logs.warn")} count={levelCounts.warn} active={levelFilter === "warn"} onClick={() => setLevelFilter(levelFilter === "warn" ? null : "warn")} color="amber" icon={<AlertTriangle className="h-3.5 w-3.5" />} />
@@ -168,7 +168,7 @@ export default function LogsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="max-h-[600px] overflow-y-auto">
+                <div className="max-h-[600px] overflow-y-auto overflow-x-auto">
                   <div className="divide-y divide-border/50 font-mono text-xs">
                     <div className="grid grid-cols-[160px_100px_100px_120px_80px_120px] bg-muted/50 px-4 py-2 font-medium uppercase tracking-wider text-muted-foreground">
                       <span>{t("audit.timestamp")}</span>

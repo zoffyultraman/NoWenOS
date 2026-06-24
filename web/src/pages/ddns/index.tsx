@@ -18,11 +18,11 @@ import {
 } from "lucide-react";
 
 const PROVIDERS = [
-  { value: "cloudflare", label: "Cloudflare" },
-  { value: "dyndns", label: "DynDNS" },
-  { value: "noip", label: "No-IP" },
-  { value: "duckdns", label: "DuckDNS" },
-  { value: "custom", label: "Custom Script" },
+  { value: "cloudflare", label: "Cloudflare", labelKey: "" },
+  { value: "dyndns", label: "DynDNS", labelKey: "" },
+  { value: "noip", label: "No-IP", labelKey: "" },
+  { value: "duckdns", label: "DuckDNS", labelKey: "" },
+  { value: "custom", label: "Custom Script", labelKey: "ddns.customScript" },
 ];
 
 const emptyForm = {
@@ -132,7 +132,8 @@ export default function DDNSPage() {
 
   function getProviderLabel(provider: string): string {
     const found = PROVIDERS.find((p) => p.value === provider);
-    return found ? found.label : provider;
+    if (!found) return provider;
+    return found.labelKey ? t(found.labelKey) : found.label;
   }
 
   return (
@@ -195,7 +196,7 @@ export default function DDNSPage() {
                     className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
                   >
                     {PROVIDERS.map((p) => (
-                      <option key={p.value} value={p.value}>{p.label}</option>
+                      <option key={p.value} value={p.value}>{p.labelKey ? t(p.labelKey) : p.label}</option>
                     ))}
                   </select>
                 </div>
@@ -324,7 +325,7 @@ function DDNSConfigCard({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <p className="font-medium">{config.domain}</p>
+                <p className="font-medium truncate">{config.domain}</p>
                 <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-cyan-400">
                   {getProviderLabel(config.provider)}
                 </span>
@@ -370,7 +371,7 @@ function DDNSConfigCard({
               className="h-8 w-8 p-0"
               title={config.enabled ? t("common.disable") : t("common.enable")}
             >
-              {config.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+              {config.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
             </Button>
             <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0" title={t("common.edit")}>
               <Pencil className="h-4 w-4" />
@@ -419,7 +420,7 @@ function StatusBadge({ enabled, ip }: { enabled: boolean; ip: string }) {
   const t = useTranslation();
   if (!enabled) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
         <AlertCircle className="h-3 w-3" />
         {t("ddns.statusDisabled")}
       </span>

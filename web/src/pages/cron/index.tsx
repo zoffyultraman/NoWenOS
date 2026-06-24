@@ -115,7 +115,7 @@ export default function CronPage() {
       case "running":
         return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
       default:
-        return <HelpCircle className="h-4 w-4 text-slate-400" />;
+        return <HelpCircle className="h-4 w-4 text-muted-foreground" />;
     }
   }
 
@@ -211,7 +211,7 @@ export default function CronPage() {
                         {task.schedule}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{task.command}</p>
+                    <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">{task.command}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export default function CronPage() {
                     <Play className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: task.id, enabled: !task.enabled })} className="h-8 w-8 p-0" title={task.enabled ? t("common.disable") : t("common.enable")}>
-                    {task.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                    {task.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(task)} className="h-8 w-8 p-0" title={t("common.edit")}>
                     <Pencil className="h-4 w-4" />

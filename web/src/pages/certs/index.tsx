@@ -312,11 +312,11 @@ export default function CertsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                      <p className="font-medium">{cert.domain}</p>
+                      <p className="font-medium truncate">{cert.domain}</p>
                       <span className={"rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider " +
                         (cert.type === "letsencrypt"
                           ? "border-blue-500/20 bg-blue-500/10 text-blue-400"
-                          : "border-slate-500/20 bg-slate-500/10 text-slate-400")
+                          : "border-slate-500/20 bg-slate-500/10 text-muted-foreground")
                       }>
                         {cert.type === "letsencrypt" ? "Let's Encrypt" : t("certs.selfSigned")}
                       </span>
@@ -350,7 +350,7 @@ export default function CertsPage() {
                   >
                     {cert.autoRenew
                       ? <ToggleRight className="h-5 w-5 text-green-600" />
-                      : <ToggleLeft className="h-5 w-5 text-slate-400" />
+                      : <ToggleLeft className="h-5 w-5 text-muted-foreground" />
                     }
                   </Button>
 

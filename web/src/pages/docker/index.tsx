@@ -225,7 +225,7 @@ function ContainerRow({
     <Card>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={"h-2.5 w-2.5 flex-shrink-0 rounded-full " + (container.state === "running" ? "bg-green-500" : "bg-slate-300")} />
+          <div className={"h-2.5 w-2.5 flex-shrink-0 rounded-full " + (container.state === "running" ? "bg-green-500" : "bg-muted-foreground/50")} />
           <div className="min-w-0">
             <p className="text-sm font-medium truncate">{container.name}</p>
             <p className="text-xs text-muted-foreground truncate">{container.image}</p>
@@ -450,7 +450,7 @@ function ComposeRow({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
-            <div className={"h-2.5 w-2.5 flex-shrink-0 rounded-full " + (isUp ? "bg-green-500" : "bg-slate-300")} />
+            <div className={"h-2.5 w-2.5 flex-shrink-0 rounded-full " + (isUp ? "bg-green-500" : "bg-muted-foreground/50")} />
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{project.name}</p>
               <p className="text-xs text-muted-foreground truncate">
@@ -493,7 +493,7 @@ function ComposeRow({
             {services.map((svc) => (
               <div key={svc.name} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border px-3 py-2">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={"h-2 w-2 flex-shrink-0 rounded-full " + (svc.state === "running" ? "bg-green-500" : "bg-slate-300")} />
+                  <div className={"h-2 w-2 flex-shrink-0 rounded-full " + (svc.state === "running" ? "bg-green-500" : "bg-muted-foreground/50")} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{svc.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{svc.image}</p>

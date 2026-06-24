@@ -242,7 +242,7 @@ export default function SharesPage() {
                     <p className="font-medium">{share.name}</p>
                     <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-cyan-400">{share.protocol.toUpperCase()}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
                     <FolderOpen className="h-3 w-3" /> {share.path}
                   </p>
                   {share.comment && <p className="text-xs text-muted-foreground">{share.comment}</p>}
@@ -278,7 +278,7 @@ export default function SharesPage() {
                   <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-xs font-medium text-purple-400">{t("shares.guest")}</span>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: share.id, enabled: !share.enabled })} className="h-8 w-8 p-0" title={share.enabled ? t("common.disable") : t("common.enable")}>
-                  {share.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                  {share.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleEdit(share)} className="h-8 w-8 p-0" title={t("common.edit")}>
                   <Pencil className="h-4 w-4" />

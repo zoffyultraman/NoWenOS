@@ -287,7 +287,7 @@ export default function AlertsPage() {
                         <Link className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: rule.id, enabled: !rule.enabled })} className="h-8 w-8 p-0">
-                        {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                        {rule.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setDeleteRuleConfirm({ id: rule.id, name: rule.name })} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
@@ -337,8 +337,8 @@ export default function AlertsPage() {
                       <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-500 shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{event.ruleName}</p>
-                      <p className="text-xs text-muted-foreground">{event.message}</p>
+                      <p className="text-sm font-medium truncate">{event.ruleName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{event.message}</p>
                       <p className="text-xs text-muted-foreground mt-1">{event.createdAt}</p>
                     </div>
                     <span className={"shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium " + (event.level === "critical" ? "border-red-500/20 bg-red-500/10 text-red-400" : "border-amber-500/20 bg-amber-500/10 text-amber-400")}>
@@ -410,7 +410,7 @@ export default function AlertsPage() {
                       <Zap className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => toggleChannelMutation.mutate({ id: ch.id, enabled: !ch.enabled })} className="h-8 w-8 p-0">
-                      {ch.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-slate-400" />}
+                      {ch.enabled ? <ToggleRight className="h-5 w-5 text-green-600" /> : <ToggleLeft className="h-5 w-5 text-muted-foreground" />}
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setDeleteChannelConfirm({ id: ch.id, name: ch.name })} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
                       <Trash2 className="h-4 w-4" />

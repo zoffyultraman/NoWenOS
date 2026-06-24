@@ -1,32 +1,42 @@
 import { useEffect, useRef } from "react";
 
-interface ShortcutMap {
-  [key: string]: (e?: KeyboardEvent) => void;
-}
+type ShortcutMap = Record<string, (e?: KeyboardEvent) => void>;
 
 export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
-  const shortcutsRef = useRef(shortcuts);
-  shortcutsRef.current = shortcuts;
+  const ref = useRef(shortcuts);
+  ref.current = shortcuts;
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" ||
+                      target.tagName === "TEXTAREA" ||
+                      target.tagName === "SELECT" ||
+                      target.isContentEditable;
+
+      if (e.key === "Escape" && ref.current["escape"]) {
+        e.preventDefault();
+        ref.current["escape"](e);
+        return;
+      }
+
+      if (isInput) return;
+
       const isMod = e.metaKey || e.ctrlKey;
       const key = e.key.toLowerCase();
-
-      // Build shortcut string like "mod+k", "mod+n", etc.
       let combo = "";
       if (isMod) combo += "mod+";
       if (e.shiftKey) combo += "shift+";
       if (e.altKey) combo += "alt+";
       combo += key;
 
-      if (shortcutsRef.current[combo]) {
+      if (ref.current[combo]) {
         e.preventDefault();
-        shortcutsRef.current[combo](e);
+        ref.current[combo](e);
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []); // stable reference via ref
+  }, []);
 }
