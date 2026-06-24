@@ -38,6 +38,14 @@ import { FilePreview } from "@/components/FilePreview";
 import PermissionsDialog from "@/features/files/PermissionsDialog";
 import MoveDialog from "@/features/files/MoveDialog";
 
+interface SearchResult {
+  name: string;
+  path: string;
+  isDir: boolean;
+  size: number;
+  modTime: string;
+}
+
 export default function FilesPage() {
   const t = useTranslation();
   const [currentPath, setCurrentPath] = useState(".");
@@ -46,7 +54,7 @@ export default function FilesPage() {
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[] | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
@@ -218,8 +226,10 @@ export default function FilesPage() {
     downloadFile(filePath);
   }
 
-  function handleDelete(filePath: string) {
-    trashMutation.mutate(filePath);
+  function handleDelete(filePath: string, name: string) {
+    if (confirm(t("files.deleteConfirm").replace("{name}", name))) {
+      trashMutation.mutate(filePath);
+    }
   }
 
   function handleMkdir() {
@@ -345,7 +355,7 @@ export default function FilesPage() {
           <CardContent className="p-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">{t("files.searchResults")} ({searchResults.length})</p>
             {searchResults.length === 0 && <p className="text-xs text-muted-foreground">{t("files.noResults")}</p>}
-            {searchResults.map((f: any) => (
+            {searchResults.map((f: SearchResult) => (
               <div key={f.path} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50 text-sm">
                 {f.isDir ? <Folder className="h-3.5 w-3.5 text-cyan-400" /> : <File className="h-3.5 w-3.5 text-muted-foreground" />}
                 <span className="truncate">{f.path}</span>
@@ -443,7 +453,7 @@ export default function FilesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(entry.path)}
+                      onClick={() => handleDelete(entry.path, entry.name)}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
