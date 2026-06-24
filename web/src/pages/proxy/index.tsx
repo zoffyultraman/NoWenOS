@@ -160,7 +160,7 @@ export default function ProxyPage() {
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                   {editId !== null ? t("proxy.updateRule") : t("proxy.createRule")}
                 </Button>
-                <Button variant="outline" type="button" onClick={() => { setShowForm(false); setEditId(null); }}>Cancel</Button>
+                <Button variant="outline" type="button" onClick={() => { setShowForm(false); setEditId(null); }}>{t("common.cancel")}</Button>
               </div>
             </form>
           </CardContent>

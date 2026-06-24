@@ -423,7 +423,7 @@ export default function VPNPage() {
                               variant="outline"
                               size="icon"
                               className="shrink-0"
-                              onClick={() => { navigator.clipboard.writeText(wizard.keys!.privateKey); toast.success("Copied"); }}
+                              onClick={() => { navigator.clipboard.writeText(wizard.keys!.privateKey); toast.success(t("vpn.copied")); }}
                             >
                               <Copy className="h-3.5 w-3.5" />
                             </Button>
@@ -437,7 +437,7 @@ export default function VPNPage() {
                               variant="outline"
                               size="icon"
                               className="shrink-0"
-                              onClick={() => { navigator.clipboard.writeText(wizard.keys!.publicKey); toast.success("Copied"); }}
+                              onClick={() => { navigator.clipboard.writeText(wizard.keys!.publicKey); toast.success(t("vpn.copied")); }}
                             >
                               <Copy className="h-3.5 w-3.5" />
                             </Button>
@@ -700,11 +700,11 @@ export default function VPNPage() {
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(qrTarget.config);
-                        toast.success("Copied");
+                        toast.success(t("vpn.copied"));
                       }}
                     >
                       <Copy className="mr-2 h-4 w-4" />
-                      Copy Config
+                      {t("vpn.copyConfig")}
                     </Button>
                   </div>
                 </div>

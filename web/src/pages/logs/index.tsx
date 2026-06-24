@@ -48,7 +48,7 @@ export default function LogsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("logs.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            {logsQuery.isLoading ? t("logs.loading") : `${allEntries.length} ${t("logs.entryCount").replace("{count}", String(allEntries.length))}`}
+            {logsQuery.isLoading ? t("logs.loading") : t("logs.entryCount").replace("{count}", String(allEntries.length))}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => activeTab === "system" ? logsQuery.refetch() : auditQuery.refetch()} disabled={logsQuery.isLoading && auditQuery.isLoading} className="gap-2">
@@ -81,11 +81,11 @@ export default function LogsPage() {
         <>
           {/* Level Filter Cards */}
           <div className="grid grid-cols-5 gap-3">
-            <LevelCard label="All" count={allEntries.length} active={levelFilter === null} onClick={() => setLevelFilter(null)} color="slate" />
-            <LevelCard label="Error" count={levelCounts.error} active={levelFilter === "error"} onClick={() => setLevelFilter(levelFilter === "error" ? null : "error")} color="red" icon={<AlertCircle className="h-3.5 w-3.5" />} />
-            <LevelCard label="Warn" count={levelCounts.warn} active={levelFilter === "warn"} onClick={() => setLevelFilter(levelFilter === "warn" ? null : "warn")} color="amber" icon={<AlertTriangle className="h-3.5 w-3.5" />} />
-            <LevelCard label="Info" count={levelCounts.info} active={levelFilter === "info"} onClick={() => setLevelFilter(levelFilter === "info" ? null : "info")} color="cyan" icon={<Info className="h-3.5 w-3.5" />} />
-            <LevelCard label="Debug" count={levelCounts.debug} active={levelFilter === "debug"} onClick={() => setLevelFilter(levelFilter === "debug" ? null : "debug")} color="purple" icon={<Bug className="h-3.5 w-3.5" />} />
+            <LevelCard label={t("logs.all")} count={allEntries.length} active={levelFilter === null} onClick={() => setLevelFilter(null)} color="slate" />
+            <LevelCard label={t("logs.error")} count={levelCounts.error} active={levelFilter === "error"} onClick={() => setLevelFilter(levelFilter === "error" ? null : "error")} color="red" icon={<AlertCircle className="h-3.5 w-3.5" />} />
+            <LevelCard label={t("logs.warn")} count={levelCounts.warn} active={levelFilter === "warn"} onClick={() => setLevelFilter(levelFilter === "warn" ? null : "warn")} color="amber" icon={<AlertTriangle className="h-3.5 w-3.5" />} />
+            <LevelCard label={t("logs.info")} count={levelCounts.info} active={levelFilter === "info"} onClick={() => setLevelFilter(levelFilter === "info" ? null : "info")} color="cyan" icon={<Info className="h-3.5 w-3.5" />} />
+            <LevelCard label={t("logs.debug")} count={levelCounts.debug} active={levelFilter === "debug"} onClick={() => setLevelFilter(levelFilter === "debug" ? null : "debug")} color="purple" icon={<Bug className="h-3.5 w-3.5" />} />
           </div>
 
           {/* Sources */}
@@ -100,7 +100,7 @@ export default function LogsPage() {
 
           {/* Limit Controls */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Limit:</span>
+            <span className="text-xs text-muted-foreground">{t("logs.limit")}:</span>
             {[50, 100, 200, 500].map((n) => (
               <Button key={n} variant={limit === n ? "default" : "outline"} size="sm" onClick={() => setLimit(n)} className={limit === n ? "bg-primary text-primary-foreground" : ""}>{n}</Button>
             ))}
@@ -122,8 +122,8 @@ export default function LogsPage() {
               <CardHeader className="border-b border-border bg-muted/30 py-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10"><Terminal className="h-4 w-4 text-cyan-400" /></div>
-                  <span>Log Output</span>
-                  <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">{entries.length} entries</span>
+                  <span>{t("logs.logOutput")}</span>
+                  <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">{t("logs.entriesCount").replace("{count}", String(entries.length))}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -164,7 +164,7 @@ export default function LogsPage() {
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10"><ShieldCheck className="h-4 w-4 text-emerald-400" /></div>
                   <span>{t("audit.title")}</span>
-                  <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">{auditEntries.length} entries</span>
+                  <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">{t("logs.entriesCount").replace("{count}", String(auditEntries.length))}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">

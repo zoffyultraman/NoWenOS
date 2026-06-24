@@ -416,11 +416,12 @@ function DDNSConfigCard({
 }
 
 function StatusBadge({ enabled, ip }: { enabled: boolean; ip: string }) {
+  const t = useTranslation();
   if (!enabled) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-slate-400">
         <AlertCircle className="h-3 w-3" />
-        Disabled
+        {t("ddns.statusDisabled")}
       </span>
     );
   }
@@ -428,14 +429,14 @@ function StatusBadge({ enabled, ip }: { enabled: boolean; ip: string }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
         <AlertCircle className="h-3 w-3" />
-        Pending
+        {t("ddns.statusPending")}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">
       <CheckCircle className="h-3 w-3" />
-      Active
+      {t("ddns.statusActive")}
     </span>
   );
 }
