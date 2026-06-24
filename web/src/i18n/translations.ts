@@ -455,6 +455,7 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // Dashboard realtime
   "dashboard.realtime": { en: "Real-time", zh: "实时" },
+  "dashboard.polling": { en: "Polling", zh: "轮询中" },
 
   // File preview and drag-drop
   "files.dropUpload": { en: "Drop files here to upload", zh: "拖拽文件到此处上传" },
@@ -524,6 +525,16 @@ const translations: Record<string, Record<Locale, string>> = {
   // Docker compose additions
   "docker.save": { en: "Save", zh: "保存" },
   "docker.validate": { en: "Validate", zh: "验证" },
+
+  // Docker confirm dialog
+  "docker.confirmAction": { en: "Confirm {action}", zh: "确认{action}" },
+  "docker.confirmActionMessage": { en: "Are you sure you want to {action} container \"{name}\"?", zh: "确定要{action}容器 \"{name}\" 吗？" },
+
+  // Files i18n fallback fixes
+  "files.item": { en: "item", zh: "项" },
+  "files.items": { en: "items", zh: "项" },
+  "files.selected": { en: "selected", zh: "已选择" },
+  "files.closeResults": { en: "Close results", zh: "关闭结果" },
 
   // Common
   "common.yes": { en: "Yes", zh: "是" },

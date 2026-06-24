@@ -40,6 +40,7 @@ import {
   CheckCircle,
   Rocket,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function DockerPage() {
   const t = useTranslation();
@@ -120,6 +121,7 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
   const t = useTranslation();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [confirmAction, setConfirmAction] = useState<{ id: string; name: string; action: "stop" | "restart" } | null>(null);
 
   const containersQuery = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
@@ -177,12 +179,32 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
           <ContainerRow
             key={container.id}
             container={container}
-            onAction={(action) => controlMutation.mutate({ id: container.id, action })}
+            onAction={(action) => {
+              if (action === "start") {
+                controlMutation.mutate({ id: container.id, action });
+              } else {
+                setConfirmAction({ id: container.id, name: container.name, action });
+              }
+            }}
             onViewLogs={() => onViewLogs(container.id, container.name)}
             isPending={controlMutation.isPending}
           />
         ))}
       </div>
+      <ConfirmDialog
+        open={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          if (confirmAction) {
+            controlMutation.mutate({ id: confirmAction.id, action: confirmAction.action });
+            setConfirmAction(null);
+          }
+        }}
+        title={t("docker.confirmAction").replace("{action}", confirmAction?.action ?? "")}
+        message={t("docker.confirmActionMessage").replace("{action}", confirmAction?.action ?? "").replace("{name}", confirmAction?.name ?? "")}
+        loading={controlMutation.isPending}
+        variant="danger"
+      />
     </div>
   );
 }
@@ -241,6 +263,7 @@ function ImagesTab() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [pullName, setPullName] = useState("");
+  const [removeImageConfirm, setRemoveImageConfirm] = useState<{ id: string; name: string } | null>(null);
 
   const imagesQuery = useQuery({ queryKey: ["images"], queryFn: fetchImages });
 
@@ -303,13 +326,26 @@ function ImagesTab() {
                 <p className="text-sm font-medium">{image.repository}:{image.tag}</p>
                 <p className="text-xs text-muted-foreground">{image.id} | {image.size} | {image.created}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => removeMutation.mutate(image.id)} disabled={removeMutation.isPending} className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" onClick={() => setRemoveImageConfirm({ id: image.id, name: `${image.repository}:${image.tag}` })} disabled={removeMutation.isPending} className="h-8 w-8 p-0">
                 <Trash2 className="h-4 w-4 text-red-600" />
               </Button>
             </CardContent>
           </Card>
         ))}
       </div>
+      <ConfirmDialog
+        open={!!removeImageConfirm}
+        onClose={() => setRemoveImageConfirm(null)}
+        onConfirm={() => {
+          if (removeImageConfirm) {
+            removeMutation.mutate(removeImageConfirm.id);
+            setRemoveImageConfirm(null);
+          }
+        }}
+        title={t("common.delete")}
+        message={`${t("common.delete")} "${removeImageConfirm?.name ?? ""}"?`}
+        loading={removeMutation.isPending}
+      />
     </div>
   );
 }

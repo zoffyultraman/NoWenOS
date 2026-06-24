@@ -38,7 +38,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5">
           <div className={"h-2 w-2 rounded-full animate-pulse " + (wsConnected ? "bg-green-400" : "bg-amber-400")} />
           <span className="text-xs font-medium text-muted-foreground">
-            {wsConnected ? t("dashboard.realtime") : t("dashboard.connected")}
+            {wsConnected ? t("dashboard.realtime") : t("dashboard.polling")}
           </span>
         </div>
       </div>

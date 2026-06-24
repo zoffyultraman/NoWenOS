@@ -147,6 +147,12 @@
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "ss02", "cv01";
   }
+  select {
+    @apply appearance-none bg-background;
+  }
+  select option {
+    @apply bg-background text-foreground;
+  }
 }
 
 /* ── Cyber NAS Utility Classes ── */
