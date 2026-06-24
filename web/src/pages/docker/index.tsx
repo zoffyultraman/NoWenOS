@@ -40,6 +40,7 @@ import {
   CheckCircle,
   Rocket,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function DockerPage() {
   const t = useTranslation();
@@ -120,6 +121,7 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
   const t = useTranslation();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [confirmAction, setConfirmAction] = useState<{ id: string; name: string; action: "stop" | "restart" } | null>(null);
 
   const containersQuery = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
@@ -177,12 +179,32 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
           <ContainerRow
             key={container.id}
             container={container}
-            onAction={(action) => controlMutation.mutate({ id: container.id, action })}
+            onAction={(action) => {
+              if (action === "start") {
+                controlMutation.mutate({ id: container.id, action });
+              } else {
+                setConfirmAction({ id: container.id, name: container.name, action });
+              }
+            }}
             onViewLogs={() => onViewLogs(container.id, container.name)}
             isPending={controlMutation.isPending}
           />
         ))}
       </div>
+      <ConfirmDialog
+        open={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          if (confirmAction) {
+            controlMutation.mutate({ id: confirmAction.id, action: confirmAction.action });
+            setConfirmAction(null);
+          }
+        }}
+        title={t("docker.confirmAction").replace("{action}", confirmAction?.action ?? "")}
+        message={t("docker.confirmActionMessage").replace("{action}", confirmAction?.action ?? "").replace("{name}", confirmAction?.name ?? "")}
+        loading={controlMutation.isPending}
+        variant="danger"
+      />
     </div>
   );
 }

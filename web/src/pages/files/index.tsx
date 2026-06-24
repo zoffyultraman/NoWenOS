@@ -39,6 +39,32 @@ import { FilePreview } from "@/components/FilePreview";
 import PermissionsDialog from "@/features/files/PermissionsDialog";
 import MoveDialog from "@/features/files/MoveDialog";
 
+function BreadcrumbNav({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
+  const parts = path.split("/").filter(Boolean);
+  const segments: { label: string; path: string }[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    segments.push({
+      label: parts[i],
+      path: parts.slice(0, i + 1).join("/"),
+    });
+  }
+  return (
+    <div className="flex items-center gap-1 text-sm overflow-x-auto">
+      <button onClick={() => onNavigate(".")} className="text-muted-foreground hover:text-foreground shrink-0">~</button>
+      {segments.map((seg, i) => (
+        <span key={seg.path} className="flex items-center gap-1 shrink-0">
+          <span className="text-muted-foreground">/</span>
+          {i === segments.length - 1 ? (
+            <span className="font-medium text-foreground">{seg.label}</span>
+          ) : (
+            <button onClick={() => onNavigate(seg.path)} className="text-muted-foreground hover:text-foreground">{seg.label}</button>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function FilesPage() {
   const t = useTranslation();
   const [currentPath, setCurrentPath] = useState(".");
@@ -243,32 +269,6 @@ export default function FilesPage() {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   }
 
-  function BreadcrumbNav({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
-    const parts = path.split("/").filter(Boolean);
-    const segments: { label: string; path: string }[] = [];
-    for (let i = 0; i < parts.length; i++) {
-      segments.push({
-        label: parts[i],
-        path: parts.slice(0, i + 1).join("/"),
-      });
-    }
-    return (
-      <div className="flex items-center gap-1 text-sm overflow-x-auto">
-        <button onClick={() => onNavigate(".")} className="text-muted-foreground hover:text-foreground shrink-0">~</button>
-        {segments.map((seg, i) => (
-          <span key={seg.path} className="flex items-center gap-1 shrink-0">
-            <span className="text-muted-foreground">/</span>
-            {i === segments.length - 1 ? (
-              <span className="font-medium text-foreground">{seg.label}</span>
-            ) : (
-              <button onClick={() => onNavigate(seg.path)} className="text-muted-foreground hover:text-foreground">{seg.label}</button>
-            )}
-          </span>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
@@ -276,7 +276,7 @@ export default function FilesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("files.title")}</h1>
           {result && (
             <span className="text-xs text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5 font-medium">
-              {result.entries.length} {result.entries.length === 1 ? "item" : "items"}
+              {result.entries.length} {result.entries.length === 1 ? t("files.item") : t("files.items")}
             </span>
           )}
           <BreadcrumbNav path={result?.path ?? currentPath} onNavigate={handleNavigate} />
@@ -361,7 +361,7 @@ export default function FilesPage() {
         </div>
         {selectedPaths.size > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{selectedPaths.size} selected</span>
+            <span className="text-xs text-muted-foreground">{selectedPaths.size} {t("files.selected")}</span>
             <Button variant="outline" size="sm" onClick={handleBatchCompress} className="h-8 text-xs">
               <Archive className="mr-1 h-3 w-3" />{t("files.compress")}
             </Button>
@@ -396,7 +396,7 @@ export default function FilesPage() {
                 <span className="truncate">{f.path}</span>
               </button>
             ))}
-            <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">Close results</button>
+            <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">{t("files.closeResults")}</button>
           </CardContent>
         </Card>
       )}

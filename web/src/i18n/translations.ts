@@ -524,6 +524,16 @@ const translations: Record<string, Record<Locale, string>> = {
   "docker.save": { en: "Save", zh: "保存" },
   "docker.validate": { en: "Validate", zh: "验证" },
 
+  // Docker confirm dialog
+  "docker.confirmAction": { en: "Confirm {action}", zh: "确认{action}" },
+  "docker.confirmActionMessage": { en: "Are you sure you want to {action} container \"{name}\"?", zh: "确定要{action}容器 \"{name}\" 吗？" },
+
+  // Files i18n fallback fixes
+  "files.item": { en: "item", zh: "项" },
+  "files.items": { en: "items", zh: "项" },
+  "files.selected": { en: "selected", zh: "已选择" },
+  "files.closeResults": { en: "Close results", zh: "关闭结果" },
+
   // Common
   "common.yes": { en: "Yes", zh: "是" },
 
