@@ -21,6 +21,7 @@ import type { ContainerInfo, ComposeProject } from "@/features/docker/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/stores/toast";
 import {
   Container,
@@ -28,7 +29,6 @@ import {
   Square,
   RotateCcw,
   ScrollText,
-  X,
   Download,
   Trash2,
   HardDrive,
@@ -645,14 +645,14 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
           {fileQuery.isLoading && <p className="text-sm text-muted-foreground">{t("docker.loadingFile")}</p>}
           {fileQuery.isError && <p className="text-sm text-destructive">{t("docker.failedFile")}</p>}
 
-          {!fileQuery.isLoading && !fileQuery.isError && (
-            <>
-              <textarea
-                className="flex-1 min-h-[400px] w-full rounded-lg border bg-slate-950 p-4 font-mono text-xs text-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                spellCheck={false}
-              />
+        {!fileQuery.isLoading && !fileQuery.isError && (
+          <>
+            <textarea
+              className="flex-1 min-h-[400px] w-full rounded-lg border bg-slate-950 p-4 font-mono text-xs text-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              spellCheck={false}
+            />
 
               {result && (
                 <div className={"rounded-lg p-3 text-sm " + (result.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200")}>
@@ -693,11 +693,45 @@ function FileEditorModal({ path, name, onClose }: { path: string; name: string; 
                   </Button>
                 </div>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {content.split("\n").length} lines
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => saveMutation.mutate()}
+                  disabled={saveMutation.isPending}
+                >
+                  <Save className="mr-1 h-3 w-3" />
+                  {saveMutation.isPending ? t("docker.saving") : t("docker.save")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => validateMutation.mutate()}
+                  disabled={validateMutation.isPending}
+                >
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  {validateMutation.isPending ? t("docker.validating") : t("docker.validate")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => deployMutation.mutate()}
+                  disabled={deployMutation.isPending}
+                >
+                  <Rocket className="mr-1 h-3 w-3" />
+                  {deployMutation.isPending ? t("docker.deploying") : t("docker.deploy")}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
   );
 }
 

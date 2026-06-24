@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/stores/toast";
-import { UserPlus, Trash2, User, Shield, KeyRound, X, Users, Plus, UserMinus } from "lucide-react";
+import { UserPlus, Trash2, User, Shield, KeyRound, Users, Plus, UserMinus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -346,35 +347,29 @@ function ChangePasswordDialog({ username, onClose }: { username: string; onClose
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg">{t("users.changePwdTitle")}: {username}</CardTitle>
-        <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>{t("users.currentPwd")}</Label>
-              <Input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("users.newPwd")}</Label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("users.confirmPwd")}</Label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-            </div>
+    <Modal open onClose={onClose} title={`${t("users.changePwdTitle")}: ${username}`}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>{t("users.currentPwd")}</Label>
+            <Input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required />
           </div>
-          <div className="flex items-center gap-3">
-            <Button type="submit" disabled={changePwdMutation.isPending}>
-              {changePwdMutation.isPending ? t("users.saving") : t("users.changePwdTitle")}
-            </Button>
-            <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+          <div className="space-y-2">
+            <Label>{t("users.newPwd")}</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
           </div>
-        </form>
-      </CardContent>
-    </Card>
+          <div className="space-y-2">
+            <Label>{t("users.confirmPwd")}</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={changePwdMutation.isPending}>
+            {changePwdMutation.isPending ? t("users.saving") : t("users.changePwdTitle")}
+          </Button>
+          <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

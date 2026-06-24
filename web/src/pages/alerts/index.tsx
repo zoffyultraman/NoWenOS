@@ -20,6 +20,7 @@ import type { CreateRuleRequest, CreateChannelRequest } from "@/features/alerts/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/stores/toast";
 import {
@@ -420,58 +421,46 @@ export default function AlertsPage() {
       )}
 
       {/* Link Channels Dialog */}
-      {linkRuleId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setLinkRuleId(null)}>
-          <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle>{t("alerts.linkChannels")}</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => setLinkRuleId(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {ruleChannelsQuery.isLoading ? (
-                <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-              ) : channels.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("alerts.noChannels")}</p>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {channels.map((ch) => (
-                    <label
-                      key={ch.id}
-                      className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-accent/50"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedChannelIds.includes(ch.id)}
-                        onChange={() => toggleChannelSelection(ch.id)}
-                        className="h-4 w-4 rounded"
-                      />
-                      {ch.type === "email" ? <Mail className="h-4 w-4 text-blue-400" /> : ch.type === "telegram" ? <Send className="h-4 w-4 text-sky-400" /> : <Globe className="h-4 w-4 text-indigo-400" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{ch.name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{ch.type}</p>
-                      </div>
-                    </label>
-                  ))}
+      <Modal open={linkRuleId !== null} onClose={() => setLinkRuleId(null)} title={t("alerts.linkChannels")} size="sm">
+        {ruleChannelsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        ) : channels.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("alerts.noChannels")}</p>
+        ) : (
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {channels.map((ch) => (
+              <label
+                key={ch.id}
+                className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-accent/50"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedChannelIds.includes(ch.id)}
+                  onChange={() => toggleChannelSelection(ch.id)}
+                  className="h-4 w-4 rounded"
+                />
+                {ch.type === "email" ? <Mail className="h-4 w-4 text-blue-400" /> : ch.type === "telegram" ? <Send className="h-4 w-4 text-sky-400" /> : <Globe className="h-4 w-4 text-indigo-400" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{ch.name}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{ch.type}</p>
                 </div>
-              )}
-              <div className="flex gap-2 mt-4">
-                <Button
-                  size="sm"
-                  onClick={() => linkChannelsMutation.mutate({ ruleId: linkRuleId, channelIds: selectedChannelIds })}
-                  disabled={linkChannelsMutation.isPending}
-                >
-                  {linkChannelsMutation.isPending ? t("common.loading") : t("alerts.saveLink")}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setLinkRuleId(null)}>
-                  {t("common.cancel")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </label>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2 mt-4">
+          <Button
+            size="sm"
+            onClick={() => linkChannelsMutation.mutate({ ruleId: linkRuleId!, channelIds: selectedChannelIds })}
+            disabled={linkChannelsMutation.isPending}
+          >
+            {linkChannelsMutation.isPending ? t("common.loading") : t("alerts.saveLink")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setLinkRuleId(null)}>
+            {t("common.cancel")}
+          </Button>
         </div>
-      )}
+      </Modal>
 
     </div>
   );
