@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"nowenos-server/internal/database"
 )
 
@@ -64,7 +65,12 @@ func InitDB() {
 	var count int
 	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'admin'").Scan(&count)
 	if err != nil || count == 0 {
-		_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", "admin", "admin", "admin")
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Failed to hash admin password: %v", err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", "admin", string(hashedPassword), "admin")
 		if err != nil {
 			log.Printf("Failed to create admin user: %v", err)
 		}
@@ -72,7 +78,12 @@ func InitDB() {
 
 	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'user'").Scan(&count)
 	if err != nil || count == 0 {
-		_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", "user", "user", "user")
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("user"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Failed to hash user password: %v", err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", "user", string(hashedPassword), "user")
 		if err != nil {
 			log.Printf("Failed to create user: %v", err)
 		}
@@ -98,7 +109,7 @@ func Login(req LoginRequest) (*LoginResponse, error) {
 		return nil, err
 	}
 
-	if user.Password != req.Password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -129,7 +140,7 @@ func ValidateCredentials(username, password string) error {
 		return err
 	}
 
-	if storedPassword != password {
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
 		return ErrInvalidCredentials
 	}
 
@@ -177,7 +188,12 @@ func CreateUser(req CreateUserRequest) (*UserInfo, error) {
 		role = "user"
 	}
 
-	_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", req.Username, req.Password, role)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", req.Username, string(hashedPassword), role)
 	if err != nil {
 		return nil, err
 	}
@@ -231,11 +247,16 @@ func ChangePassword(username string, req ChangePasswordRequest) error {
 		return err
 	}
 
-	if currentPassword != req.OldPassword {
+	if err := bcrypt.CompareHashAndPassword([]byte(currentPassword), []byte(req.OldPassword)); err != nil {
 		return ErrInvalidCredentials
 	}
 
-	_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", req.NewPassword, username)
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", string(hashedNewPassword), username)
 	return err
 }
 

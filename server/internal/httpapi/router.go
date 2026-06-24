@@ -231,7 +231,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": images})
 		})
 
-		api.POST("/docker/images/pull", func(c *gin.Context) {
+		api.POST("/docker/images/pull", requireWrite(), func(c *gin.Context) {
 			var req struct {
 				Image string `json:"image"`
 			}
@@ -248,7 +248,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok", "image": req.Image}})
 		})
 
-		api.DELETE("/docker/images/:id", func(c *gin.Context) {
+		api.DELETE("/docker/images/:id", requireWrite(), func(c *gin.Context) {
 			id := c.Param("id")
 
 			if err := systemadapter.RemoveImage(id); err != nil {
@@ -509,7 +509,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": share})
 		})
 
-		api.PUT("/shares/:id", func(c *gin.Context) {
+		api.PUT("/shares/:id", requireWrite(), func(c *gin.Context) {
 			idStr := c.Param("id")
 			var id int64
 			fmt.Sscanf(idStr, "%d", &id)
@@ -526,7 +526,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": share})
 		})
 
-		api.PUT("/shares/:id/toggle", func(c *gin.Context) {
+		api.PUT("/shares/:id/toggle", requireWrite(), func(c *gin.Context) {
 			idStr := c.Param("id")
 			var id int64
 			fmt.Sscanf(idStr, "%d", &id)
@@ -544,7 +544,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		api.DELETE("/shares/:id", func(c *gin.Context) {
+		api.DELETE("/shares/:id", requireWrite(), func(c *gin.Context) {
 			idStr := c.Param("id")
 			var id int64
 			fmt.Sscanf(idStr, "%d", &id)
@@ -659,7 +659,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": items})
 		})
 
-		api.POST("/recycle-bin/trash", func(c *gin.Context) {
+		api.POST("/recycle-bin/trash", requireWrite(), func(c *gin.Context) {
 			var req struct {
 				Path string `json:"path"`
 			}
@@ -694,7 +694,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deleted"}})
 		})
 
-		api.POST("/recycle-bin/empty", func(c *gin.Context) {
+		api.POST("/recycle-bin/empty", requireRole("admin"), func(c *gin.Context) {
 			if err := recyclebin.EmptyTrash(); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -800,7 +800,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": users})
 		})
 
-		api.POST("/users", func(c *gin.Context) {
+		api.POST("/users", requireRole("admin"), func(c *gin.Context) {
 			var req auth.CreateUserRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -816,7 +816,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": user})
 		})
 
-		api.DELETE("/users/:username", func(c *gin.Context) {
+		api.DELETE("/users/:username", requireRole("admin"), func(c *gin.Context) {
 			username := c.Param("username")
 
 			if err := auth.DeleteUser(username); err != nil {
@@ -874,7 +874,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": s})
 		})
 
-		api.PUT("/settings", func(c *gin.Context) {
+		api.PUT("/settings", requireRole("admin"), func(c *gin.Context) {
 			var req settings.Settings
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -962,15 +962,13 @@ func New() *gin.Engine {
 			}
 			c.JSON(http.StatusOK, gin.H{"data": resp})
 		})
-	}
-
 
 		// --- Groups ---
-		api.GET("/groups", func(c *gin.Context) {
+		api.GET("/groups", requireRole("admin"), func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"data": auth.GetGroups()})
 		})
 
-		api.POST("/groups", func(c *gin.Context) {
+		api.POST("/groups", requireRole("admin"), func(c *gin.Context) {
 			var req struct {
 				Name    string `json:"name"`
 				Comment string `json:"comment"`
@@ -987,7 +985,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": group})
 		})
 
-		api.DELETE("/groups/:id", func(c *gin.Context) {
+		api.DELETE("/groups/:id", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			if err := auth.DeleteGroup(id); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -996,7 +994,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deleted"}})
 		})
 
-		api.POST("/groups/:id/members", func(c *gin.Context) {
+		api.POST("/groups/:id/members", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			var req struct {
 				Username string `json:"username"`
@@ -1012,7 +1010,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "added"}})
 		})
 
-		api.DELETE("/groups/:id/members/:username", func(c *gin.Context) {
+		api.DELETE("/groups/:id/members/:username", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			username := c.Param("username")
 			if err := auth.RemoveUserFromGroup(username, id); err != nil {
@@ -1069,7 +1067,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, data)
 		})
 
-		api.POST("/config/import", func(c *gin.Context) {
+		api.POST("/config/import", requireRole("admin"), func(c *gin.Context) {
 			var data configmgr.ExportData
 			if err := c.ShouldBindJSON(&data); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid config data"})
@@ -1239,7 +1237,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"path": path}})
 		})
 
-		api.DELETE("/backups/:name", func(c *gin.Context) {
+		api.DELETE("/backups/:name", requireRole("admin"), func(c *gin.Context) {
 			name := c.Param("name")
 			if err := backup.DeleteBackup(name); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -1264,7 +1262,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": proxy.ListRules()})
 		})
 
-		api.POST("/proxy/rules", func(c *gin.Context) {
+		api.POST("/proxy/rules", requireRole("admin"), func(c *gin.Context) {
 			var req struct {
 				Domain   string `json:"domain"`
 				Target   string `json:"target"`
@@ -1282,7 +1280,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": rule})
 		})
 
-		api.PUT("/proxy/rules/:id", func(c *gin.Context) {
+		api.PUT("/proxy/rules/:id", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			var req struct {
 				Domain   string `json:"domain"`
@@ -1301,7 +1299,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": rule})
 		})
 
-		api.DELETE("/proxy/rules/:id", func(c *gin.Context) {
+		api.DELETE("/proxy/rules/:id", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			if err := proxy.DeleteRule(id); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -1310,7 +1308,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "deleted"}})
 		})
 
-		api.PUT("/proxy/rules/:id/toggle", func(c *gin.Context) {
+		api.PUT("/proxy/rules/:id/toggle", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			var req struct {
 				Enabled bool `json:"enabled"`
@@ -1339,7 +1337,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"caddyfile": cfg}})
 		})
 
-		api.POST("/proxy/reload", func(c *gin.Context) {
+		api.POST("/proxy/reload", requireRole("admin"), func(c *gin.Context) {
 			if err := proxy.ReloadCaddy(); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -1468,6 +1466,7 @@ func New() *gin.Engine {
 			}
 			c.JSON(http.StatusOK, gin.H{"data": result})
 		})
+	}
 
 	static.ServeStatic(r)
 
