@@ -170,15 +170,35 @@ func TestChangePassword_ShortPassword(t *testing.T) {
 	}
 }
 
-func TestValidateToken(t *testing.T) {
+func TestValidateTokenAndExtractUser(t *testing.T) {
 	setupTestDB(t)
 	defer database.CloseTestDB()
 
-	if !ValidateToken("any-token") {
-		t.Error("expected valid token to return true")
+	// Generate a valid token first
+	token, err := GenerateToken("admin")
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
 	}
-	if ValidateToken("") {
-		t.Error("expected empty token to return false")
+
+	// Validate a valid token
+	username, err := ValidateTokenAndExtractUser(token)
+	if err != nil {
+		t.Fatalf("expected valid token, got error: %v", err)
+	}
+	if username != "admin" {
+		t.Errorf("expected username 'admin', got '%s'", username)
+	}
+
+	// Validate an empty token
+	_, err = ValidateTokenAndExtractUser("")
+	if err == nil {
+		t.Error("expected error for empty token")
+	}
+
+	// Validate an invalid token
+	_, err = ValidateTokenAndExtractUser("invalid-token")
+	if err == nil {
+		t.Error("expected error for invalid token")
 	}
 }
 
