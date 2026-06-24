@@ -1284,12 +1284,12 @@ func New() *gin.Engine {
 		})
 
 		// --- Scheduled Tasks (Cron) ---
-		api.GET("/cron/tasks", func(c *gin.Context) {
+		api.GET("/cron/tasks", requireRole("admin"), func(c *gin.Context) {
 			tasks := cronmanager.GetTasks()
 			c.JSON(http.StatusOK, gin.H{"data": tasks})
 		})
 
-		api.POST("/cron/tasks", requireWrite(), func(c *gin.Context) {
+		api.POST("/cron/tasks", requireRole("admin"), func(c *gin.Context) {
 			var req cronmanager.CreateTaskRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -1303,7 +1303,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": task})
 		})
 
-		api.PUT("/cron/tasks/:id", requireWrite(), func(c *gin.Context) {
+		api.PUT("/cron/tasks/:id", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			var req cronmanager.CreateTaskRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
@@ -1318,7 +1318,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": task})
 		})
 
-		api.DELETE("/cron/tasks/:id", requireWrite(), func(c *gin.Context) {
+		api.DELETE("/cron/tasks/:id", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			if err := cronmanager.DeleteTask(id); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -1327,7 +1327,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		api.POST("/cron/tasks/:id/toggle", requireWrite(), func(c *gin.Context) {
+		api.POST("/cron/tasks/:id/toggle", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			var req struct {
 				Enabled bool `json:"enabled"`
@@ -1343,7 +1343,7 @@ func New() *gin.Engine {
 			c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "ok"}})
 		})
 
-		api.POST("/cron/tasks/:id/run", requireWrite(), func(c *gin.Context) {
+		api.POST("/cron/tasks/:id/run", requireRole("admin"), func(c *gin.Context) {
 			id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 			task, err := cronmanager.RunTask(id)
 			if err != nil {

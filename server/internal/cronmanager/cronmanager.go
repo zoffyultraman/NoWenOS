@@ -2,7 +2,9 @@ package cronmanager
 
 import (
 	"bytes"
+	"context"
 	"errors"
+	"io"
 	"log"
 	"os/exec"
 	"strconv"
@@ -11,6 +13,12 @@ import (
 	"time"
 
 	"nowenos-server/internal/database"
+)
+
+const (
+	maxOutputSize   = 1024 * 1024 // 1MB
+	executionTimeout = 5 * time.Minute
+	maxConcurrent    = 5
 )
 
 // ScheduledTask represents a cron-like scheduled task.
@@ -285,8 +293,16 @@ func runDueTasks(now time.Time) {
 		}
 	}
 
+	sem := make(chan struct{}, maxConcurrent)
 	for _, t := range dueTasks {
+		sem <- struct{}{}
 		go func(ti taskInfo) {
+			defer func() { <-sem }()
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[cronmanager] panic in task %d: %v", ti.id, r)
+				}
+			}()
 			runSingleTask(ti.id, ti.command, ti.schedule)
 		}(t)
 	}
@@ -312,10 +328,13 @@ func runSingleTask(id int64, command, schedule string) {
 }
 
 func executeCommand(command string) (string, error) {
-	cmd := exec.Command("sh", "-c", command)
+	ctx, cancel := context.WithTimeout(context.Background(), executionTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "sh", "-c", command)
 	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	cmd.Stdout = io.LimitWriter(&stdout, maxOutputSize)
+	cmd.Stderr = io.LimitWriter(&stderr, maxOutputSize/4)
 	err := cmd.Run()
 
 	output := stdout.String()
@@ -325,6 +344,10 @@ func executeCommand(command string) (string, error) {
 		}
 		output += stderr.String()
 	}
+	// Truncate output to maxOutputSize
+	if len(output) > maxOutputSize {
+		output = output[:maxOutputSize] + "\n... (truncated)"
+	}
 	return output, err
 }
 
@@ -332,7 +355,51 @@ func executeCommand(command string) (string, error) {
 
 func isValidCron(expr string) bool {
 	fields := strings.Fields(expr)
-	return len(fields) == 5
+	if len(fields) != 5 {
+		return false
+	}
+	ranges := [][]int{
+		{0, 59}, // minute
+		{0, 23}, // hour
+		{1, 31}, // day of month
+		{1, 12}, // month
+		{0, 7},  // weekday (0 and 7 = Sunday)
+	}
+	for i, field := range fields {
+		if field == "*" {
+			continue
+		}
+		if strings.ContainsAny(field, ",/-") {
+			// Validate numeric parts of compound expressions
+			for _, part := range strings.Split(field, ",") {
+				part = strings.TrimSpace(part)
+				if strings.Contains(part, "/") {
+					subParts := strings.SplitN(part, "/", 2)
+					if subParts[0] != "*" {
+						if n, err := strconv.Atoi(subParts[0]); err != nil || n < ranges[i][0] || n > ranges[i][1] {
+							return false
+						}
+					}
+					if n, err := strconv.Atoi(subParts[1]); err != nil || n <= 0 {
+						return false
+					}
+				} else if strings.Contains(part, "-") {
+					subParts := strings.SplitN(part, "-", 2)
+					n1, err1 := strconv.Atoi(subParts[0])
+					n2, err2 := strconv.Atoi(subParts[1])
+					if err1 != nil || err2 != nil || n1 < ranges[i][0] || n2 > ranges[i][1] || n1 > n2 {
+						return false
+					}
+				}
+			}
+			continue
+		}
+		n, err := strconv.Atoi(field)
+		if err != nil || n < ranges[i][0] || n > ranges[i][1] {
+			return false
+		}
+	}
+	return true
 }
 
 func matchesField(field string, value int) bool {
