@@ -37,6 +37,7 @@ import {
 import { FilePreview } from "@/components/FilePreview";
 import PermissionsDialog from "@/features/files/PermissionsDialog";
 import MoveDialog from "@/features/files/MoveDialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function FilesPage() {
   const t = useTranslation();
@@ -52,6 +53,8 @@ export default function FilesPage() {
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
   const [permissionsFile, setPermissionsFile] = useState<{ path: string; name: string } | null>(null);
   const [movingFile, setMovingFile] = useState<{ path: string; name: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ path: string; name: string } | null>(null);
+  const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
   const [fileInputEl, setFileInputEl] = useState<HTMLInputElement | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -186,8 +189,13 @@ export default function FilesPage() {
   }
 
   function handleBatchDelete() {
+    setBatchDeleteConfirm(true);
+  }
+
+  function confirmBatchDelete() {
     for (const p of selectedPaths) trashMutation.mutate(p);
     setSelectedPaths(new Set());
+    setBatchDeleteConfirm(false);
   }
 
   function handleBatchCompress() {
@@ -218,8 +226,15 @@ export default function FilesPage() {
     downloadFile(filePath);
   }
 
-  function handleDelete(filePath: string) {
-    trashMutation.mutate(filePath);
+  function handleDelete(filePath: string, name: string) {
+    setDeleteConfirm({ path: filePath, name });
+  }
+
+  function confirmDelete() {
+    if (deleteConfirm) {
+      trashMutation.mutate(deleteConfirm.path);
+      setDeleteConfirm(null);
+    }
   }
 
   function handleMkdir() {
@@ -443,7 +458,7 @@ export default function FilesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(entry.path)}
+                      onClick={() => handleDelete(entry.path, entry.name)}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -481,6 +496,22 @@ export default function FilesPage() {
           }}
         />
       )}
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={confirmDelete}
+        title={t("common.delete")}
+        message={t("files.deleteConfirm").replace("{name}", deleteConfirm?.name ?? "")}
+        loading={trashMutation.isPending}
+      />
+      <ConfirmDialog
+        open={batchDeleteConfirm}
+        onClose={() => setBatchDeleteConfirm(false)}
+        onConfirm={confirmBatchDelete}
+        title={t("files.batchDelete")}
+        message={`${t("files.batchDelete")} (${selectedPaths.size})?`}
+        loading={trashMutation.isPending}
+      />
     </div>
   );
 }

@@ -450,6 +450,7 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // Dashboard realtime
   "dashboard.realtime": { en: "Real-time", zh: "实时" },
+  "dashboard.polling": { en: "Polling", zh: "轮询中" },
 
   // File preview and drag-drop
   "files.dropUpload": { en: "Drop files here to upload", zh: "拖拽文件到此处上传" },
