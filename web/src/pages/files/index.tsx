@@ -256,7 +256,7 @@ export default function FilesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("files.title")}</h1>
           {result && (
             <span className="text-xs text-muted-foreground bg-muted/50 rounded-full px-2.5 py-0.5 font-medium">
-              {result.entries.length} {result.entries.length === 1 ? "item" : "items"}
+              {result.entries.length} {result.entries.length === 1 ? t("files.item") : t("files.items")}
             </span>
           )}
           <span className="font-mono text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-1.5">
@@ -343,7 +343,7 @@ export default function FilesPage() {
         </div>
         {selectedPaths.size > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{selectedPaths.size} selected</span>
+            <span className="text-xs text-muted-foreground">{selectedPaths.size} {t("files.selected")}</span>
             <Button variant="outline" size="sm" onClick={handleBatchCompress} className="h-8 text-xs">
               <Archive className="mr-1 h-3 w-3" />{t("files.compress")}
             </Button>
@@ -366,7 +366,7 @@ export default function FilesPage() {
                 <span className="truncate">{f.path}</span>
               </div>
             ))}
-            <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">Close results</button>
+            <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">{t("files.closeResults")}</button>
           </CardContent>
         </Card>
       )}

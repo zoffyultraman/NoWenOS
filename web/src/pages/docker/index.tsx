@@ -200,8 +200,8 @@ function ContainersTab({ onViewLogs }: { onViewLogs: (id: string, name: string) 
             setConfirmAction(null);
           }
         }}
-        title={t("docker.containerAction").replace("{action}", confirmAction?.action ?? "")}
-        message={`${t("docker.containerAction").replace("{action}", confirmAction?.action ?? "")} "${confirmAction?.name ?? ""}"?`}
+        title={t("docker.confirmAction").replace("{action}", confirmAction?.action ?? "")}
+        message={t("docker.confirmActionMessage").replace("{action}", confirmAction?.action ?? "").replace("{name}", confirmAction?.name ?? "")}
         loading={controlMutation.isPending}
         variant="danger"
       />
