@@ -171,6 +171,8 @@ func GetFileInfo(filePath string) (*FileEntry, error) {
 		Size:    info.Size(),
 		ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
 	}, nil
+func GetFileInfo(filePath string) (*FileDetails, error) {
+	return GetFileDetails(filePath)
 }
 
 func OpenFile(filePath string) (*os.File, error) {

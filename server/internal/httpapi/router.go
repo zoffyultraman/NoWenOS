@@ -3,6 +3,7 @@
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -591,7 +592,7 @@ func New() *gin.Engine {
 				return
 			}
 
-			c.Header("Content-Disposition", "attachment; filename="+info.Name)
+			c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(info.Name)))
 			c.Header("Content-Type", "application/octet-stream")
 			c.Header("Content-Length", strconv.FormatInt(info.Size, 10))
 			c.File(filePath)
@@ -738,19 +739,13 @@ func New() *gin.Engine {
 		})
 
 		// --- File Search / Compress / Extract ---
-		api.POST("/files/search", requireWrite(), func(c *gin.Context) {
-			var req struct {
-				Path  string `json:"path"`
-				Query string `json:"query"`
+		api.GET("/files/search", func(c *gin.Context) {
+			searchPath := c.Query("path")
+			query := c.Query("query")
+			if searchPath == "" {
+				searchPath = "."
 			}
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-				return
-			}
-			if req.Path == "" {
-				req.Path = "."
-			}
-			results, err := filemanager.SearchFiles(req.Path, req.Query)
+			results, err := filemanager.SearchFiles(searchPath, query)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
@@ -1032,7 +1027,7 @@ func New() *gin.Engine {
 
 
 		api.GET("/logs/download", func(c *gin.Context) {
-			c.Header("Content-Disposition", "attachment; filename=nowenos.log")
+			c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape("nowenos.log")))
 			logPath := "/var/log/nowenos/nowenos.log"
 			data, err := os.ReadFile(logPath)
 			if err != nil {
@@ -1063,7 +1058,7 @@ func New() *gin.Engine {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
-			c.Header("Content-Disposition", "attachment; filename=nowenos-config.json")
+			c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape("nowenos-config.json")))
 			c.JSON(http.StatusOK, data)
 		})
 
