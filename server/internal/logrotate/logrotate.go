@@ -117,6 +117,12 @@ func CreateConfig(req CreateConfigRequest) (*LogRotateConfig, error) {
 	if err := validatePaths(req.LogPaths); err != nil {
 		return nil, err
 	}
+	if err := validateCreateMode(req.CreateMode); err != nil {
+		return nil, err
+	}
+	if err := validatePostRotate(req.PostRotate); err != nil {
+		return nil, err
+	}
 
 	freq := req.Frequency
 	if freq == "" {
@@ -156,6 +162,12 @@ func CreateConfig(req CreateConfigRequest) (*LogRotateConfig, error) {
 // UpdateConfig updates an existing logrotate configuration.
 func UpdateConfig(id int64, req CreateConfigRequest) (*LogRotateConfig, error) {
 	if err := validatePaths(req.LogPaths); err != nil {
+		return nil, err
+	}
+	if err := validateCreateMode(req.CreateMode); err != nil {
+		return nil, err
+	}
+	if err := validatePostRotate(req.PostRotate); err != nil {
 		return nil, err
 	}
 
@@ -230,9 +242,15 @@ func ApplyConfig(id int64) error {
 
 	content := generateConfigContent(cfg)
 	configPath := filepath.Join(configDir, "nowenos-"+cfg.Name)
+	tmpPath := configPath + ".tmp"
 
-	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
+	// Atomic write: write to temp file first, then rename
+	if err := os.WriteFile(tmpPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write config file: %v", err)
+	}
+	if err := os.Rename(tmpPath, configPath); err != nil {
+		os.Remove(tmpPath) // cleanup temp file on failure
+		return fmt.Errorf("failed to rename config file: %v", err)
 	}
 
 	return nil
@@ -356,7 +374,7 @@ func validateName(name string) error {
 	return nil
 }
 
-// validatePaths checks that log paths are non-empty and absolute.
+// validatePaths checks that log paths are non-empty, absolute, and don't contain path traversal.
 func validatePaths(paths string) error {
 	if strings.TrimSpace(paths) == "" {
 		return fmt.Errorf("log paths are required")
@@ -370,6 +388,36 @@ func validatePaths(paths string) error {
 		if !filepath.IsAbs(p) {
 			return fmt.Errorf("log path must be absolute: %s", p)
 		}
+		cleaned := filepath.Clean(p)
+		if strings.Contains(cleaned, "..") {
+			return fmt.Errorf("log path must not contain '..': %s", p)
+		}
+	}
+	return nil
+}
+
+// validateCreateMode checks that create mode is a valid octal string.
+func validateCreateMode(mode string) error {
+	if mode == "" {
+		return nil
+	}
+	matched, _ := regexp.MatchString(`^0[0-7]{3}$`, mode)
+	if !matched {
+		return fmt.Errorf("create mode must be a 4-digit octal string like 0644, got: %s", mode)
+	}
+	return nil
+}
+
+// validatePostRotate checks that postRotate command is safe (single line, reasonable length).
+func validatePostRotate(cmd string) error {
+	if cmd == "" {
+		return nil
+	}
+	if len(cmd) > 500 {
+		return fmt.Errorf("postRotate command too long (max 500 chars)")
+	}
+	if strings.Contains(cmd, "\n") || strings.Contains(cmd, "\r") {
+		return fmt.Errorf("postRotate command must be a single line")
 	}
 	return nil
 }
