@@ -1,4 +1,4 @@
-﻿package appcenter
+package appcenter
 
 import (
 	"encoding/json"
@@ -27,16 +27,6 @@ type EnvVar struct {
 	Description string `json:"description"`
 	Default     string `json:"default"`
 	Required    bool   `json:"required"`
-}
-
-func InitTable() {
-	db := database.GetDB()
-	db.Exec("CREATE TABLE IF NOT EXISTS installed_apps (" +
-		"id TEXT PRIMARY KEY, " +
-		"name TEXT NOT NULL, " +
-		"container_id TEXT DEFAULT '', " +
-		"status TEXT DEFAULT 'stopped', " +
-		"installed_at DATETIME DEFAULT CURRENT_TIMESTAMP)")
 }
 
 func GetBuiltinTemplates() []AppTemplate {

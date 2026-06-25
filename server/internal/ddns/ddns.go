@@ -44,35 +44,12 @@ type CreateConfigRequest struct {
 }
 
 var (
-	mu          sync.Mutex
-	currentIP   string
-	knownIPs    = make(map[string]string) // configID -> last known IP
+	mu        sync.Mutex
+	currentIP string
+	knownIPs  = make(map[string]string) // configID -> last known IP
 )
 
 // InitTable creates the ddns_configs table and ddns_update_log table if they don't exist.
-func InitTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS ddns_configs (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		provider TEXT NOT NULL,
-		domain TEXT NOT NULL,
-		username TEXT NOT NULL DEFAULT '',
-		password TEXT NOT NULL DEFAULT '',
-		ip TEXT NOT NULL DEFAULT '',
-		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		enabled INTEGER NOT NULL DEFAULT 1
-	)`)
-	db.Exec(`CREATE TABLE IF NOT EXISTS ddns_update_log (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		config_id INTEGER NOT NULL,
-		old_ip TEXT NOT NULL DEFAULT '',
-		new_ip TEXT NOT NULL DEFAULT '',
-		status TEXT NOT NULL DEFAULT 'success',
-		message TEXT NOT NULL DEFAULT '',
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (config_id) REFERENCES ddns_configs(id) ON DELETE CASCADE
-	)`)
-}
 
 // ListConfigs returns all DDNS configs ordered by creation time.
 func ListConfigs() []DDNSConfig {

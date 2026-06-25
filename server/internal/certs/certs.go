@@ -42,14 +42,14 @@ func validateDomain(domain string) error {
 
 // Certificate represents a stored TLS certificate record.
 type Certificate struct {
-	ID         int64  `json:"id"`
-	Domain     string `json:"domain"`
-	Type       string `json:"type"`       // letsencrypt, selfsigned
-	CertPath   string `json:"certPath"`
-	KeyPath    string `json:"keyPath"`
-	ExpiresAt  string `json:"expiresAt"`
-	AutoRenew  bool   `json:"autoRenew"`
-	CreatedAt  string `json:"createdAt"`
+	ID        int64  `json:"id"`
+	Domain    string `json:"domain"`
+	Type      string `json:"type"` // letsencrypt, selfsigned
+	CertPath  string `json:"certPath"`
+	KeyPath   string `json:"keyPath"`
+	ExpiresAt string `json:"expiresAt"`
+	AutoRenew bool   `json:"autoRenew"`
+	CreatedAt string `json:"createdAt"`
 }
 
 // CreateLERequest is the input for requesting a Let's Encrypt certificate.
@@ -73,21 +73,6 @@ type Status struct {
 }
 
 // InitTable creates the certificates table if it doesn't exist.
-func InitTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS certificates (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		domain TEXT NOT NULL,
-		type TEXT NOT NULL DEFAULT 'selfsigned',
-		cert_path TEXT NOT NULL,
-		key_path TEXT NOT NULL,
-		expires_at DATETIME,
-		auto_renew INTEGER NOT NULL DEFAULT 0,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`)
-	db.Exec("CREATE INDEX IF NOT EXISTS idx_certificates_domain ON certificates(domain)")
-	os.MkdirAll(certDir, 0755)
-}
 
 // ListCertificates returns all certificate records ordered by creation time.
 func ListCertificates() []Certificate {

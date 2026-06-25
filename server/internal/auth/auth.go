@@ -1,4 +1,4 @@
-﻿package auth
+package auth
 
 import (
 	"crypto/hmac"
@@ -66,38 +66,6 @@ type CreateUserRequest struct {
 type ChangePasswordRequest struct {
 	OldPassword string `json:"oldPassword"`
 	NewPassword string `json:"newPassword"`
-}
-
-
-func InitDB() {
-	db := database.GetDB()
-
-	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'admin'").Scan(&count)
-	if err != nil || count == 0 {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Printf("Failed to hash admin password: %v", err)
-			return
-		}
-		_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", "admin", string(hashedPassword), "admin")
-		if err != nil {
-			log.Printf("Failed to create admin user: %v", err)
-		}
-	}
-
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'user'").Scan(&count)
-	if err != nil || count == 0 {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("user"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Printf("Failed to hash user password: %v", err)
-			return
-		}
-		_, err = db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", "user", string(hashedPassword), "user")
-		if err != nil {
-			log.Printf("Failed to create user: %v", err)
-		}
-	}
 }
 
 func Login(req LoginRequest) (*LoginResponse, error) {
@@ -324,4 +292,3 @@ func GetUserRole(username string) string {
 	}
 	return role
 }
-

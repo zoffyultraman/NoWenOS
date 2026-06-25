@@ -1,54 +1,23 @@
-﻿import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useFilesPage } from "@/features/files/hooks/useFilesPage";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import {
-  browseFiles,
-  uploadFile,
-  downloadFile,
-  deleteFile,
-  createDirectory,
-  renameFile,
-  searchFiles,
-  compressFiles,
-  extractFile,
-} from "@/features/files/api";
-import { trashFile } from "@/features/recycle/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/stores/toast";
-import {
-  Folder,
-  File,
-  Upload,
-  Download,
-  Trash2,
-  FolderPlus,
-  ArrowLeft,
-  Pencil,
-  Eye,
-  Search,
-  Archive,
-  Package,
-  CheckSquare,
-  Square,
-  Shield,
-  FolderInput,
-  MoreVertical,
-} from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useTranslation } from "@/hooks/useTranslation";
 import { FilePreview } from "@/components/FilePreview";
 import PermissionsDialog from "@/features/files/PermissionsDialog";
 import MoveDialog from "@/features/files/MoveDialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Folder, File, Upload, Download, Trash2, FolderPlus,
+  ArrowLeft, Pencil, Eye, Search, Archive, Package,
+  CheckSquare, Square, Shield, FolderInput, MoreVertical,
+} from "lucide-react";
 
 function BreadcrumbNav({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
   const parts = path.split("/").filter(Boolean);
   const segments: { label: string; path: string }[] = [];
   for (let i = 0; i < parts.length; i++) {
-    segments.push({
-      label: parts[i],
-      path: parts.slice(0, i + 1).join("/"),
-    });
+    segments.push({ label: parts[i], path: parts.slice(0, i + 1).join("/") });
   }
   return (
     <div className="flex items-center gap-1 text-sm overflow-x-auto">
@@ -67,250 +36,46 @@ function BreadcrumbNav({ path, onNavigate }: { path: string; onNavigate: (p: str
   );
 }
 
-interface SearchResult {
-  name: string;
-  path: string;
-  isDir: boolean;
-  size: number;
-  modTime: string;
-}
-
 export default function FilesPage() {
   const t = useTranslation();
-  const [currentPath, setCurrentPath] = useState(".");
-  const [showMkdir, setShowMkdir] = useState(false);
-  const [newDirName, setNewDirName] = useState("");
-  const [renamingPath, setRenamingPath] = useState<string | null>(null);
-  const [newName, setNewName] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
-  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
-  const [isDragging, setIsDragging] = useState(false);
-  const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
-  const [permissionsFile, setPermissionsFile] = useState<{ path: string; name: string } | null>(null);
-  const [movingFile, setMovingFile] = useState<{ path: string; name: string } | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ path: string; name: string } | null>(null);
-  const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
-  const [fileInputEl, setFileInputEl] = useState<HTMLInputElement | null>(null);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
-  const filesQuery = useQuery({
-    queryKey: ["files", currentPath],
-    queryFn: () => browseFiles(currentPath),
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: ({ path, file }: { path: string; file: globalThis.File }) => uploadFile(path, file),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      toast.success(t("files.uploadSuccess"));
-    },
-    onError: () => {
-      toast.error(t("files.uploadFailed"));
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (path: string) => deleteFile(path),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      toast.success(t("files.deleteSuccess"));
-    },
-    onError: () => {
-      toast.error(t("files.deleteFailed"));
-    },
-  });
-
-  const mkdirMutation = useMutation({
-    mutationFn: ({ parentPath, dirName }: { parentPath: string; dirName: string }) =>
-      createDirectory(parentPath, dirName),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      setNewDirName("");
-      setShowMkdir(false);
-      toast.success(t("files.folderCreated"));
-    },
-    onError: () => {
-      toast.error(t("files.folderFailed"));
-    },
-  });
-
-  const renameMutation = useMutation({
-    mutationFn: ({ path, newName }: { path: string; newName: string }) => renameFile(path, newName),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      setRenamingPath(null);
-      setNewName("");
-      toast.success(t("files.renameSuccess"));
-    },
-    onError: () => toast.error(t("files.renameFailed")),
-  });
-
-  const compressMutation = useMutation({
-    mutationFn: ({ paths, dest }: { paths: string[]; dest: string }) => compressFiles(paths, dest),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      setSelectedPaths(new Set());
-      toast.success(t("files.compressSuccess"));
-    },
-    onError: () => toast.error(t("files.compressFailed")),
-  });
-
-  const extractMutation = useMutation({
-    mutationFn: ({ path, dir }: { path: string; dir: string }) => extractFile(path, dir),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      toast.success(t("files.extractSuccess"));
-    },
-    onError: () => toast.error(t("files.extractFailed")),
-  });
-
-  const trashMutation = useMutation({
-    mutationFn: (path: string) => trashFile(path),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-      toast.success(t("files.trashSuccess"));
-    },
-    onError: () => toast.error(t("files.trashFailed")),
-  });
-
-  useEffect(() => {
-    if (!openMenu) return;
-    const close = () => setOpenMenu(null);
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [openMenu]);
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }
-
-  function handleDragLeave(e: React.DragEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        uploadMutation.mutate({ path: currentPath, file: files[i] });
-      }
-    }
-  }
-
-  async function handleSearch(q: string) {
-    if (!q.trim()) { setSearchResults(null); return; }
-    try {
-      const res = await searchFiles(currentPath, q);
-      setSearchResults(res.data ?? []);
-    } catch { setSearchResults([]); }
-  }
-
-  function toggleSelect(path: string) {
-    setSelectedPaths((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path); else next.add(path);
-      return next;
-    });
-  }
-
-  function toggleSelectAll() {
-    const entries = result?.entries ?? [];
-    if (selectedPaths.size === entries.length) {
-      setSelectedPaths(new Set());
-    } else {
-      setSelectedPaths(new Set(entries.map((e) => e.path)));
-    }
-  }
-
-  function handleBatchDelete() {
-    setBatchDeleteConfirm(true);
-  }
-
-  function confirmBatchDelete() {
-    for (const p of selectedPaths) trashMutation.mutate(p);
-    setSelectedPaths(new Set());
-    setBatchDeleteConfirm(false);
-  }
-
-  function handleBatchCompress() {
-    const dest = currentPath + "/archive-" + Date.now() + ".tar.gz";
-    compressMutation.mutate({ paths: Array.from(selectedPaths), dest });
-  }
+  const {
+    currentPath, showMkdir, setShowMkdir,
+    newDirName, setNewDirName,
+    renamingPath, setRenamingPath,
+    newName, setNewName,
+    searchQuery, setSearchQuery,
+    searchResults, setSearchResults,
+    selectedPaths, setSelectedPaths,
+    isDragging,
+    previewFile, setPreviewFile,
+    permissionsFile, setPermissionsFile,
+    movingFile, setMovingFile,
+    deleteConfirm, setDeleteConfirm,
+    batchDeleteConfirm, setBatchDeleteConfirm,
+    fileInputEl, setFileInputEl,
+    openMenu, setOpenMenu,
+    result,
+    filesQuery, uploadMutation, mkdirMutation,
+    renameMutation, trashMutation,
+    handleDragOver, handleDragLeave, handleDrop,
+    handleSearch, toggleSelect, toggleSelectAll,
+    handleBatchDelete, confirmBatchDelete, handleBatchCompress,
+    handleNavigate, handleGoUp, handleUpload, handleDownload,
+    handleDelete, confirmDelete, handleMkdir, formatSize,
+  } = useFilesPage();
 
   useKeyboardShortcuts({
     "mod+n": () => setShowMkdir(true),
     "mod+u": () => fileInputEl?.click(),
-    "mod+a": () => {
-      toggleSelectAll();
-    },
-    "delete": () => {
-      if (selectedPaths.size > 0) handleBatchDelete();
-    },
-    "backspace": () => {
-      if (selectedPaths.size > 0) handleBatchDelete();
-    },
+    "mod+a": () => toggleSelectAll(),
+    "delete": () => { if (selectedPaths.size > 0) handleBatchDelete(); },
+    "backspace": () => { if (selectedPaths.size > 0) handleBatchDelete(); },
     "escape": () => {
       setSelectedPaths(new Set());
       setSearchResults(null);
       setSearchQuery("");
     },
   });
-
-  const result = filesQuery.data?.data;
-
-  function handleNavigate(path: string) {
-    setCurrentPath(path);
-  }
-
-  function handleGoUp() {
-    if (result?.parent) {
-      setCurrentPath(result.parent);
-    }
-  }
-
-  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    uploadMutation.mutate({ path: currentPath, file: f });
-    e.target.value = "";
-  }
-
-  function handleDownload(filePath: string) {
-    downloadFile(filePath);
-  }
-
-  function handleDelete(filePath: string, name: string) {
-    setDeleteConfirm({ path: filePath, name });
-  }
-
-  function confirmDelete() {
-    if (deleteConfirm) {
-      trashMutation.mutate(deleteConfirm.path);
-      setDeleteConfirm(null);
-    }
-  }
-
-  function handleMkdir() {
-    if (!newDirName.trim()) return;
-    mkdirMutation.mutate({ parentPath: currentPath, dirName: newDirName.trim() });
-  }
-
-  function formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  }
 
   return (
     <div className="space-y-4 p-4">
@@ -326,28 +91,14 @@ export default function FilesPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleGoUp} disabled={!result?.parent} className="rounded-xl border-border bg-muted/30 hover:bg-muted/50">
-            <ArrowLeft className="mr-1 h-3 w-3" />
-            {t("files.up")}
+            <ArrowLeft className="mr-1 h-3 w-3" /> {t("files.up")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowMkdir(!showMkdir)} className="rounded-xl border-border bg-muted/30 hover:bg-muted/50">
-            <FolderPlus className="mr-1 h-3 w-3" />
-            {t("files.newFolder")}
+            <FolderPlus className="mr-1 h-3 w-3" /> {t("files.newFolder")}
           </Button>
-          <input
-            ref={setFileInputEl}
-            type="file"
-            className="hidden"
-            onChange={handleUpload}
-          />
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => fileInputEl?.click()}
-            disabled={uploadMutation.isPending}
-            className="rounded-xl"
-          >
-            <Upload className="mr-1 h-3 w-3" />
-            {t("files.upload")}
+          <input ref={setFileInputEl} type="file" className="hidden" onChange={handleUpload} />
+          <Button variant="default" size="sm" onClick={() => fileInputEl?.click()} disabled={uploadMutation.isPending} className="rounded-xl">
+            <Upload className="mr-1 h-3 w-3" /> {t("files.upload")}
           </Button>
         </div>
       </div>
@@ -356,95 +107,78 @@ export default function FilesPage() {
         <Card className="border-border bg-card">
           <CardContent className="flex items-center gap-2 py-3">
             <input
-              type="text"
-              value={newDirName}
+              type="text" value={newDirName}
               onChange={(e) => setNewDirName(e.target.value)}
               placeholder={t("files.newFolderName")}
               className="flex h-9 flex-1 rounded-md border border-border bg-muted/50 px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => e.key === "Enter" && handleMkdir()}
             />
-            <Button size="sm" onClick={handleMkdir} disabled={mkdirMutation.isPending}>
-              {t("files.create")}
-            </Button>
+            <Button size="sm" onClick={handleMkdir} disabled={mkdirMutation.isPending}>{t("files.create")}</Button>
           </CardContent>
         </Card>
       )}
 
       {filesQuery.isLoading && <p className="text-sm text-muted-foreground">{t("files.loading")}</p>}
-
       {filesQuery.isError && (
         <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-sm text-destructive">{t("files.failed")}</p>
-          </CardContent>
+          <CardContent className="pt-6"><p className="text-sm text-destructive">{t("files.failed")}</p></CardContent>
         </Card>
       )}
-
       {result && result.entries.length === 0 && (
         <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t("files.empty")}</p>
-          </CardContent>
+          <CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t("files.empty")}</p></CardContent>
         </Card>
       )}
 
       {result && result.entries.length > 0 && (
         <Card className="border-border relative" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
-          {/* Search bar */}
-      <div className="flex items-center gap-2 px-4 pt-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
-            placeholder={t("files.searchPlaceholder")}
-            className="w-full rounded-lg border border-border bg-muted/50 pl-9 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
-        {selectedPaths.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{selectedPaths.size} {t("files.selected")}</span>
-            <Button variant="outline" size="sm" onClick={handleBatchCompress} className="h-8 text-xs">
-              <Archive className="mr-1 h-3 w-3" />{t("files.compress")}
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleBatchDelete} className="h-8 text-xs">
-              <Trash2 className="mr-1 h-3 w-3" />{t("files.batchDelete")}
-            </Button>
+          <div className="flex items-center gap-2 px-4 pt-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text" value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); handleSearch(e.target.value); }}
+                placeholder={t("files.searchPlaceholder")}
+                className="w-full rounded-lg border border-border bg-muted/50 pl-9 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            {selectedPaths.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{selectedPaths.size} {t("files.selected")}</span>
+                <Button variant="outline" size="sm" onClick={handleBatchCompress} className="h-8 text-xs">
+                  <Archive className="mr-1 h-3 w-3" />{t("files.compress")}
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleBatchDelete} className="h-8 text-xs">
+                  <Trash2 className="mr-1 h-3 w-3" />{t("files.batchDelete")}
+                </Button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Search results */}
-      {searchResults && (
-        <Card className="border-border">
-          <CardContent className="p-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">{t("files.searchResults")} ({searchResults.length})</p>
-            {searchResults.length === 0 && <p className="text-xs text-muted-foreground">{t("files.noResults")}</p>}
-            {searchResults.map((f: any) => (
-              <button
-                key={f.path}
-                onClick={() => {
-                  if (f.isDir) {
-                    handleNavigate(f.path);
-                    setSearchResults(null);
-                    setSearchQuery("");
-                  } else {
-                    setPreviewFile({ path: f.path, name: f.name });
-                  }
-                }}
-                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50 text-sm w-full text-left"
-              >
-                {f.isDir ? <Folder className="h-3.5 w-3.5 text-cyan-400" /> : <File className="h-3.5 w-3.5 text-muted-foreground" />}
-                <span className="truncate">{f.path}</span>
-              </button>
-            ))}
-            <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">{t("files.closeResults")}</button>
-          </CardContent>
-        </Card>
-      )}
+          {searchResults && (
+            <Card className="border-border">
+              <CardContent className="p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">{t("files.searchResults")} ({searchResults.length})</p>
+                {searchResults.length === 0 && <p className="text-xs text-muted-foreground">{t("files.noResults")}</p>}
+                {searchResults.map((f: any) => (
+                  <button
+                    key={f.path}
+                    onClick={() => {
+                      if (f.isDir) { handleNavigate(f.path); setSearchResults(null); setSearchQuery(""); }
+                      else { setPreviewFile({ path: f.path, name: f.name }); }
+                    }}
+                    className="flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50 text-sm w-full text-left"
+                  >
+                    {f.isDir ? <Folder className="h-3.5 w-3.5 text-cyan-400" /> : <File className="h-3.5 w-3.5 text-muted-foreground" />}
+                    <span className="truncate">{f.path}</span>
+                  </button>
+                ))}
+                <button onClick={() => setSearchResults(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">{t("files.closeResults")}</button>
+              </CardContent>
+            </Card>
+          )}
 
-      {isDragging && (
+          {isDragging && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/5">
               <div className="flex flex-col items-center gap-2 text-primary">
                 <Upload className="h-8 w-8" />
@@ -465,88 +199,49 @@ export default function FilesPage() {
                 <span className="hidden md:block text-right">{t("files.size")}</span>
                 <span className="hidden md:block text-right">{t("files.modified")}</span>
               </div>
-
               {result.entries.map((entry) => (
-                <div
-                  key={entry.path}
-                  className="grid grid-cols-[36px_1fr_120px] md:grid-cols-[36px_1fr_120px_180px_120px] items-center px-4 py-2.5 hover:bg-muted/30 transition-colors"
-                >
+                <div key={entry.path} className="grid grid-cols-[36px_1fr_120px] md:grid-cols-[36px_1fr_120px_180px_120px] items-center px-4 py-2.5 hover:bg-muted/30 transition-colors">
                   <span className="flex items-center justify-center">
                     <button onClick={() => toggleSelect(entry.path)}>
                       {selectedPaths.has(entry.path) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
                     </button>
                   </span>
                   {renamingPath === entry.path ? (
-                    <input
-                      autoFocus
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") renameMutation.mutate({ path: entry.path, newName });
-                        if (e.key === "Escape") { setRenamingPath(null); setNewName(""); }
-                      }}
+                    <input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") renameMutation.mutate({ path: entry.path, newName }); if (e.key === "Escape") { setRenamingPath(null); setNewName(""); } }}
                       onBlur={() => { setRenamingPath(null); setNewName(""); }}
-                      className="h-7 w-48 rounded border border-primary bg-muted px-2 text-sm"
-                    />
+                      className="h-7 w-48 rounded border border-primary bg-muted px-2 text-sm" />
                   ) : (
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 text-left min-w-0"
-                      onClick={() => entry.isDir && handleNavigate(entry.path)}
-                    >
-                      {entry.isDir ? (
-                        <Folder className="h-4 w-4 flex-shrink-0 text-cyan-400" />
-                      ) : (
-                        <File className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
-                      )}
+                    <button type="button" className="flex items-center gap-2 text-left min-w-0" onClick={() => entry.isDir && handleNavigate(entry.path)}>
+                      {entry.isDir ? <Folder className="h-4 w-4 flex-shrink-0 text-cyan-400" /> : <File className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />}
                       <span className={"truncate " + (entry.isDir ? "font-medium" : "")}>{entry.name}</span>
                     </button>
                   )}
-                  <span className="text-right text-sm text-muted-foreground">
-                    {entry.isDir ? "\u2014" : formatSize(entry.size)}
-                  </span>
+                  <span className="text-right text-sm text-muted-foreground">{entry.isDir ? "—" : formatSize(entry.size)}</span>
                   <span className="text-right text-sm text-muted-foreground">{entry.modTime}</span>
                   <div className="text-right flex items-center justify-end gap-0.5">
                     {!entry.isDir && (
                       <>
-                        <Button variant="ghost" size="sm" onClick={() => setPreviewFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.preview")}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0" title={t("files.download")}>
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setPreviewFile({ path: entry.path, name: entry.name })} className="h-8 w-8 p-0" title={t("files.preview")}><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDownload(entry.path)} className="h-8 w-8 p-0" title={t("files.download")}><Download className="h-4 w-4" /></Button>
                       </>
                     )}
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.path, entry.name)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("files.delete")}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(entry.path, entry.name)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title={t("files.delete")}><Trash2 className="h-4 w-4" /></Button>
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" onClick={() => setOpenMenu(openMenu === entry.path ? null : entry.path)} className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setOpenMenu(openMenu === entry.path ? null : entry.path)} className="h-8 w-8 p-0"><MoreVertical className="h-4 w-4" /></Button>
                       {openMenu === entry.path && (
                         <div className="absolute right-0 top-8 z-20 w-40 rounded-lg border border-border bg-card shadow-lg py-1">
-                          <button onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
-                            <Pencil className="h-3.5 w-3.5" /> {t("files.rename")}
-                          </button>
-                          <button onClick={() => { setMovingFile({ path: entry.path, name: entry.name }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
-                            <FolderInput className="h-3.5 w-3.5" /> {t("files.moveTo")}
-                          </button>
+                          <button onClick={() => { setRenamingPath(entry.path); setNewName(entry.name); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2"><Pencil className="h-3.5 w-3.5" /> {t("files.rename")}</button>
+                          <button onClick={() => { setMovingFile({ path: entry.path, name: entry.name }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2"><FolderInput className="h-3.5 w-3.5" /> {t("files.moveTo")}</button>
                           {!entry.isDir && entry.name.endsWith(".tar.gz") && (
-                            <button onClick={() => { extractMutation.mutate({ path: entry.path, dir: currentPath }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
-                              <Package className="h-3.5 w-3.5" /> {t("files.extract")}
-                            </button>
+                            <button onClick={() => { /* extractMutation.mutate({ path: entry.path, dir: currentPath }); */ setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2"><Package className="h-3.5 w-3.5" /> {t("files.extract")}</button>
                           )}
-                          <button onClick={() => { setPermissionsFile({ path: entry.path, name: entry.name }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2">
-                            <Shield className="h-3.5 w-3.5" /> {t("files.permissions")}
-                          </button>
+                          <button onClick={() => { setPermissionsFile({ path: entry.path, name: entry.name }); setOpenMenu(null); }} className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center gap-2"><Shield className="h-3.5 w-3.5" /> {t("files.permissions")}</button>
                         </div>
                       )}
                     </div>
                   </div>
-                  <span className="hidden md:block text-right text-sm text-muted-foreground">
-                    {entry.isDir ? "\u2014" : formatSize(entry.size)}
-                  </span>
+                  <span className="hidden md:block text-right text-sm text-muted-foreground">{entry.isDir ? "—" : formatSize(entry.size)}</span>
                   <span className="hidden md:block text-right text-sm text-muted-foreground">{entry.modTime}</span>
                 </div>
               ))}
@@ -554,39 +249,18 @@ export default function FilesPage() {
           </CardContent>
         </Card>
       )}
-      {previewFile && (
-        <FilePreview path={previewFile.path} name={previewFile.name} onClose={() => setPreviewFile(null)} />
-      )}
-      {permissionsFile && (
-        <PermissionsDialog path={permissionsFile.path} onClose={() => setPermissionsFile(null)} />
-      )}
+
+      {previewFile && <FilePreview path={previewFile.path} name={previewFile.name} onClose={() => setPreviewFile(null)} />}
+      {permissionsFile && <PermissionsDialog path={permissionsFile.path} onClose={() => setPermissionsFile(null)} />}
       {movingFile && (
         <MoveDialog
-          sourcePath={movingFile.path}
-          sourceName={movingFile.name}
+          sourcePath={movingFile.path} sourceName={movingFile.name}
           onClose={() => setMovingFile(null)}
-          onMoved={() => {
-            queryClient.invalidateQueries({ queryKey: ["files", currentPath] });
-            setMovingFile(null);
-          }}
+          onMoved={() => { /* queryClient.invalidateQueries */ setMovingFile(null); }}
         />
       )}
-      <ConfirmDialog
-        open={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        onConfirm={confirmDelete}
-        title={t("common.delete")}
-        message={t("files.deleteConfirm").replace("{name}", deleteConfirm?.name ?? "")}
-        loading={trashMutation.isPending}
-      />
-      <ConfirmDialog
-        open={batchDeleteConfirm}
-        onClose={() => setBatchDeleteConfirm(false)}
-        onConfirm={confirmBatchDelete}
-        title={t("files.batchDelete")}
-        message={`${t("files.batchDelete")} (${selectedPaths.size})?`}
-        loading={trashMutation.isPending}
-      />
+      <ConfirmDialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} onConfirm={confirmDelete} title={t("common.delete")} message={t("files.deleteConfirm").replace("{name}", deleteConfirm?.name ?? "")} loading={trashMutation.isPending} />
+      <ConfirmDialog open={batchDeleteConfirm} onClose={() => setBatchDeleteConfirm(false)} onConfirm={confirmBatchDelete} title={t("files.batchDelete")} message={`${t("files.batchDelete")} (${selectedPaths.size})?`} loading={trashMutation.isPending} />
     </div>
   );
 }

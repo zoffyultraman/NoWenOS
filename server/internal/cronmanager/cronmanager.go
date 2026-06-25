@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	maxOutputSize   = 1024 * 1024 // 1MB
+	maxOutputSize    = 1024 * 1024 // 1MB
 	executionTimeout = 5 * time.Minute
 	maxConcurrent    = 5
 )
@@ -54,22 +54,6 @@ func boolToInt(b bool) int {
 }
 
 // InitTable creates the scheduled_tasks table.
-func InitTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS scheduled_tasks (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		command TEXT NOT NULL,
-		schedule TEXT NOT NULL,
-		enabled INTEGER NOT NULL DEFAULT 1,
-		last_run TEXT DEFAULT '',
-		next_run TEXT DEFAULT '',
-		last_status TEXT DEFAULT 'never',
-		output TEXT DEFAULT '',
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`)
-}
 
 // GetTasks returns all scheduled tasks.
 func GetTasks() []ScheduledTask {
@@ -475,4 +459,3 @@ func computeNextRun(expr string, from time.Time) time.Time {
 	// Fallback: 1 minute from now
 	return from.Add(1 * time.Minute)
 }
-

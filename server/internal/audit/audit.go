@@ -22,22 +22,6 @@ type AuditEntry struct {
 	Duration   int64  `json:"duration"`
 }
 
-func InitTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS audit_log (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-		username TEXT DEFAULT '',
-		action TEXT NOT NULL,
-		resource TEXT DEFAULT '',
-		resource_id TEXT DEFAULT '',
-		details TEXT DEFAULT '',
-		ip TEXT DEFAULT '',
-		status TEXT DEFAULT 'ok',
-		duration INTEGER DEFAULT 0
-	)`)
-}
-
 func Log(username, action, resource, resourceID, details, ip, status string, duration int64) {
 	db := database.GetDB()
 	db.Exec(

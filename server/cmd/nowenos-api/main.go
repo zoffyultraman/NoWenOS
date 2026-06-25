@@ -35,22 +35,9 @@ func main() {
 	database.AutoMigrate()
 
 	// Initialize default users
-	auth.InitDB()
-	auth.InitGroupsTable()
-	alerts.InitTable()
-	shares.InitTable()
 	backup.InitBackupDir()
-	recyclebin.InitTable()
-	audit.InitTable()
-	appcenter.InitTable()
-	proxy.InitTable()
-	twofa.InitDB()
-	cronmanager.InitTable()
 	cronmanager.StartScheduler()
-	logrotate.InitTable()
 	alerts.StartPeriodicCheck()
-	statsstore.InitTable()
-	dockerstats.InitTable()
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()

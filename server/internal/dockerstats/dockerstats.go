@@ -11,34 +11,34 @@ import (
 )
 
 type ContainerStats struct {
-	ContainerID  string  `json:"containerId"`
-	Name         string  `json:"name"`
-	CPUPercent   float64 `json:"cpuPercent"`
-	MemoryUsage  int64   `json:"memoryUsage"`
-	MemoryLimit  int64   `json:"memoryLimit"`
+	ContainerID   string  `json:"containerId"`
+	Name          string  `json:"name"`
+	CPUPercent    float64 `json:"cpuPercent"`
+	MemoryUsage   int64   `json:"memoryUsage"`
+	MemoryLimit   int64   `json:"memoryLimit"`
 	MemoryPercent float64 `json:"memoryPercent"`
-	NetRx        int64   `json:"netRx"`
-	NetTx        int64   `json:"netTx"`
-	BlockRead    int64   `json:"blockRead"`
-	BlockWrite   int64   `json:"blockWrite"`
-	Pids         int     `json:"pids"`
-	Timestamp    string  `json:"timestamp"`
+	NetRx         int64   `json:"netRx"`
+	NetTx         int64   `json:"netTx"`
+	BlockRead     int64   `json:"blockRead"`
+	BlockWrite    int64   `json:"blockWrite"`
+	Pids          int     `json:"pids"`
+	Timestamp     string  `json:"timestamp"`
 }
 
 type ContainerStatsHistory struct {
-	ID           int64   `json:"id"`
-	ContainerID  string  `json:"containerId"`
-	Name         string  `json:"name"`
-	CPUPercent   float64 `json:"cpuPercent"`
-	MemoryUsage  int64   `json:"memoryUsage"`
-	MemoryLimit  int64   `json:"memoryLimit"`
+	ID            int64   `json:"id"`
+	ContainerID   string  `json:"containerId"`
+	Name          string  `json:"name"`
+	CPUPercent    float64 `json:"cpuPercent"`
+	MemoryUsage   int64   `json:"memoryUsage"`
+	MemoryLimit   int64   `json:"memoryLimit"`
 	MemoryPercent float64 `json:"memoryPercent"`
-	NetRx        int64   `json:"netRx"`
-	NetTx        int64   `json:"netTx"`
-	BlockRead    int64   `json:"blockRead"`
-	BlockWrite   int64   `json:"blockWrite"`
-	Pids         int     `json:"pids"`
-	CreatedAt    string  `json:"createdAt"`
+	NetRx         int64   `json:"netRx"`
+	NetTx         int64   `json:"netTx"`
+	BlockRead     int64   `json:"blockRead"`
+	BlockWrite    int64   `json:"blockWrite"`
+	Pids          int     `json:"pids"`
+	CreatedAt     string  `json:"createdAt"`
 }
 
 // dockerStatsJSON represents the raw JSON output from `docker stats --no-stream --format '{{json .}}'`
@@ -55,26 +55,6 @@ type dockerStatsJSON struct {
 }
 
 // InitTable creates the docker_stats_history table if it does not exist.
-func InitTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS docker_stats_history (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		container_id TEXT NOT NULL,
-		name TEXT,
-		cpu_percent REAL,
-		memory_usage INTEGER,
-		memory_limit INTEGER,
-		memory_percent REAL,
-		net_rx INTEGER,
-		net_tx INTEGER,
-		block_read INTEGER,
-		block_write INTEGER,
-		pids INTEGER,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`)
-	db.Exec(`CREATE INDEX IF NOT EXISTS idx_docker_stats_container_id ON docker_stats_history(container_id)`)
-	db.Exec(`CREATE INDEX IF NOT EXISTS idx_docker_stats_created_at ON docker_stats_history(created_at)`)
-}
 
 // GetContainerStats runs `docker stats --no-stream` and parses the output.
 func GetContainerStats() ([]ContainerStats, error) {

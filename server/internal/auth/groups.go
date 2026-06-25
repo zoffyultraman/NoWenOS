@@ -1,4 +1,4 @@
-﻿package auth
+package auth
 
 import (
 	"errors"
@@ -9,21 +9,6 @@ type Group struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	Comment string `json:"comment"`
-}
-
-func InitGroupsTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS groups (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT UNIQUE NOT NULL,
-		comment TEXT DEFAULT ''
-	)`)
-	db.Exec(`CREATE TABLE IF NOT EXISTS user_groups (
-		username TEXT NOT NULL,
-		group_id INTEGER NOT NULL,
-		PRIMARY KEY (username, group_id),
-		FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
-	)`)
 }
 
 func GetGroups() []Group {

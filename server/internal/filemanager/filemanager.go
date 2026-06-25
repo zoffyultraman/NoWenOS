@@ -140,6 +140,7 @@ func Browse(dirPath string) (*BrowseResult, error) {
 		Entries: files,
 	}, nil
 }
+}
 
 func GetFileInfo(filePath string) (*FileEntry, error) {
 	if filePath == "" {
@@ -171,6 +172,7 @@ func GetFileInfo(filePath string) (*FileEntry, error) {
 		Size:    info.Size(),
 		ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
 	}, nil
+}
 func GetFileInfo(filePath string) (*FileDetails, error) {
 	return GetFileDetails(filePath)
 }
@@ -264,6 +266,7 @@ func Upload(dirPath string, filename string, reader io.Reader) (*FileEntry, erro
 		ModTime: dstInfo.ModTime().Format("2006-01-02 15:04:05"),
 	}, nil
 }
+}
 
 func Delete(targetPath string) error {
 	if targetPath == "" {
@@ -338,6 +341,7 @@ func CreateDir(parentPath, dirName string) (*FileEntry, error) {
 		ModTime: "",
 	}, nil
 }
+}
 
 func Rename(oldPath, newName string) (*FileEntry, error) {
 	if oldPath == "" || newName == "" {
@@ -375,6 +379,7 @@ func Rename(oldPath, newName string) (*FileEntry, error) {
 		Size:    newInfo.Size(),
 		ModTime: newInfo.ModTime().Format("2006-01-02 15:04:05"),
 	}, nil
+}
 }
 
 func Move(sourcePath, destDir string) (*FileEntry, error) {
@@ -418,6 +423,7 @@ func Move(sourcePath, destDir string) (*FileEntry, error) {
 		Size:    newInfo.Size(),
 		ModTime: newInfo.ModTime().Format("2006-01-02 15:04:05"),
 	}, nil
+}
 }
 
 var ErrSearchLimitReached = errors.New("search result limit reached")
@@ -705,6 +711,7 @@ func GetFileDetails(filePath string) (*FileDetails, error) {
 			Mode:      info.Mode().Perm().String(),
 			ModeOctal: fmt.Sprintf("%04o", info.Mode().Perm()),
 		}, nil
+}
 	}
 
 	ownerName := lookupUsername(stat.Uid)
@@ -723,6 +730,7 @@ func GetFileDetails(filePath string) (*FileDetails, error) {
 		UID:       stat.Uid,
 		GID:       stat.Gid,
 	}, nil
+}
 }
 
 func lookupUsername(uid uint32) string {

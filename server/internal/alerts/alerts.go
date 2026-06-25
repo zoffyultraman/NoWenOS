@@ -21,33 +21,33 @@ import (
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 type AlertRule struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Metric    string `json:"metric"`    // cpu, memory, disk
-	Operator  string `json:"operator"`  // gt, lt
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	Metric    string  `json:"metric"`   // cpu, memory, disk
+	Operator  string  `json:"operator"` // gt, lt
 	Threshold float64 `json:"threshold"`
-	Enabled   bool   `json:"enabled"`
-	CreatedAt string `json:"createdAt"`
+	Enabled   bool    `json:"enabled"`
+	CreatedAt string  `json:"createdAt"`
 }
 
 type AlertEvent struct {
-	ID        int64  `json:"id"`
-	RuleID    int64  `json:"ruleId"`
-	RuleName  string `json:"ruleName"`
-	Metric    string `json:"metric"`
+	ID        int64   `json:"id"`
+	RuleID    int64   `json:"ruleId"`
+	RuleName  string  `json:"ruleName"`
+	Metric    string  `json:"metric"`
 	Value     float64 `json:"value"`
 	Threshold float64 `json:"threshold"`
-	Message   string `json:"message"`
-	Level     string `json:"level"` // warning, critical
-	Seen      bool   `json:"seen"`
-	CreatedAt string `json:"createdAt"`
+	Message   string  `json:"message"`
+	Level     string  `json:"level"` // warning, critical
+	Seen      bool    `json:"seen"`
+	CreatedAt string  `json:"createdAt"`
 }
 
 // NotificationChannel represents a notification delivery target.
 type NotificationChannel struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
-	Type      string `json:"type"` // email, webhook, telegram
+	Type      string `json:"type"`   // email, webhook, telegram
 	Config    string `json:"config"` // JSON config string
 	Enabled   bool   `json:"enabled"`
 	CreatedAt string `json:"createdAt"`
@@ -71,48 +71,6 @@ var (
 	checkMu    sync.Mutex
 	checkTimer *time.Timer
 )
-
-func InitTable() {
-	db := database.GetDB()
-	db.Exec(`CREATE TABLE IF NOT EXISTS alert_rules (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		metric TEXT NOT NULL,
-		operator TEXT NOT NULL DEFAULT 'gt',
-		threshold REAL NOT NULL,
-		enabled INTEGER NOT NULL DEFAULT 1,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`)
-	db.Exec(`CREATE TABLE IF NOT EXISTS notification_channels (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		type TEXT NOT NULL,
-		config TEXT DEFAULT '{}',
-		enabled INTEGER NOT NULL DEFAULT 1,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`)
-
-		db.Exec(`CREATE TABLE IF NOT EXISTS alert_events (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		rule_id INTEGER NOT NULL,
-		rule_name TEXT NOT NULL,
-		metric TEXT NOT NULL,
-		value REAL NOT NULL,
-		threshold REAL NOT NULL,
-		message TEXT NOT NULL,
-		level TEXT NOT NULL DEFAULT 'warning',
-		seen INTEGER NOT NULL DEFAULT 0,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (rule_id) REFERENCES alert_rules(id) ON DELETE CASCADE
-	)`)
-	db.Exec(`CREATE TABLE IF NOT EXISTS rule_channels (
-		rule_id INTEGER NOT NULL,
-		channel_id INTEGER NOT NULL,
-		PRIMARY KEY (rule_id, channel_id),
-		FOREIGN KEY (rule_id) REFERENCES alert_rules(id) ON DELETE CASCADE,
-		FOREIGN KEY (channel_id) REFERENCES notification_channels(id) ON DELETE CASCADE
-	)`)
-}
 
 func GetRules() []AlertRule {
 	db := database.GetDB()
@@ -398,7 +356,6 @@ func ToggleChannel(id int64, enabled bool) error {
 	_, err := db.Exec("UPDATE notification_channels SET enabled = ? WHERE id = ?", boolToInt(enabled), id)
 	return err
 }
-
 
 func boolToInt(b bool) int {
 	if b {
