@@ -17,13 +17,11 @@ interface FirewallRulesTableProps {
   onMove: (index: number, direction: -1 | 1) => void;
   onEdit: (rule: FirewallRule) => void;
   onDelete: (id: number, name: string) => void;
-  isToggling: boolean;
 }
 
 export function FirewallRulesTable({
   rules, selectedIds, allSelected,
   onToggleSelect, onToggleSelectAll, onToggle, onMove, onEdit, onDelete,
-  isToggling,
 }: FirewallRulesTableProps) {
   const t = useTranslation();
 

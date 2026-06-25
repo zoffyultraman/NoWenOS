@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ComposeProject struct {
@@ -25,14 +25,13 @@ type ComposeService struct {
 }
 
 func ListComposeProjects() ([]ComposeProject, error) {
-	cmd := exec.Command("docker", "compose", "ls", "--format", "json")
-	out, err := cmd.Output()
+	result, err := Run("docker", []string{"compose", "ls", "--format", "json"}, 30*time.Second)
 	if err != nil {
 		return []ComposeProject{}, nil
 	}
 
 	projects := make([]ComposeProject, 0)
-	lines := splitLines(out)
+	lines := splitLines([]byte(result.Stdout))
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -61,14 +60,13 @@ func GetComposeProject(name string) ([]ComposeService, error) {
 		return nil, errors.New("project name is required")
 	}
 
-	cmd := exec.Command("docker", "compose", "-p", name, "ps", "--format", "json")
-	out, err := cmd.Output()
+	result, err := Run("docker", []string{"compose", "-p", name, "ps", "--format", "json"}, 30*time.Second)
 	if err != nil {
 		return nil, errors.New("failed to get project services: " + err.Error())
 	}
 
 	services := make([]ComposeService, 0)
-	lines := splitLines(out)
+	lines := splitLines([]byte(result.Stdout))
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -104,10 +102,12 @@ func ComposeUp(name string, filePath string) error {
 	}
 	args = append(args, "up", "-d")
 
-	cmd := exec.Command("docker", args...)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", args, 120*time.Second)
 	if err != nil {
-		return errors.New(string(out))
+		return err
+	}
+	if result.ExitCode != 0 {
+		return errors.New(result.Stdout + result.Stderr)
 	}
 	return nil
 }
@@ -122,10 +122,12 @@ func ComposeDown(name string, filePath string) error {
 	}
 	args = append(args, "down")
 
-	cmd := exec.Command("docker", args...)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", args, 60*time.Second)
 	if err != nil {
-		return errors.New(string(out))
+		return err
+	}
+	if result.ExitCode != 0 {
+		return errors.New(result.Stdout + result.Stderr)
 	}
 	return nil
 }
@@ -140,10 +142,12 @@ func ComposeRestart(name string, filePath string) error {
 	}
 	args = append(args, "restart")
 
-	cmd := exec.Command("docker", args...)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", args, 60*time.Second)
 	if err != nil {
-		return errors.New(string(out))
+		return err
+	}
+	if result.ExitCode != 0 {
+		return errors.New(result.Stdout + result.Stderr)
 	}
 	return nil
 }
@@ -156,15 +160,17 @@ func ComposeLogs(name string, tail int) (string, error) {
 		tail = 100
 	}
 
-	cmd := exec.Command("docker", "compose", "-p", name, "logs", "--tail", strconv.Itoa(tail))
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", []string{"compose", "-p", name, "logs", "--tail", strconv.Itoa(tail)}, 30*time.Second)
 	if err != nil {
-		return "", errors.New(string(out))
+		return "", err
 	}
-	return string(out), nil
+	if result.ExitCode != 0 {
+		return "", errors.New(result.Stdout + result.Stderr)
+	}
+	return result.Stdout + result.Stderr, nil
 }
 
-// ── Compose File Operations ──
+// --- Compose File Operations ---
 
 func ReadComposeFile(path string) (string, error) {
 	if path == "" {
@@ -206,12 +212,14 @@ func ValidateComposeFile(path string) (string, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return "", errors.New("file does not exist: " + path)
 	}
-	cmd := exec.Command("docker", "compose", "-f", path, "config")
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", []string{"compose", "-f", path, "config"}, 30*time.Second)
 	if err != nil {
-		return string(out), errors.New("validation failed: " + string(out))
+		return result.Stderr, errors.New("validation failed: " + result.Stdout + result.Stderr)
 	}
-	return string(out), nil
+	if result.ExitCode != 0 {
+		return result.Stdout + result.Stderr, errors.New("validation failed")
+	}
+	return result.Stdout, nil
 }
 
 func DeployComposeFile(path string) error {
@@ -221,10 +229,12 @@ func DeployComposeFile(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return errors.New("file does not exist: " + path)
 	}
-	cmd := exec.Command("docker", "compose", "-f", path, "up", "-d")
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", []string{"compose", "-f", path, "up", "-d"}, 120*time.Second)
 	if err != nil {
-		return errors.New("deploy failed: " + string(out))
+		return errors.New("deploy failed: " + result.Stdout + result.Stderr)
+	}
+	if result.ExitCode != 0 {
+		return errors.New("deploy failed: " + result.Stdout + result.Stderr)
 	}
 	return nil
 }

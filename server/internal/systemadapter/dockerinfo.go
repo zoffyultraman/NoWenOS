@@ -3,8 +3,8 @@ package systemadapter
 import (
 	"encoding/json"
 	"errors"
-	"os/exec"
 	"strconv"
+	"time"
 )
 
 type ContainerInfo struct {
@@ -23,14 +23,13 @@ type ImageInfo struct {
 }
 
 func GetContainers() ([]ContainerInfo, error) {
-	cmd := exec.Command("docker", "ps", "-a", "--format", "{{json .}}")
-	out, err := cmd.Output()
+	result, err := Run("docker", []string{"ps", "-a", "--format", "{{json .}}"}, 30*time.Second)
 	if err != nil {
 		return []ContainerInfo{}, nil
 	}
 
 	containers := make([]ContainerInfo, 0)
-	lines := splitLines(out)
+	lines := splitLines([]byte(result.Stdout))
 	for _, line := range lines {
 		if line == "" {
 			continue
@@ -56,14 +55,13 @@ func GetContainers() ([]ContainerInfo, error) {
 }
 
 func GetImages() ([]ImageInfo, error) {
-	cmd := exec.Command("docker", "images", "--format", "{{json .}}")
-	out, err := cmd.Output()
+	result, err := Run("docker", []string{"images", "--format", "{{json .}}"}, 30*time.Second)
 	if err != nil {
 		return []ImageInfo{}, nil
 	}
 
 	images := make([]ImageInfo, 0)
-	lines := splitLines(out)
+	lines := splitLines([]byte(result.Stdout))
 	for _, line := range lines {
 		if line == "" {
 			continue
@@ -95,10 +93,12 @@ func PullImage(image string) error {
 		return errors.New("image name is required")
 	}
 
-	cmd := exec.Command("docker", "pull", image)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", []string{"pull", image}, 300*time.Second)
 	if err != nil {
-		return errors.New(string(out))
+		return err
+	}
+	if result.ExitCode != 0 {
+		return errors.New(result.Stdout + result.Stderr)
 	}
 
 	return nil
@@ -109,10 +109,12 @@ func RemoveImage(id string) error {
 		return errors.New("image id is required")
 	}
 
-	cmd := exec.Command("docker", "rmi", id)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", []string{"rmi", id}, 30*time.Second)
 	if err != nil {
-		return errors.New(string(out))
+		return err
+	}
+	if result.ExitCode != 0 {
+		return errors.New(result.Stdout + result.Stderr)
 	}
 
 	return nil
@@ -140,10 +142,12 @@ func ControlContainer(id string, action string) error {
 		return ErrInvalidAction
 	}
 
-	cmd := exec.Command("docker", args...)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", args, 60*time.Second)
 	if err != nil {
-		return errors.New(string(out))
+		return err
+	}
+	if result.ExitCode != 0 {
+		return errors.New(result.Stdout + result.Stderr)
 	}
 
 	return nil
@@ -158,13 +162,15 @@ func GetContainerLogs(id string, tail int) (string, error) {
 		tail = 100
 	}
 
-	cmd := exec.Command("docker", "logs", "--tail", strconv.Itoa(tail), id)
-	out, err := cmd.CombinedOutput()
+	result, err := Run("docker", []string{"logs", "--tail", strconv.Itoa(tail), id}, 30*time.Second)
 	if err != nil {
-		return "", errors.New(string(out))
+		return "", err
+	}
+	if result.ExitCode != 0 {
+		return "", errors.New(result.Stdout + result.Stderr)
 	}
 
-	return string(out), nil
+	return result.Stdout + result.Stderr, nil
 }
 
 func splitLines(data []byte) []string {
