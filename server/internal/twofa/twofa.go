@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -25,25 +24,6 @@ var (
 	ErrInvalidBackup    = errors.New("invalid backup code")
 	ErrSetupNotStarted = errors.New("2FA setup has not been started")
 )
-
-// InitDB creates the user_2fa table if it doesn't exist.
-func InitDB() {
-	db := database.GetDB()
-	queries := []string{
-		`CREATE TABLE IF NOT EXISTS user_2fa (
-			user_id TEXT PRIMARY KEY,
-			secret TEXT NOT NULL,
-			enabled INTEGER NOT NULL DEFAULT 0,
-			backup_codes TEXT NOT NULL DEFAULT '[]',
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-	}
-	for _, q := range queries {
-		if _, err := db.Exec(q); err != nil {
-			log.Printf("Failed to create user_2fa table: %v", err)
-		}
-	}
-}
 
 // generateSecret creates a random 20-byte base32-encoded TOTP secret.
 func generateSecret() (string, error) {
