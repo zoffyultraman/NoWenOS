@@ -42,39 +42,6 @@ func initDB() {
 
 	// Enable WAL mode for better performance
 	db.Exec("PRAGMA journal_mode=WAL")
-
-	// Create tables
-	createTables()
-}
-
-func createTables() {
-	queries := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			username TEXT UNIQUE NOT NULL,
-			password TEXT NOT NULL,
-			role TEXT NOT NULL DEFAULT 'user',
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS settings (
-			key TEXT PRIMARY KEY,
-			value TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`,
-		`CREATE TABLE IF NOT EXISTS user_2fa (
-			user_id TEXT PRIMARY KEY,
-			secret TEXT NOT NULL,
-			enabled INTEGER NOT NULL DEFAULT 0,
-			backup_codes TEXT NOT NULL DEFAULT '[]',
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-	}
-
-	for _, query := range queries {
-		if _, err := db.Exec(query); err != nil {
-			log.Printf("Failed to execute query: %v", err)
-		}
-	}
 }
 
 func Close() {
@@ -98,31 +65,8 @@ func InitTestDB() {
 	db.Exec("PRAGMA journal_mode=WAL")
 	testMode.Store(true)
 
-	// Create tables
-	queries := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			username TEXT UNIQUE NOT NULL,
-			password TEXT NOT NULL,
-			role TEXT NOT NULL DEFAULT 'user',
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS settings (
-			key TEXT PRIMARY KEY,
-			value TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`,
-		`CREATE TABLE IF NOT EXISTS user_2fa (
-			user_id TEXT PRIMARY KEY,
-			secret TEXT NOT NULL,
-			enabled INTEGER NOT NULL DEFAULT 0,
-			backup_codes TEXT NOT NULL DEFAULT '[]',
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-	}
-	for _, q := range queries {
-		db.Exec(q)
-	}
+	// Use the same migration path as production
+	AutoMigrate()
 }
 
 func CloseTestDB() {

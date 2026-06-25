@@ -269,40 +269,5 @@ func init() {
 			}
 			return nil
 		},
-		Down: func(db *sql.DB) error {
-			tables := []string{
-				"alert_events",
-				"rule_channels",
-				"notification_channels",
-				"alert_rules",
-				"ddns_update_log",
-				"ddns_configs",
-				"docker_stats_history",
-				"scheduled_tasks",
-				"logrotate_configs",
-				"recycle_bin",
-				"file_shares",
-				"shares",
-				"firewall_rules",
-				"vpn_configs",
-				"proxy_rules",
-				"certificates",
-				"stats_history",
-				"installed_apps",
-				"audit_log",
-				"user_groups",
-				"user_2fa",
-				"groups",
-				"settings",
-				"users",
-				"schema_migrations",
-			}
-			for _, t := range tables {
-				if _, err := db.Exec("DROP TABLE IF EXISTS " + t); err != nil {
-					return err
-				}
-			}
-			return nil
-		},
 	})
 }
