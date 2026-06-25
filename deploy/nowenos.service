@@ -16,7 +16,6 @@ StandardOutput=append:/var/log/nowenos/nowenos.log
 StandardError=append:/var/log/nowenos/nowenos.log
 
 # Security hardening
-NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/var/lib/nowenos /var/log/nowenos /opt/nowenos/data
 ProtectHome=true
