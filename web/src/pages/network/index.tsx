@@ -27,6 +27,7 @@ export default function NetworkPage() {
   } = useInterfaceConfig();
 
   const {
+    dnsForm,
     dnsFormState,
     setDnsFormState,
     newDnsServer,
@@ -71,7 +72,7 @@ export default function NetworkPage() {
         onNewDnsServerChange={setNewDnsServer}
         onAddDnsServer={addDnsServer}
         onRemoveDnsServer={removeDnsServer}
-        onSubmit={handleDnsSubmit}
+        onSubmit={dnsForm.handleSubmit(handleDnsSubmit)}
         isPending={dnsMutation.isPending}
       />
     </div>
