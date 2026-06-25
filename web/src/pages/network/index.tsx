@@ -1,4 +1,6 @@
-import { useNetworkForm } from "@/features/network/hooks/useNetworkForm";
+import { useNetworkInterfaces } from "@/features/network/hooks/useNetworkInterfaces";
+import { useInterfaceConfig } from "@/features/network/hooks/useInterfaceConfig";
+import { useDnsSettings } from "@/features/network/hooks/useDnsSettings";
 import { NetworkInterfaceList } from "@/features/network/components/NetworkInterfaceList";
 import { NetworkConfigForm } from "@/features/network/components/NetworkConfigForm";
 import { DnsSettingsCard } from "@/features/network/components/DnsSettingsCard";
@@ -6,27 +8,34 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 export default function NetworkPage() {
   const t = useTranslation();
+
+  const {
+    interfaces,
+    ifacesQuery,
+    upMutation,
+    downMutation,
+  } = useNetworkInterfaces();
+
   const {
     configTarget,
     setConfigTarget,
     configForm,
     configMode,
-    dnsForm,
-    setDnsForm,
-    newDnsServer,
-    setNewDnsServer,
-    interfaces,
-    ifacesQuery,
     configureMutation,
-    upMutation,
-    downMutation,
-    dnsMutation,
     openConfig,
     onConfigSubmit,
-    handleDnsSubmit,
+  } = useInterfaceConfig();
+
+  const {
+    dnsFormState,
+    setDnsFormState,
+    newDnsServer,
+    setNewDnsServer,
+    dnsMutation,
     addDnsServer,
     removeDnsServer,
-  } = useNetworkForm();
+    handleDnsSubmit,
+  } = useDnsSettings();
 
   return (
     <div className="space-y-4 p-4">
@@ -56,8 +65,8 @@ export default function NetworkPage() {
       />
 
       <DnsSettingsCard
-        dnsForm={dnsForm}
-        onDnsFormChange={setDnsForm}
+        dnsForm={dnsFormState}
+        onDnsFormChange={setDnsFormState}
         newDnsServer={newDnsServer}
         onNewDnsServerChange={setNewDnsServer}
         onAddDnsServer={addDnsServer}

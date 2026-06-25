@@ -13,7 +13,7 @@ interface DnsSettingsCardProps {
   onNewDnsServerChange: (value: string) => void;
   onAddDnsServer: () => void;
   onRemoveDnsServer: (index: number) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: () => void;
   isPending: boolean;
 }
 
@@ -40,7 +40,7 @@ export function DnsSettingsCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
           {/* DNS Servers */}
           <div className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
