@@ -1,7 +1,7 @@
 ﻿import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchUsers, createUser, deleteUser, changePassword } from "@/features/users/api";
-import { fetchGroups, createGroup, deleteGroup, addMember, removeMember, fetchGroupMembers, type Group } from "@/features/groups/api";
+import { fetchGroups, createGroup, deleteGroup, addMember, removeMember, fetchGroupMembers } from "@/features/groups/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

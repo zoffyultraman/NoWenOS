@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, Settings, Globe, Server, Upload, Download } from "lucide-react";
+import { Save, Settings, Globe, Server, Upload, Download, FileUp } from "lucide-react";
 import { exportConfig, importConfig } from "@/features/config/api";
 import { useState } from "react";
 import { useToast } from "@/stores/toast";
@@ -227,6 +227,15 @@ export default function SettingsPage() {
                   <Save className="mr-2 h-4 w-4" />
                   {updateMutation.isPending ? t("settings.saving") : t("settings.save")}
                 </Button>
+                <Button variant="outline" type="button" onClick={handleExportConfig}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t("config.export")}
+                </Button>
+                <label className="inline-flex items-center gap-2 rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:bg-muted/50 cursor-pointer">
+                  <FileUp className="mr-2 h-4 w-4" />
+                  {t("config.import")}
+                  <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />
+                </label>
               </div>
             </CardContent>
           </Card>

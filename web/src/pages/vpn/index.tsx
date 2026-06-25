@@ -22,7 +22,7 @@ export default function VPNPage() {
     register, handleFormSubmit, errors,
     configs, status,
     configsQuery,
-    createMutation, updateMutation, connectMutation, disconnectMutation,
+    createMutation, updateMutation, disconnectMutation,
     genKeysMutation, genConfigMutation, parseMutation,
     closeDialog, openAdd, openEdit, openWizard, openImport, openQR,
     onSubmit, handleDelete, handleConnect, handleDisconnect, isCurrentVPN,

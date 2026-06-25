@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/stores/toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
-  Network, Plus, Trash2, X, ToggleLeft, ToggleRight,
+  Network, Plus, Trash2, ToggleLeft, ToggleRight,
   Pencil, RefreshCw, Globe, Lock,
 } from "lucide-react";
 
