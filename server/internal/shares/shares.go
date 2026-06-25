@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 type Share struct {
@@ -257,10 +257,9 @@ func applySambaConfig() {
 	tmpPath := "/tmp/smb.conf.nowenos"
 	os.WriteFile(tmpPath, []byte(config.String()), 0644)
 	backupPath := fmt.Sprintf("/etc/samba/smb.conf.backup.%s", time.Now().Format("20060102150405"))
-	exec.Command("cp", "/etc/samba/smb.conf", backupPath).Run()
-	exec.Command("cp", tmpPath, "/etc/samba/smb.conf").Run()
-	exec.Command("systemctl", "restart", "smbd").Run()
-	exec.Command("systemctl", "restart", "nmbd").Run()
+	systemadapter.CopyFile("/etc/samba/smb.conf", backupPath)
+	systemadapter.CopyFile(tmpPath, "/etc/samba/smb.conf")
+	systemadapter.RestartSamba()
 }
 
 // ── WebDAV (Apache mod_dav_svn / standalone) ──
@@ -307,9 +306,9 @@ func applyWebDAVConfig() {
 
 	confPath := "/etc/apache2/sites-available/nowenos-webdav.conf"
 	os.WriteFile(confPath, []byte(config.String()), 0644)
-	exec.Command("a2enmod", "dav", "dav_fs").Run()
-	exec.Command("a2ensite", "nowenos-webdav").Run()
-	exec.Command("systemctl", "reload", "apache2").Run()
+	systemadapter.EnableApacheModule([]string{"dav", "dav_fs"})
+	systemadapter.EnableApacheSite("nowenos-webdav")
+	systemadapter.ReloadApache()
 }
 
 // ── NFS ──
@@ -349,10 +348,10 @@ func applyNFSConfig() {
 	exportsPath := "/etc/exports.nowenos"
 	os.WriteFile(exportsPath, []byte(config.String()), 0644)
 	backupPath := fmt.Sprintf("/etc/exports.backup.%s", time.Now().Format("20060102150405"))
-	exec.Command("cp", "/etc/exports", backupPath).Run()
-	exec.Command("cp", exportsPath, "/etc/exports").Run()
-	exec.Command("exportfs", "-ra").Run()
-	exec.Command("systemctl", "reload", "nfs-kernel-server").Run()
+	systemadapter.CopyFile("/etc/exports", backupPath)
+	systemadapter.CopyFile(exportsPath, "/etc/exports")
+	systemadapter.ExportFS()
+	systemadapter.ReloadNFS()
 }
 
 // ── Service Status ──
@@ -367,12 +366,10 @@ func GetSambaStatus() map[string]interface{} {
 		result["running"] = true
 		return result
 	}
-	if _, err := exec.LookPath("smbd"); err == nil {
+	if systemadapter.IsBinaryAvailable("smbd") {
 		result["installed"] = true
 	}
-	cmd := exec.Command("systemctl", "is-active", "smbd")
-	out, _ := cmd.Output()
-	if strings.TrimSpace(string(out)) == "active" {
+	if active, err := systemadapter.IsServiceActive("smbd"); err == nil && active {
 		result["running"] = true
 	}
 	return result
@@ -388,12 +385,10 @@ func GetWebDAVStatus() map[string]interface{} {
 		result["running"] = true
 		return result
 	}
-	if _, err := exec.LookPath("apache2"); err == nil {
+	if systemadapter.IsBinaryAvailable("apache2") {
 		result["installed"] = true
 	}
-	cmd := exec.Command("systemctl", "is-active", "apache2")
-	out, _ := cmd.Output()
-	if strings.TrimSpace(string(out)) == "active" {
+	if active, err := systemadapter.IsServiceActive("apache2"); err == nil && active {
 		result["running"] = true
 	}
 	return result
@@ -409,12 +404,10 @@ func GetNFSStatus() map[string]interface{} {
 		result["running"] = true
 		return result
 	}
-	if _, err := exec.LookPath("exportfs"); err == nil {
+	if systemadapter.IsBinaryAvailable("exportfs") {
 		result["installed"] = true
 	}
-	cmd := exec.Command("systemctl", "is-active", "nfs-kernel-server")
-	out, _ := cmd.Output()
-	if strings.TrimSpace(string(out)) == "active" {
+	if active, err := systemadapter.IsServiceActive("nfs-kernel-server"); err == nil && active {
 		result["running"] = true
 	}
 	return result
@@ -447,6 +440,5 @@ func boolToInt(b bool) int {
 }
 
 func isWindows() bool {
-	_, err := exec.LookPath("cmd.exe")
-	return err == nil
+	return systemadapter.IsBinaryAvailable("cmd.exe")
 }

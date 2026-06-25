@@ -3,8 +3,8 @@ package systemadapter
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
+	"time"
 )
 
 type DiskInfo struct {
@@ -30,13 +30,12 @@ type diskUsage struct {
 
 func getDiskUsage() map[string]diskUsage {
 	usage := make(map[string]diskUsage)
-	cmd := exec.Command("df", "-B1", "--output=source,size,used,avail,pcent,target")
-	out, err := cmd.Output()
+	result, err := Run("df", []string{"-B1", "--output=source,size,used,avail,pcent,target"}, 10*time.Second)
 	if err != nil {
 		return usage
 	}
 
-	lines := strings.Split(string(out), "\n")
+	lines := strings.Split(result.Stdout, "\n")
 	for _, line := range lines[1:] {
 		fields := strings.Fields(line)
 		if len(fields) < 6 {
@@ -59,13 +58,12 @@ func getDiskUsage() map[string]diskUsage {
 }
 
 func GetDisks() ([]DiskInfo, error) {
-	cmd := exec.Command("lsblk", "-bJo", "NAME,SIZE,MODEL,TYPE,MOUNTPOINT,FSTYPE")
-	out, err := cmd.Output()
+	result, err := Run("lsblk", []string{"-bJo", "NAME,SIZE,MODEL,TYPE,MOUNTPOINT,FSTYPE"}, 10*time.Second)
 	if err != nil {
 		return []DiskInfo{}, nil
 	}
 
-	var result struct {
+	var resp struct {
 		BlockDevices []struct {
 			Name       string `json:"name"`
 			Size       int64  `json:"size"`
@@ -76,14 +74,14 @@ func GetDisks() ([]DiskInfo, error) {
 		} `json:"blockdevices"`
 	}
 
-	if err := json.Unmarshal(out, &result); err != nil {
+	if err := json.Unmarshal([]byte(result.Stdout), &resp); err != nil {
 		return []DiskInfo{}, nil
 	}
 
 	usage := getDiskUsage()
 
-	disks := make([]DiskInfo, 0, len(result.BlockDevices))
-	for _, d := range result.BlockDevices {
+	disks := make([]DiskInfo, 0, len(resp.BlockDevices))
+	for _, d := range resp.BlockDevices {
 		disk := DiskInfo{
 			Name:       d.Name,
 			Size:       formatBytes(d.Size),
