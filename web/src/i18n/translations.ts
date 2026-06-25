@@ -191,6 +191,86 @@ const translations: Record<string, Record<Locale, string>> = {
   "storage.mount": { en: "Mount", zh: "挂载点" },
   "storage.fs": { en: "FS", zh: "文件系统" },
 
+  // Storage - SMART
+  "storage.smart.title": { en: "S.M.A.R.T.", zh: "S.M.A.R.T." },
+  "storage.smart.loading": { en: "Loading...", zh: "加载中..." },
+  "storage.smart.failed": { en: "Failed to load SMART data.", zh: "加载 SMART 数据失败" },
+  "storage.smart.health": { en: "Health", zh: "健康状态" },
+  "storage.smart.temperature": { en: "Temperature", zh: "温度" },
+  "storage.smart.powerOn": { en: "Power On", zh: "通电时间" },
+  "storage.smart.reallocated": { en: "Reallocated Sectors", zh: "重分配扇区" },
+  "storage.smart.pending": { en: "Pending Sectors", zh: "待处理扇区" },
+
+  // Storage - Mount/Unmount
+  "storage.mountBtn": { en: "Mount", zh: "挂载" },
+  "storage.unmountBtn": { en: "Unmount", zh: "卸载" },
+  "storage.mountTitle": { en: "Mount Device", zh: "挂载设备" },
+  "storage.mountDesc": { en: "Select a mount point for", zh: "选择挂载点" },
+  "storage.mountTarget": { en: "Mount Point", zh: "挂载点" },
+  "storage.mountSuccess": { en: "Device mounted successfully", zh: "设备挂载成功" },
+  "storage.unmountTitle": { en: "Unmount Device", zh: "卸载设备" },
+  "storage.unmountDesc": { en: "Unmount", zh: "卸载" },
+  "storage.unmountSuccess": { en: "Device unmounted successfully", zh: "设备卸载成功" },
+
+  // Storage - Mountpoints
+  "storage.mountpoints": { en: "Mountpoints", zh: "挂载点列表" },
+  "storage.mp.source": { en: "Source", zh: "来源" },
+  "storage.mp.target": { en: "Target", zh: "目标" },
+  "storage.mp.fstype": { en: "Type", zh: "类型" },
+  "storage.mp.options": { en: "Options", zh: "选项" },
+  "storage.mp.used": { en: "Used", zh: "已用" },
+
+  // Storage tabs
+  "storage.tabDisks": { en: "Disks", zh: "磁盘" },
+  "storage.tabRaid": { en: "RAID", zh: "RAID" },
+  "storage.tabLvm": { en: "LVM", zh: "LVM" },
+  "storage.tabZfs": { en: "ZFS", zh: "ZFS" },
+
+  // RAID
+  "storage.raid.noArrays": { en: "No RAID arrays detected.", zh: "未检测到 RAID 阵列" },
+  "storage.raid.array": { en: "Array", zh: "阵列" },
+  "storage.raid.level": { en: "Level", zh: "级别" },
+  "storage.raid.state": { en: "State", zh: "状态" },
+  "storage.raid.size": { en: "Size", zh: "大小" },
+  "storage.raid.active": { en: "Active", zh: "活跃" },
+  "storage.raid.working": { en: "Working", zh: "工作" },
+  "storage.raid.failed": { en: "Failed", zh: "失败" },
+  "storage.raid.spare": { en: "Spare", zh: "备用" },
+  "storage.raid.rebuild": { en: "Rebuild", zh: "重建" },
+  "storage.raid.devices": { en: "Devices", zh: "设备" },
+
+  // LVM
+  "storage.lvm.noLvm": { en: "No LVM configuration detected.", zh: "未检测到 LVM 配置" },
+  "storage.lvm.pvs": { en: "Physical Volumes", zh: "物理卷" },
+  "storage.lvm.vgs": { en: "Volume Groups", zh: "卷组" },
+  "storage.lvm.lvs": { en: "Logical Volumes", zh: "逻辑卷" },
+  "storage.lvm.name": { en: "Name", zh: "名称" },
+  "storage.lvm.size": { en: "Size", zh: "大小" },
+  "storage.lvm.free": { en: "Free", zh: "空闲" },
+  "storage.lvm.vgName": { en: "VG", zh: "卷组" },
+  "storage.lvm.pvCount": { en: "PVs", zh: "物理卷数" },
+  "storage.lvm.lvCount": { en: "LVs", zh: "逻辑卷数" },
+  "storage.lvm.path": { en: "Path", zh: "路径" },
+
+  // ZFS
+  "storage.zfs.noZfs": { en: "No ZFS pools detected.", zh: "未检测到 ZFS 存储池" },
+  "storage.zfs.pools": { en: "Pools", zh: "存储池" },
+  "storage.zfs.datasets": { en: "Datasets", zh: "数据集" },
+  "storage.zfs.pool": { en: "Pool", zh: "存储池" },
+  "storage.zfs.health": { en: "Health", zh: "健康状态" },
+  "storage.zfs.size": { en: "Size", zh: "大小" },
+  "storage.zfs.allocated": { en: "Allocated", zh: "已分配" },
+  "storage.zfs.free": { en: "Free", zh: "空闲" },
+  "storage.zfs.scan": { en: "Scan", zh: "扫描" },
+  "storage.zfs.used": { en: "Used", zh: "已用" },
+  "storage.zfs.avail": { en: "Avail", zh: "可用" },
+  "storage.zfs.refer": { en: "Refer", zh: "引用" },
+  "storage.zfs.mountpoint": { en: "Mountpoint", zh: "挂载点" },
+  "storage.zfs.type": { en: "Type", zh: "类型" },
+  "storage.zfs.read": { en: "Read", zh: "读取" },
+  "storage.zfs.write": { en: "Write", zh: "写入" },
+  "storage.zfs.cksum": { en: "Cksum", zh: "校验" },
+
   // Files (补充)
   "files.deleteConfirm": { en: "Delete \"{name}\"?", zh: "删除 \"{name}\"？" },
   "files.item": { en: "item", zh: "项" },
@@ -724,6 +804,35 @@ const translations: Record<string, Record<Locale, string>> = {
   "ddns.customScript": { en: "Custom Script", zh: "自定义脚本" },
   "firewall.any": { en: "Any", zh: "任意" },
   "settings.qrCodeAlt": { en: "2FA QR Code", zh: "2FA 二维码" },
+
+  // Storage - SMART
+  "storage.smart.title": { en: "S.M.A.R.T. Health", zh: "S.M.A.R.T. 健康状态" },
+  "storage.smart.loading": { en: "Loading...", zh: "加载中..." },
+  "storage.smart.failed": { en: "Failed to load SMART data", zh: "加载 SMART 数据失败" },
+  "storage.smart.health": { en: "Health Status", zh: "健康状态" },
+  "storage.smart.temperature": { en: "Temperature", zh: "温度" },
+  "storage.smart.powerOn": { en: "Power-On Hours", zh: "通电时间" },
+  "storage.smart.reallocated": { en: "Reallocated Sectors", zh: "重映射扇区" },
+  "storage.smart.pending": { en: "Pending Sectors", zh: "待映射扇区" },
+
+  // Storage - Mount/Unmount
+  "storage.mountBtn": { en: "Mount", zh: "挂载" },
+  "storage.unmountBtn": { en: "Unmount", zh: "卸载" },
+  "storage.mountTitle": { en: "Mount Device", zh: "挂载设备" },
+  "storage.mountDesc": { en: "Mount device", zh: "挂载设备" },
+  "storage.mountTarget": { en: "Mount Target", zh: "挂载目标" },
+  "storage.mountSuccess": { en: "Device mounted successfully", zh: "设备挂载成功" },
+  "storage.unmountTitle": { en: "Unmount Device", zh: "卸载设备" },
+  "storage.unmountDesc": { en: "Are you sure you want to unmount", zh: "确定要卸载" },
+  "storage.unmountSuccess": { en: "Device unmounted successfully", zh: "设备卸载成功" },
+
+  // Storage - Mountpoints Table
+  "storage.mountpoints": { en: "Mountpoints", zh: "挂载点" },
+  "storage.mp.source": { en: "Source", zh: "来源" },
+  "storage.mp.target": { en: "Target", zh: "目标" },
+  "storage.mp.fstype": { en: "Type", zh: "类型" },
+  "storage.mp.options": { en: "Options", zh: "选项" },
+  "storage.mp.used": { en: "Used", zh: "已用" },
 
 };
 

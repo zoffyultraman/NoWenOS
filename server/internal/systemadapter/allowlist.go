@@ -38,6 +38,16 @@ var AllowedBinaries = map[string]string{
 	"umount":        "unmount filesystem",
 	"tasklist":      "Windows process list",
 	"curl":          "HTTP client (for DDNS updates)",
+	"mdadm":         "Linux software RAID management",
+	"pvs":           "LVM physical volume display",
+	"vgs":           "LVM volume group display",
+	"lvs":           "LVM logical volume display",
+	"zpool":         "ZFS pool management",
+	"zfs":           "ZFS dataset management",
+	"hdparm":        "get/set hard disk parameters",
+	"smartctl":      "SMART disk health monitoring",
+	"findmnt":       "find mounted filesystems",
+	"cat":           "concatenate files",
 }
 
 // shellMetachars matches characters that have special meaning in shell contexts.

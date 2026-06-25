@@ -83,6 +83,108 @@ func registerSystemRoutes(api *gin.RouterGroup) {
 		c.JSON(http.StatusOK, gin.H{"data": disks})
 	})
 
+	// RAID arrays
+	api.GET("/storage/raid", func(c *gin.Context) {
+		arrays, err := systemadapter.GetRAIDStatus()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": arrays})
+	})
+
+	// LVM info
+	api.GET("/storage/lvm", func(c *gin.Context) {
+		info, err := systemadapter.GetLVMInfo()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": info})
+	})
+
+	// ZFS pools and datasets
+	api.GET("/storage/zfs", func(c *gin.Context) {
+		info, err := systemadapter.GetZFSInfo()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": info})
+	})
+
+	// SMART health for a specific device
+	api.GET("/storage/smart/:device", func(c *gin.Context) {
+		device := c.Param("device")
+		info, err := systemadapter.GetSmartInfo(device)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": info})
+	})
+
+	// Mountpoints listing
+	api.GET("/storage/mountpoints", func(c *gin.Context) {
+		mounts, err := systemadapter.GetMountpoints()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": mounts})
+	})
+
+	// Mount a device (write operation)
+	api.POST("/storage/mount", requireWrite(), func(c *gin.Context) {
+		var req struct {
+			Device     string `json:"device"`
+			Mountpoint string `json:"mountpoint"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+		if req.Device == "" || req.Mountpoint == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "device and mountpoint are required"})
+			return
+		}
+		if _, err := systemadapter.MountDevice(req.Device, req.Mountpoint); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "mounted", "device": req.Device, "mountpoint": req.Mountpoint}})
+	})
+
+	// Unmount a device (write operation)
+	api.POST("/storage/unmount", requireWrite(), func(c *gin.Context) {
+		var req struct {
+			Mountpoint string `json:"mountpoint"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+		if req.Mountpoint == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "mountpoint is required"})
+			return
+		}
+		if _, err := systemadapter.UnmountDevice(req.Mountpoint); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "unmounted", "mountpoint": req.Mountpoint}})
+	})
+
+	// Spin down a disk (admin only)
+	api.POST("/storage/spindown/:device", requireWrite(), requireRole("admin"), func(c *gin.Context) {
+		device := c.Param("device")
+		if err := systemadapter.SpinDownDevice(device); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "spundown", "device": device}})
+	})
+
 	// Settings
 	api.GET("/settings", func(c *gin.Context) {
 		s := settings.Get()
