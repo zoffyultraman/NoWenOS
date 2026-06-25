@@ -3,10 +3,10 @@ package firewall
 import (
 	"database/sql"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 // FirewallRule represents a single firewall rule.
@@ -217,27 +217,12 @@ func BatchDelete(ids []int64) error {
 func GetStatus() FirewallStatus {
 	status := FirewallStatus{Backend: "none"}
 
-	// Try iptables first
-	if out, err := exec.Command("iptables", "--version").Output(); err == nil {
+	backend, err := systemadapter.DetectFirewallBackend()
+	if err == nil {
 		status.Installed = true
-		status.Backend = "iptables"
-		status.Version = strings.TrimSpace(string(out))
-		// Check if running (iptables -L should succeed)
-		if err := exec.Command("iptables", "-L", "-n").Run(); err == nil {
-			status.Running = true
-		}
-	}
-
-	// Try nftables
-	if !status.Installed {
-		if out, err := exec.Command("nft", "--version").Output(); err == nil {
-			status.Installed = true
-			status.Backend = "nftables"
-			status.Version = strings.TrimSpace(string(out))
-			if err := exec.Command("nft", "list", "tables").Run(); err == nil {
-				status.Running = true
-			}
-		}
+		status.Backend = backend.Name
+		status.Version = backend.Version
+		status.Running = backend.Running
 	}
 
 	// Count enabled rules
@@ -268,7 +253,9 @@ func ApplyRules(backend string) error {
 
 func applyIptables() error {
 	// Flush existing rules
-	exec.Command("iptables", "-F").Run()
+	if err := systemadapter.FlushIptables(); err != nil {
+		return fmt.Errorf("failed to flush iptables: %w", err)
+	}
 
 	rules := ListRules()
 	for _, rule := range rules {
@@ -276,9 +263,8 @@ func applyIptables() error {
 			continue
 		}
 		args := buildIptablesArgs(rule)
-		out, err := exec.Command("iptables", args...).CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to apply rule '%s': %s", rule.Name, strings.TrimSpace(string(out)))
+		if err := systemadapter.ApplyIptablesRule(args); err != nil {
+			return fmt.Errorf("failed to apply rule '%s': %w", rule.Name, err)
 		}
 	}
 	return nil
@@ -286,18 +272,18 @@ func applyIptables() error {
 
 func applyNftables() error {
 	// Flush existing ruleset and recreate
-	exec.Command("nft", "flush", "ruleset").Run()
+	if err := systemadapter.FlushNftRuleset(); err != nil {
+		return fmt.Errorf("failed to flush nft ruleset: %w", err)
+	}
 
 	rules := ListRules()
 	for _, rule := range rules {
 		if !rule.Enabled {
 			continue
 		}
-		cmd := buildNftCommand(rule)
-		parts := strings.Fields(cmd)
-		out, err := exec.Command(parts[0], parts[1:]...).CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to apply rule '%s': %s", rule.Name, strings.TrimSpace(string(out)))
+		args := buildNftArgs(rule)
+		if err := systemadapter.ApplyNftRule(args); err != nil {
+			return fmt.Errorf("failed to apply rule '%s': %w", rule.Name, err)
 		}
 	}
 	return nil
@@ -323,7 +309,9 @@ func buildIptablesArgs(rule FirewallRule) []string {
 	return args
 }
 
-func buildNftCommand(rule FirewallRule) string {
+// buildNftArgs returns the nft command arguments for applying a rule.
+// Returns args suitable for systemadapter.ApplyNftRule (e.g., ["add", "rule", "inet", "filter", "input", ...]).
+func buildNftArgs(rule FirewallRule) []string {
 	chain := strings.ToLower(rule.Chain)
 	// Map to nft chain names
 	nftChain := "input"
@@ -333,35 +321,35 @@ func buildNftCommand(rule FirewallRule) string {
 		nftChain = "output"
 	}
 
+	args := []string{"add", "rule", "inet", "filter", nftChain}
+
 	proto := rule.Protocol
 	if proto == "any" || proto == "" {
 		proto = ""
 	}
 
-	var parts []string
 	if proto != "" {
-		parts = append(parts, proto)
+		args = append(args, proto)
 	}
 	if rule.Source != "" {
-		parts = append(parts, "ip saddr", rule.Source)
+		args = append(args, "ip", "saddr", rule.Source)
 	}
 	if rule.Destination != "" {
-		parts = append(parts, "ip daddr", rule.Destination)
+		args = append(args, "ip", "daddr", rule.Destination)
 	}
 	if rule.Port != "" && (proto == "tcp" || proto == "udp") {
-		parts = append(parts, "dport", rule.Port)
+		args = append(args, "dport", rule.Port)
 	}
 	action := strings.ToLower(rule.Action)
 	if action == "accept" {
-		parts = append(parts, "accept")
+		args = append(args, "accept")
 	} else if action == "drop" {
-		parts = append(parts, "drop")
+		args = append(args, "drop")
 	} else if action == "reject" {
-		parts = append(parts, "reject")
+		args = append(args, "reject")
 	}
 
-	match := strings.Join(parts, " ")
-	return fmt.Sprintf("nft add rule inet filter %s %s", nftChain, match)
+	return args
 }
 
 // --- helpers ---

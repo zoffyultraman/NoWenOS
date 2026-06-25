@@ -3,9 +3,9 @@
 import (
 	"database/sql"
 	"fmt"
-	"os/exec"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 // ProxyRule represents a reverse proxy routing rule.
@@ -102,19 +102,11 @@ func ToggleRule(id int64, enabled bool) error {
 func GetStatus() ProxyStatus {
 	status := ProxyStatus{}
 
-	// Check version
-	out, err := exec.Command("caddy", "version").Output()
+	version, err := systemadapter.GetCaddyVersion()
 	if err == nil {
 		status.Installed = true
-		status.Version = string(out)
-	}
-
-	// Check if running
-	if status.Installed {
-		cmd := exec.Command("pgrep", "-x", "caddy")
-		if err := cmd.Run(); err == nil {
-			status.Running = true
-		}
+		status.Version = version
+		status.Running = systemadapter.IsCaddyRunning()
 	}
 
 	return status
@@ -154,15 +146,13 @@ func ReloadCaddy() error {
 	if err != nil {
 		return err
 	}
-	// Write to Caddyfile
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("echo %q > /etc/caddy/Caddyfile", caddyfile))
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to write Caddyfile: %s", string(out))
+	// Write to Caddyfile using os.WriteFile (eliminates shell injection vector)
+	if err := systemadapter.WriteCaddyfile(caddyfile); err != nil {
+		return fmt.Errorf("failed to write Caddyfile: %w", err)
 	}
 	// Reload Caddy
-	cmd = exec.Command("systemctl", "reload", "caddy")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to reload Caddy: %s", string(out))
+	if err := systemadapter.ReloadCaddy(); err != nil {
+		return fmt.Errorf("failed to reload Caddy: %w", err)
 	}
 	return nil
 }
