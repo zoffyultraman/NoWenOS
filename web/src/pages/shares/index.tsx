@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchShares, fetchSambaStatus, fetchWebDAVStatus, fetchNFSStatus, createShare, updateShare, toggleShare, deleteShare } from "@/features/shares/api";
-import type { Share, CreateShareRequest } from "@/features/shares/api";
+import type { Share } from "@/features/shares/api";
+import { createShareSchema, type CreateShareFormData } from "@/features/shares/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +13,7 @@ import { useToast } from "@/stores/toast";
 import { Share2, Plus, Trash2, X, FolderOpen, ToggleLeft, ToggleRight, Pencil, Shield, Eye } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const emptyForm: CreateShareRequest = {
+const emptyForm: CreateShareFormData = {
   name: "",
   path: "",
   protocol: "smb",
@@ -25,7 +28,10 @@ export default function SharesPage() {
   const t = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState<CreateShareRequest>({ ...emptyForm });
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateShareFormData>({
+    resolver: zodResolver(createShareSchema),
+    defaultValues: emptyForm,
+  });
 
   const sharesQuery = useQuery({ queryKey: ["shares"], queryFn: fetchShares });
   const statusQuery = useQuery({ queryKey: ["samba-status"], queryFn: fetchSambaStatus });
@@ -37,19 +43,19 @@ export default function SharesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
       setShowForm(false);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("shares.created"));
     },
     onError: (err: Error) => { toast.error(err.message || t("shares.createFailed")); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CreateShareRequest }) => updateShare(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CreateShareFormData }) => updateShare(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
       setShowForm(false);
       setEditId(null);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("shares.updated"));
     },
     onError: (err: Error) => { toast.error(err.message || t("shares.updateFailed")); },
@@ -78,21 +84,20 @@ export default function SharesPage() {
   const webdavStatus = webdavStatusQuery.data?.data;
   const nfsStatus = nfsStatusQuery.data?.data;
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function onSubmit(data: CreateShareFormData) {
     if (editId !== null) {
-      updateMutation.mutate({ id: editId, data: form });
+      updateMutation.mutate({ id: editId, data });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(data);
     }
   }
 
   function handleEdit(share: Share) {
     setEditId(share.id);
-    setForm({
+    reset({
       name: share.name,
       path: share.path,
-      protocol: share.protocol,
+      protocol: share.protocol as CreateShareFormData["protocol"],
       readOnly: share.readOnly,
       guest: share.guest,
       comment: share.comment,
@@ -106,9 +111,6 @@ export default function SharesPage() {
     }
   }
 
-  function handleChange(field: keyof CreateShareRequest, value: string | boolean) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
 
   return (
     <div className="space-y-4 p-4">
@@ -117,7 +119,7 @@ export default function SharesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("shares.title")}</h1>
           <p className="text-muted-foreground">{t("shares.subtitle")}</p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ ...emptyForm }); }}>
+        <Button onClick={() => { setShowForm(!showForm); setEditId(null); reset(emptyForm); }}>
           <Plus className="mr-2 h-4 w-4" />
           {t("shares.addShare")}
         </Button>
@@ -170,37 +172,40 @@ export default function SharesPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="share-name">{t("shares.shareName")}</Label>
-                  <Input id="share-name" value={form.name} onChange={(e) => handleChange("name", e.target.value)} placeholder="e.g. documents" required />
+                  <Input id="share-name" {...register("name")} placeholder="e.g. documents" />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="share-path">{t("shares.path")}</Label>
-                  <Input id="share-path" value={form.path} onChange={(e) => handleChange("path", e.target.value)} placeholder="e.g. /srv/shares/documents" required />
+                  <Input id="share-path" {...register("path")} placeholder="e.g. /srv/shares/documents" />
+                  {errors.path && <p className="text-xs text-destructive">{errors.path.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="share-protocol">{t("shares.protocol")}</Label>
-                  <select id="share-protocol" value={form.protocol} onChange={(e) => handleChange("protocol", e.target.value)}
+                  <select id="share-protocol" {...register("protocol")}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     <option value="smb">{t("shares.protocolSmb")}</option>
                     <option value="webdav">{t("shares.protocolWebdav")}</option>
                     <option value="nfs">{t("shares.protocolNfs")}</option>
                   </select>
+                  {errors.protocol && <p className="text-xs text-destructive">{errors.protocol.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="share-comment">{t("shares.comment")}</Label>
-                  <Input id="share-comment" value={form.comment} onChange={(e) => handleChange("comment", e.target.value)} placeholder={t("shares.optionalComment")} />
+                  <Input id="share-comment" {...register("comment")} placeholder={t("shares.optionalComment")} />
                 </div>
               </div>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.readOnly} onChange={(e) => handleChange("readOnly", e.target.checked)} className="h-4 w-4 rounded border" />
+                  <input type="checkbox" {...register("readOnly")} className="h-4 w-4 rounded border" />
                   {t("shares.readOnly")}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.guest} onChange={(e) => handleChange("guest", e.target.checked)} className="h-4 w-4 rounded border" />
+                  <input type="checkbox" {...register("guest")} className="h-4 w-4 rounded border" />
                   {t("shares.guestAccess")}
                 </label>
               </div>
@@ -294,7 +299,3 @@ export default function SharesPage() {
     </div>
   );
 }
-
-
-
-

@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { vpnConfigSchema, type VPNConfigFormData } from "@/features/vpn/schemas";
 import {
   fetchVPNConfigs, createVPNConfig, updateVPNConfig, deleteVPNConfig,
   connectVPN, disconnectVPN, fetchVPNStatus,
@@ -66,12 +69,18 @@ export default function VPNPage() {
 
   const [dialog, setDialog] = useState<DialogMode>("closed");
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: "", type: "wireguard" as string, config: "" });
+  const [wizardName, setWizardName] = useState("");
+  const [importName, setImportName] = useState("");
   const [wizard, setWizard] = useState<WizardState>({ ...defaultWizard, params: { ...defaultWizard.params } });
   const [importText, setImportText] = useState("");
   const [parsedInfo, setParsedInfo] = useState<OpenVPNInfo | null>(null);
   const [qrTarget, setQrTarget] = useState<VPNConfig | null>(null);
   const [connectingId, setConnectingId] = useState<number | null>(null);
+
+  const { register, handleSubmit: handleFormSubmit, formState: { errors }, reset: resetForm } = useForm<VPNConfigFormData>({
+    resolver: zodResolver(vpnConfigSchema),
+    defaultValues: { name: "", type: "wireguard", config: "" },
+  });
 
   // Queries
   const configsQuery = useQuery({ queryKey: ["vpn-configs"], queryFn: fetchVPNConfigs });
@@ -174,7 +183,9 @@ export default function VPNPage() {
   function closeDialog() {
     setDialog("closed");
     setEditId(null);
-    setForm({ name: "", type: "wireguard", config: "" });
+    resetForm({ name: "", type: "wireguard", config: "" });
+    setWizardName("");
+    setImportName("");
     setWizard({ ...defaultWizard, params: { ...defaultWizard.params } });
     setImportText("");
     setParsedInfo(null);
@@ -188,7 +199,7 @@ export default function VPNPage() {
 
   function openEdit(cfg: VPNConfig) {
     setEditId(cfg.id);
-    setForm({ name: cfg.name, type: cfg.type, config: cfg.config });
+    resetForm({ name: cfg.name, type: cfg.type, config: cfg.config });
     setDialog("edit");
   }
 
@@ -207,15 +218,13 @@ export default function VPNPage() {
     setDialog("qrcode");
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const data = { name: form.name, type: form.type, config: form.config };
+  const onSubmit = (data: VPNConfigFormData) => {
     if (editId !== null) {
       updateMutation.mutate({ id: editId, data });
     } else {
       createMutation.mutate(data);
     }
-  }
+  };
 
   function handleDelete(id: number, name: string) {
     if (confirm(t("vpn.deleteConfirm").replace("{name}", name))) {
@@ -327,38 +336,42 @@ export default function VPNPage() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleFormSubmit(onSubmit)} className="space-y-4">
                   <div>
                     <Label>{t("vpn.configName")}</Label>
                     <Input
-                      value={form.name}
-                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                      {...register("name")}
                       placeholder={t("vpn.configNamePlaceholder")}
-                      required
                       className="mt-1"
                     />
+                    {errors.name && (
+                      <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
+                    )}
                   </div>
                   <div>
                     <Label>{t("vpn.type")}</Label>
                     <select
-                      value={form.type}
-                      onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+                      {...register("type")}
                       className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
                     >
                       <option value="wireguard">{t("vpn.wireguard")}</option>
                       <option value="openvpn">{t("vpn.openvpn")}</option>
                     </select>
+                    {errors.type && (
+                      <p className="mt-1 text-xs text-destructive">{errors.type.message}</p>
+                    )}
                   </div>
                   <div>
                     <Label>{t("vpn.config")}</Label>
                     <textarea
-                      value={form.config}
-                      onChange={(e) => setForm((p) => ({ ...p, config: e.target.value }))}
+                      {...register("config")}
                       placeholder={t("vpn.configPlaceholder")}
-                      required
                       rows={10}
                       className="mt-1 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono"
                     />
+                    {errors.config && (
+                      <p className="mt-1 text-xs text-destructive">{errors.config.message}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
@@ -547,8 +560,8 @@ export default function VPNPage() {
                     <div>
                       <Label>{t("vpn.configName")}</Label>
                       <Input
-                        value={form.name}
-                        onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                        value={wizardName}
+                        onChange={(e) => setWizardName(e.target.value)}
                         placeholder={t("vpn.configNamePlaceholder")}
                         className="mt-1"
                       />
@@ -560,12 +573,12 @@ export default function VPNPage() {
                       <Button
                         onClick={() => {
                           createMutation.mutate({
-                            name: form.name || "WireGuard",
+                            name: wizardName || "WireGuard",
                             type: "wireguard",
                             config: wizard.generatedConfig,
                           });
                         }}
-                        disabled={createMutation.isPending || !form.name}
+                        disabled={createMutation.isPending || !wizardName}
                       >
                         {createMutation.isPending ? t("common.loading") : t("vpn.create")}
                       </Button>
@@ -649,8 +662,8 @@ export default function VPNPage() {
                   <div>
                     <Label>{t("vpn.configName")}</Label>
                     <Input
-                      value={form.name}
-                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                      value={importName}
+                      onChange={(e) => setImportName(e.target.value)}
                       placeholder={t("vpn.configNamePlaceholder")}
                       className="mt-1"
                     />
@@ -659,12 +672,12 @@ export default function VPNPage() {
                     <Button
                       onClick={() => {
                         createMutation.mutate({
-                          name: form.name || "OpenVPN",
+                          name: importName || "OpenVPN",
                           type: "openvpn",
                           config: importText,
                         });
                       }}
-                      disabled={createMutation.isPending || !importText.trim() || !form.name}
+                      disabled={createMutation.isPending || !importText.trim() || !importName}
                     >
                       {createMutation.isPending ? t("common.loading") : t("vpn.create")}
                     </Button>

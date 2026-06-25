@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createLogRotateSchema, type CreateLogRotateFormData } from "@/features/logrotate/schemas";
 import {
   fetchConfigs,
   createConfig,
@@ -9,7 +12,7 @@ import {
   applyConfig,
   testConfig,
 } from "@/features/logrotate/api";
-import type { LogRotateConfig, CreateConfigRequest } from "@/features/logrotate/api";
+import type { LogRotateConfig } from "@/features/logrotate/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +34,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const defaultForm: CreateConfigRequest = {
+const defaultForm: CreateLogRotateFormData = {
   name: "",
   logPaths: "",
   frequency: "daily",
@@ -48,8 +51,12 @@ export default function LogRotatePage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<CreateConfigRequest>({ ...defaultForm });
   const [testOutput, setTestOutput] = useState<{ id: number; output: string } | null>(null);
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateLogRotateFormData>({
+    resolver: zodResolver(createLogRotateSchema),
+    defaultValues: defaultForm,
+  });
 
   const configsQuery = useQuery({ queryKey: ["logrotate-configs"], queryFn: fetchConfigs });
 
@@ -64,7 +71,7 @@ export default function LogRotatePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CreateConfigRequest }) => updateConfig(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CreateLogRotateFormData }) => updateConfig(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["logrotate-configs"] });
       resetForm();
@@ -104,13 +111,13 @@ export default function LogRotatePage() {
   const configs = configsQuery.data?.data ?? [];
 
   function resetForm() {
-    setForm({ ...defaultForm });
+    reset(defaultForm);
     setShowForm(false);
     setEditingId(null);
   }
 
   function handleEdit(cfg: LogRotateConfig) {
-    setForm({
+    reset({
       name: cfg.name,
       logPaths: cfg.logPaths,
       frequency: cfg.frequency,
@@ -124,12 +131,11 @@ export default function LogRotatePage() {
     setShowForm(true);
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function onSubmit(data: CreateLogRotateFormData) {
     if (editingId !== null) {
-      updateMutation.mutate({ id: editingId, data: form });
+      updateMutation.mutate({ id: editingId, data });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(data);
     }
   }
 
@@ -156,23 +162,21 @@ export default function LogRotatePage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>{t("logrotate.name")}</Label>
                   <Input
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    {...register("name")}
                     placeholder={t("logrotate.namePlaceholder")}
-                    required
                     disabled={editingId !== null}
                   />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t("logrotate.frequency")}</Label>
                   <select
-                    value={form.frequency}
-                    onChange={(e) => setForm({ ...form, frequency: e.target.value })}
+                    {...register("frequency")}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     <option value="daily">{t("logrotate.daily")}</option>
@@ -185,13 +189,12 @@ export default function LogRotatePage() {
               <div className="space-y-2">
                 <Label>{t("logrotate.logPaths")}</Label>
                 <textarea
-                  value={form.logPaths}
-                  onChange={(e) => setForm({ ...form, logPaths: e.target.value })}
+                  {...register("logPaths")}
                   placeholder={t("logrotate.logPathsPlaceholder")}
-                  required
                   rows={2}
                   className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                 />
+                {errors.logPaths && <p className="text-sm text-destructive">{errors.logPaths.message}</p>}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -201,23 +204,20 @@ export default function LogRotatePage() {
                     type="number"
                     min={1}
                     max={999}
-                    value={form.rotateCount}
-                    onChange={(e) => setForm({ ...form, rotateCount: Number(e.target.value) })}
+                    {...register("rotateCount")}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("logrotate.maxSize")}</Label>
                   <Input
-                    value={form.maxSize}
-                    onChange={(e) => setForm({ ...form, maxSize: e.target.value })}
+                    {...register("maxSize")}
                     placeholder="100M"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("logrotate.createMode")}</Label>
                   <Input
-                    value={form.createMode}
-                    onChange={(e) => setForm({ ...form, createMode: e.target.value })}
+                    {...register("createMode")}
                     placeholder="0644"
                   />
                 </div>
@@ -226,8 +226,7 @@ export default function LogRotatePage() {
               <div className="space-y-2">
                 <Label>{t("logrotate.postRotate")}</Label>
                 <Input
-                  value={form.postRotate}
-                  onChange={(e) => setForm({ ...form, postRotate: e.target.value })}
+                  {...register("postRotate")}
                   placeholder={t("logrotate.postRotatePlaceholder")}
                 />
               </div>
@@ -236,8 +235,7 @@ export default function LogRotatePage() {
                 <input
                   type="checkbox"
                   id="compress"
-                  checked={form.compress}
-                  onChange={(e) => setForm({ ...form, compress: e.target.checked })}
+                  {...register("compress")}
                   className="h-4 w-4 rounded border-gray-300"
                 />
                 <Label htmlFor="compress" className="cursor-pointer">{t("logrotate.compress")}</Label>

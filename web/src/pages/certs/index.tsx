@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchCertificates, fetchCertStatus, requestLetsEncrypt,
   generateSelfSigned, deleteCertificate, renewCertificate, toggleAutoRenew,
 } from "@/features/certs/api";
 import type { Certificate } from "@/features/certs/api";
+import { letsEncryptSchema, selfSignedSchema, type LetsEncryptFormData, type SelfSignedFormData } from "@/features/certs/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +29,14 @@ export default function CertsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("letsencrypt");
-  const [leForm, setLeForm] = useState({ domain: "", email: "", autoRenew: true });
-  const [ssForm, setSsForm] = useState({ domain: "", days: 365, autoRenew: false });
+  const leForm = useForm<LetsEncryptFormData>({
+    resolver: zodResolver(letsEncryptSchema),
+    defaultValues: { domain: "", email: "", autoRenew: true },
+  });
+  const ssForm = useForm<SelfSignedFormData>({
+    resolver: zodResolver(selfSignedSchema),
+    defaultValues: { domain: "", days: 365, autoRenew: false },
+  });
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const certsQuery = useQuery({ queryKey: ["certs"], queryFn: fetchCertificates });
@@ -38,7 +47,7 @@ export default function CertsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["certs"] });
       setShowForm(false);
-      setLeForm({ domain: "", email: "", autoRenew: true });
+      leForm.reset();
       toast.success(t("certs.leCreated"));
     },
     onError: (err: Error) => toast.error(err.message || t("certs.createFailed")),
@@ -49,7 +58,7 @@ export default function CertsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["certs"] });
       setShowForm(false);
-      setSsForm({ domain: "", days: 365, autoRenew: false });
+      ssForm.reset();
       toast.success(t("certs.ssCreated"));
     },
     onError: (err: Error) => toast.error(err.message || t("certs.createFailed")),
@@ -86,14 +95,12 @@ export default function CertsPage() {
   const certs: Certificate[] = certsQuery.data?.data ?? [];
   const status = statusQuery.data?.data;
 
-  function handleSubmitLE(e: React.FormEvent) {
-    e.preventDefault();
-    createLEMutation.mutate(leForm);
+  function onSubmitLE(data: LetsEncryptFormData) {
+    createLEMutation.mutate(data);
   }
 
-  function handleSubmitSS(e: React.FormEvent) {
-    e.preventDefault();
-    createSSMutation.mutate(ssForm);
+  function onSubmitSS(data: SelfSignedFormData) {
+    createSSMutation.mutate(data);
   }
 
   function getExpiryStatus(expiresAt: string): "expired" | "expiring" | "valid" {
@@ -183,36 +190,33 @@ export default function CertsPage() {
           </CardHeader>
           <CardContent>
             {activeTab === "letsencrypt" ? (
-              <form onSubmit={handleSubmitLE} className="space-y-4">
+              <form onSubmit={leForm.handleSubmit(onSubmitLE)} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label>{t("certs.domain")}</Label>
                     <Input
-                      value={leForm.domain}
-                      onChange={(e) => setLeForm((p) => ({ ...p, domain: e.target.value }))}
+                      {...leForm.register("domain")}
                       placeholder="example.com"
-                      required
                       className="mt-1"
                     />
+                    {leForm.formState.errors.domain && <p className="text-xs text-destructive">{leForm.formState.errors.domain.message}</p>}
                   </div>
                   <div>
                     <Label>{t("certs.email")}</Label>
                     <Input
                       type="email"
-                      value={leForm.email}
-                      onChange={(e) => setLeForm((p) => ({ ...p, email: e.target.value }))}
+                      {...leForm.register("email")}
                       placeholder="admin@example.com"
-                      required
                       className="mt-1"
                     />
+                    {leForm.formState.errors.email && <p className="text-xs text-destructive">{leForm.formState.errors.email.message}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="le-auto-renew"
-                    checked={leForm.autoRenew}
-                    onChange={(e) => setLeForm((p) => ({ ...p, autoRenew: e.target.checked }))}
+                    {...leForm.register("autoRenew")}
                     className="h-4 w-4 rounded border-input"
                   />
                   <Label htmlFor="le-auto-renew" className="cursor-pointer">{t("certs.autoRenew")}</Label>
@@ -228,36 +232,32 @@ export default function CertsPage() {
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleSubmitSS} className="space-y-4">
+              <form onSubmit={ssForm.handleSubmit(onSubmitSS)} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label>{t("certs.domain")}</Label>
                     <Input
-                      value={ssForm.domain}
-                      onChange={(e) => setSsForm((p) => ({ ...p, domain: e.target.value }))}
+                      {...ssForm.register("domain")}
                       placeholder="example.local"
-                      required
                       className="mt-1"
                     />
+                    {ssForm.formState.errors.domain && <p className="text-xs text-destructive">{ssForm.formState.errors.domain.message}</p>}
                   </div>
                   <div>
                     <Label>{t("certs.validDays")}</Label>
                     <Input
                       type="number"
-                      value={ssForm.days}
-                      onChange={(e) => setSsForm((p) => ({ ...p, days: parseInt(e.target.value) || 365 }))}
-                      min={1}
-                      max={3650}
+                      {...ssForm.register("days")}
                       className="mt-1"
                     />
+                    {ssForm.formState.errors.days && <p className="text-xs text-destructive">{ssForm.formState.errors.days.message}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="ss-auto-renew"
-                    checked={ssForm.autoRenew}
-                    onChange={(e) => setSsForm((p) => ({ ...p, autoRenew: e.target.checked }))}
+                    {...ssForm.register("autoRenew")}
                     className="h-4 w-4 rounded border-input"
                   />
                   <Label htmlFor="ss-auto-renew" className="cursor-pointer">{t("certs.autoRenew")}</Label>

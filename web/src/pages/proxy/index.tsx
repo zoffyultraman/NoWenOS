@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchProxyRules, createProxyRule, updateProxyRule, deleteProxyRule,
   toggleProxyRule, fetchProxyStatus, reloadProxyConfig,
 } from "@/features/proxy/api";
 import type { ProxyRule } from "@/features/proxy/api";
+import { createProxyRuleSchema, type CreateProxyRuleFormData } from "@/features/proxy/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +19,7 @@ import {
   Pencil, RefreshCw, Globe, Lock,
 } from "lucide-react";
 
-const emptyForm = { domain: "", target: "", protocol: "http" };
+const emptyForm: CreateProxyRuleFormData = { domain: "", target: "", protocol: "http" };
 
 export default function ProxyPage() {
   const t = useTranslation();
@@ -24,7 +27,11 @@ export default function ProxyPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ ...emptyForm });
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateProxyRuleFormData>({
+    resolver: zodResolver(createProxyRuleSchema),
+    defaultValues: emptyForm,
+  });
 
   const rulesQuery = useQuery({ queryKey: ["proxy-rules"], queryFn: fetchProxyRules });
   const statusQuery = useQuery({ queryKey: ["proxy-status"], queryFn: fetchProxyStatus });
@@ -34,19 +41,19 @@ export default function ProxyPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proxy-rules"] });
       setShowForm(false);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("proxy.ruleCreated"));
     },
     onError: (err: Error) => toast.error(err.message || t("proxy.createFailed")),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: typeof emptyForm }) => updateProxyRule(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CreateProxyRuleFormData }) => updateProxyRule(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proxy-rules"] });
       setShowForm(false);
       setEditId(null);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("proxy.ruleUpdated"));
     },
     onError: (err: Error) => toast.error(err.message || t("proxy.updateFailed")),
@@ -79,18 +86,17 @@ export default function ProxyPage() {
   const rules = rulesQuery.data?.data ?? [];
   const status = statusQuery.data?.data;
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function onSubmit(data: CreateProxyRuleFormData) {
     if (editId !== null) {
-      updateMutation.mutate({ id: editId, data: form });
+      updateMutation.mutate({ id: editId, data });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(data);
     }
   }
 
   function handleEdit(rule: ProxyRule) {
     setEditId(rule.id);
-    setForm({ domain: rule.domain, target: rule.target, protocol: rule.protocol });
+    reset({ domain: rule.domain, target: rule.target, protocol: rule.protocol });
     setShowForm(true);
   }
 
@@ -112,7 +118,7 @@ export default function ProxyPage() {
             <RefreshCw className={"mr-2 h-4 w-4 " + (reloadMutation.isPending ? "animate-spin" : "")} />
             {t("proxy.reload")}
           </Button>
-          <Button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ ...emptyForm }); }}>
+          <Button onClick={() => { setShowForm(!showForm); setEditId(null); reset(emptyForm); }}>
             <Plus className="mr-2 h-4 w-4" />
             {t("proxy.addRule")}
           </Button>
@@ -138,22 +144,25 @@ export default function ProxyPage() {
             <CardTitle className="text-base">{editId !== null ? t("proxy.editRule") : t("proxy.newRule")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <Label>{t("proxy.domain")}</Label>
-                  <Input value={form.domain} onChange={(e) => setForm((p) => ({ ...p, domain: e.target.value }))} placeholder="app.example.com" required className="mt-1" />
+                  <Input {...register("domain")} placeholder="app.example.com" className="mt-1" />
+                  {errors.domain && <p className="mt-1 text-xs text-destructive">{errors.domain.message}</p>}
                 </div>
                 <div>
                   <Label>{t("proxy.target")}</Label>
-                  <Input value={form.target} onChange={(e) => setForm((p) => ({ ...p, target: e.target.value }))} placeholder="127.0.0.1:3000" required className="mt-1" />
+                  <Input {...register("target")} placeholder="127.0.0.1:3000" className="mt-1" />
+                  {errors.target && <p className="mt-1 text-xs text-destructive">{errors.target.message}</p>}
                 </div>
                 <div>
                   <Label>{t("proxy.protocol")}</Label>
-                  <select value={form.protocol} onChange={(e) => setForm((p) => ({ ...p, protocol: e.target.value }))} className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
+                  <select {...register("protocol")} className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
                     <option value="http">HTTP</option>
                     <option value="https">HTTPS</option>
                   </select>
+                  {errors.protocol && <p className="mt-1 text-xs text-destructive">{errors.protocol.message}</p>}
                 </div>
               </div>
               <div className="flex items-center gap-3">

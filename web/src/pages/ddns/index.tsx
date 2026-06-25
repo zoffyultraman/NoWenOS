@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   fetchDDNSConfigs, createDDNSConfig, updateDDNSConfig, deleteDDNSConfig,
   toggleDDNSConfig, manualUpdateDDNS, fetchDDNSStatus, fetchDDNSUpdateLog,
 } from "@/features/ddns/api";
 import type { DDNSConfig, DDNSUpdateLog } from "@/features/ddns/api";
+import { ddnsConfigSchema, type DDNSConfigFormData } from "@/features/ddns/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +28,7 @@ const PROVIDERS = [
   { value: "custom", label: "Custom Script", labelKey: "ddns.customScript" },
 ];
 
-const emptyForm = {
+const emptyForm: DDNSConfigFormData = {
   provider: "cloudflare",
   domain: "",
   username: "",
@@ -39,8 +42,13 @@ export default function DDNSPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ ...emptyForm });
   const [expandedLog, setExpandedLog] = useState<number | null>(null);
+
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<DDNSConfigFormData>({
+    resolver: zodResolver(ddnsConfigSchema),
+    defaultValues: emptyForm,
+  });
+  const currentProvider = watch("provider");
 
   const configsQuery = useQuery({ queryKey: ["ddns-configs"], queryFn: fetchDDNSConfigs });
   const statusQuery = useQuery({ queryKey: ["ddns-status"], queryFn: fetchDDNSStatus });
@@ -51,20 +59,20 @@ export default function DDNSPage() {
       queryClient.invalidateQueries({ queryKey: ["ddns-configs"] });
       queryClient.invalidateQueries({ queryKey: ["ddns-status"] });
       setShowForm(false);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("ddns.configCreated"));
     },
     onError: (err: Error) => toast.error(err.message || t("ddns.createFailed")),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: typeof emptyForm }) => updateDDNSConfig(id, data),
+    mutationFn: ({ id, data }: { id: number; data: DDNSConfigFormData }) => updateDDNSConfig(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ddns-configs"] });
       queryClient.invalidateQueries({ queryKey: ["ddns-status"] });
       setShowForm(false);
       setEditId(null);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("ddns.configUpdated"));
     },
     onError: (err: Error) => toast.error(err.message || t("ddns.updateFailed")),
@@ -103,18 +111,17 @@ export default function DDNSPage() {
   const configs = configsQuery.data?.data ?? [];
   const status = statusQuery.data?.data;
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function onSubmit(data: DDNSConfigFormData) {
     if (editId !== null) {
-      updateMutation.mutate({ id: editId, data: form });
+      updateMutation.mutate({ id: editId, data });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(data);
     }
   }
 
   function handleEdit(config: DDNSConfig) {
     setEditId(config.id);
-    setForm({
+    reset({
       provider: config.provider,
       domain: config.domain,
       username: config.username,
@@ -143,7 +150,7 @@ export default function DDNSPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("ddns.title")}</h1>
           <p className="text-muted-foreground">{t("ddns.subtitle")}</p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ ...emptyForm }); }}>
+        <Button onClick={() => { setShowForm(!showForm); setEditId(null); reset(emptyForm); }}>
           <Plus className="mr-2 h-4 w-4" />
           {t("ddns.addConfig")}
         </Button>
@@ -186,62 +193,59 @@ export default function DDNSPage() {
             <CardTitle className="text-base">{editId !== null ? t("ddns.editConfig") : t("ddns.newConfig")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label>{t("ddns.provider")}</Label>
                   <select
-                    value={form.provider}
-                    onChange={(e) => setForm((p) => ({ ...p, provider: e.target.value }))}
+                    {...register("provider")}
                     className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
                   >
                     {PROVIDERS.map((p) => (
                       <option key={p.value} value={p.value}>{p.labelKey ? t(p.labelKey) : p.label}</option>
                     ))}
                   </select>
+                  {errors.provider && <p className="mt-1 text-xs text-destructive">{errors.provider.message}</p>}
                 </div>
                 <div>
                   <Label>{t("ddns.domain")}</Label>
                   <Input
-                    value={form.domain}
-                    onChange={(e) => setForm((p) => ({ ...p, domain: e.target.value }))}
-                    placeholder={form.provider === "duckdns" ? "subdomain" : "subdomain.example.com"}
-                    required
+                    {...register("domain")}
+                    placeholder={currentProvider === "duckdns" ? "subdomain" : "subdomain.example.com"}
                     className="mt-1"
                   />
+                  {errors.domain && <p className="mt-1 text-xs text-destructive">{errors.domain.message}</p>}
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>{form.provider === "cloudflare" ? t("ddns.apiToken") : form.provider === "custom" ? t("ddns.script") : t("ddns.username")}</Label>
+                  <Label>{currentProvider === "cloudflare" ? t("ddns.apiToken") : currentProvider === "custom" ? t("ddns.script") : t("ddns.username")}</Label>
                   <Input
-                    value={form.username}
-                    onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+                    {...register("username")}
                     placeholder={
-                      form.provider === "cloudflare" ? "API Token" :
-                      form.provider === "custom" ? "/path/to/script.sh {domain} {ip}" :
-                      form.provider === "duckdns" ? t("ddns.optional") :
+                      currentProvider === "cloudflare" ? "API Token" :
+                      currentProvider === "custom" ? "/path/to/script.sh {domain} {ip}" :
+                      currentProvider === "duckdns" ? t("ddns.optional") :
                       "username"
                     }
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label>{form.provider === "cloudflare" ? t("ddns.zoneId") : form.provider === "duckdns" ? t("ddns.token") : t("ddns.password")}</Label>
+                  <Label>{currentProvider === "cloudflare" ? t("ddns.zoneId") : currentProvider === "duckdns" ? t("ddns.token") : t("ddns.password")}</Label>
                   <Input
                     type="password"
-                    value={form.password}
-                    onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                    {...register("password")}
                     placeholder={
-                      form.provider === "duckdns" ? "token" :
-                      form.provider === "cloudflare" ? t("ddns.optional") :
+                      currentProvider === "duckdns" ? "token" :
+                      currentProvider === "cloudflare" ? t("ddns.optional") :
                       "password"
                     }
                     className="mt-1"
                   />
                 </div>
               </div>
-              {form.provider === "custom" && (
+              {currentProvider === "custom" && (
                 <p className="text-xs text-muted-foreground">
                   {t("ddns.customHint")}
                 </p>

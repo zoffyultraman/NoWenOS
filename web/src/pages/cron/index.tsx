@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createTaskSchema, type CreateTaskFormData } from "@/features/cron/schemas";
 import {
   fetchTasks, createTask, updateTask, deleteTask,
   toggleTask, runTask,
@@ -16,7 +19,7 @@ import {
   Pencil, Play, CheckCircle, XCircle, Loader2, HelpCircle,
 } from "lucide-react";
 
-const emptyForm = { name: "", command: "", schedule: "" };
+const emptyForm: CreateTaskFormData = { name: "", command: "", schedule: "" };
 
 export default function CronPage() {
   const t = useTranslation();
@@ -24,7 +27,11 @@ export default function CronPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ ...emptyForm });
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CreateTaskFormData>({
+    resolver: zodResolver(createTaskSchema),
+    defaultValues: emptyForm,
+  });
 
   const tasksQuery = useQuery({ queryKey: ["cron-tasks"], queryFn: fetchTasks });
 
@@ -33,19 +40,19 @@ export default function CronPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cron-tasks"] });
       setShowForm(false);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("cron.taskCreated"));
     },
     onError: (err: Error) => toast.error(err.message || t("cron.createFailed")),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: typeof emptyForm }) => updateTask(id, data),
+    mutationFn: ({ id, data }: { id: number; data: CreateTaskFormData }) => updateTask(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cron-tasks"] });
       setShowForm(false);
       setEditId(null);
-      setForm({ ...emptyForm });
+      reset(emptyForm);
       toast.success(t("cron.taskUpdated"));
     },
     onError: (err: Error) => toast.error(err.message || t("cron.updateFailed")),
@@ -85,18 +92,17 @@ export default function CronPage() {
 
   const tasks = tasksQuery.data?.data ?? [];
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function onSubmit(data: CreateTaskFormData) {
     if (editId !== null) {
-      updateMutation.mutate({ id: editId, data: form });
+      updateMutation.mutate({ id: editId, data });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(data);
     }
   }
 
   function handleEdit(task: ScheduledTask) {
     setEditId(task.id);
-    setForm({ name: task.name, command: task.command, schedule: task.schedule });
+    reset({ name: task.name, command: task.command, schedule: task.schedule });
     setShowForm(true);
   }
 
@@ -144,7 +150,7 @@ export default function CronPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("cron.title")}</h1>
           <p className="text-muted-foreground">{t("cron.subtitle")}</p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ ...emptyForm }); }}>
+        <Button onClick={() => { setShowForm(!showForm); setEditId(null); reset(emptyForm); }}>
           <Plus className="mr-2 h-4 w-4" />
           {t("cron.addTask")}
         </Button>
@@ -156,19 +162,22 @@ export default function CronPage() {
             <CardTitle className="text-base">{editId !== null ? t("cron.editTask") : t("cron.newTask")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <Label>{t("cron.taskName")}</Label>
-                  <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder={t("cron.namePlaceholder")} required className="mt-1" />
+                  <Input {...register("name")} placeholder={t("cron.namePlaceholder")} className="mt-1" />
+                  {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>}
                 </div>
                 <div>
                   <Label>{t("cron.cronExpression")}</Label>
-                  <Input value={form.schedule} onChange={(e) => setForm((p) => ({ ...p, schedule: e.target.value }))} placeholder="*/5 * * * *" required className="mt-1" />
+                  <Input {...register("schedule")} placeholder="*/5 * * * *" className="mt-1" />
+                  {errors.schedule && <p className="mt-1 text-xs text-destructive">{errors.schedule.message}</p>}
                 </div>
                 <div>
                   <Label>{t("cron.command")}</Label>
-                  <Input value={form.command} onChange={(e) => setForm((p) => ({ ...p, command: e.target.value }))} placeholder="/usr/bin/backup.sh" required className="mt-1" />
+                  <Input {...register("command")} placeholder="/usr/bin/backup.sh" className="mt-1" />
+                  {errors.command && <p className="mt-1 text-xs text-destructive">{errors.command.message}</p>}
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">{t("cron.expressionHelp")}</p>

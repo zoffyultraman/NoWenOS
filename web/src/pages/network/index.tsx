@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   fetchInterfaces,
   configureInterface,
@@ -10,6 +12,7 @@ import {
   formatBytes,
 } from "@/features/network/api";
 import type { NetworkInterface, InterfaceConfig, DNSConfig } from "@/features/network/api";
+import { interfaceConfigSchema, type InterfaceConfigFormData } from "@/features/network/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,14 +30,11 @@ export default function NetworkPage() {
   const toast = useToast();
 
   const [configTarget, setConfigTarget] = useState<NetworkInterface | null>(null);
-  const [configForm, setConfigForm] = useState<InterfaceConfig>({
-    name: "",
-    mode: "dhcp",
-    address: "",
-    netmask: "255.255.255.0",
-    gateway: "",
-    dns: [],
+  const { register, handleSubmit: handleConfigSubmit, formState: { errors }, reset: resetConfig, watch, setValue } = useForm<InterfaceConfigFormData>({
+    resolver: zodResolver(interfaceConfigSchema),
+    defaultValues: { name: "", mode: "dhcp", address: "", netmask: "255.255.255.0", gateway: "", dns: [] },
   });
+  const configMode = watch("mode");
   const [dnsForm, setDnsForm] = useState<DNSConfig>({ servers: [], search: [] });
   const [newDnsServer, setNewDnsServer] = useState("");
 
@@ -99,7 +99,7 @@ export default function NetworkPage() {
   // Handlers
   function openConfig(iface: NetworkInterface) {
     setConfigTarget(iface);
-    setConfigForm({
+    resetConfig({
       name: iface.name,
       mode: iface.config?.mode ?? "dhcp",
       address: iface.config?.address ?? "",
@@ -109,11 +109,10 @@ export default function NetworkPage() {
     });
   }
 
-  function handleConfigSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const onConfigSubmit = (data: InterfaceConfigFormData) => {
     if (!configTarget) return;
-    configureMutation.mutate({ name: configTarget.name, config: configForm });
-  }
+    configureMutation.mutate({ name: configTarget.name, config: data });
+  };
 
   function handleDnsSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -306,7 +305,7 @@ export default function NetworkPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleConfigSubmit} className="space-y-4">
+              <form onSubmit={handleConfigSubmit(onConfigSubmit)} className="space-y-4">
                 {/* Mode Toggle */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -315,10 +314,10 @@ export default function NetworkPage() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setConfigForm((prev) => ({ ...prev, mode: "dhcp" }))}
+                      onClick={() => setValue("mode", "dhcp")}
                       className={
                         "rounded-xl border px-4 py-2 text-sm font-medium transition-all " +
-                        (configForm.mode === "dhcp"
+                        (configMode === "dhcp"
                           ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-400 shadow-sm shadow-cyan-500/10"
                           : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50")
                       }
@@ -327,10 +326,10 @@ export default function NetworkPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setConfigForm((prev) => ({ ...prev, mode: "static" }))}
+                      onClick={() => setValue("mode", "static")}
                       className={
                         "rounded-xl border px-4 py-2 text-sm font-medium transition-all " +
-                        (configForm.mode === "static"
+                        (configMode === "static"
                           ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-400 shadow-sm shadow-cyan-500/10"
                           : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50")
                       }
@@ -341,7 +340,7 @@ export default function NetworkPage() {
                 </div>
 
                 {/* Static IP Fields */}
-                {configForm.mode === "static" && (
+                {configMode === "static" && (
                   <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
@@ -350,12 +349,13 @@ export default function NetworkPage() {
                         </Label>
                         <Input
                           id="cfg-address"
-                          value={configForm.address ?? ""}
-                          onChange={(e) => setConfigForm((prev) => ({ ...prev, address: e.target.value }))}
+                          {...register("address")}
                           placeholder="192.168.1.100"
                           className="bg-muted/50 border-border focus:border-primary font-mono"
-                          required
                         />
+                        {errors.address && (
+                          <p className="text-xs text-destructive">{errors.address.message}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="cfg-netmask" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -363,8 +363,7 @@ export default function NetworkPage() {
                         </Label>
                         <Input
                           id="cfg-netmask"
-                          value={configForm.netmask ?? ""}
-                          onChange={(e) => setConfigForm((prev) => ({ ...prev, netmask: e.target.value }))}
+                          {...register("netmask")}
                           placeholder="255.255.255.0"
                           className="bg-muted/50 border-border focus:border-primary font-mono"
                         />
@@ -376,8 +375,7 @@ export default function NetworkPage() {
                       </Label>
                       <Input
                         id="cfg-gateway"
-                        value={configForm.gateway ?? ""}
-                        onChange={(e) => setConfigForm((prev) => ({ ...prev, gateway: e.target.value }))}
+                        {...register("gateway")}
                         placeholder="192.168.1.1"
                         className="bg-muted/50 border-border focus:border-primary font-mono"
                       />
