@@ -1,18 +1,16 @@
 package cronmanager
 
 import (
-	"bytes"
-	"context"
 	"errors"
-	"io"
+	"fmt"
 	"log"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 const (
@@ -53,24 +51,6 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
-}
-
-// limitWriter is a writer that limits the number of bytes written.
-type limitWriter struct {
-	w    io.Writer
-	left int64
-}
-
-func (lw *limitWriter) Write(p []byte) (int, error) {
-	if lw.left <= 0 {
-		return len(p), nil // silently drop
-	}
-	if int64(len(p)) > lw.left {
-		p = p[:lw.left]
-	}
-	n, err := lw.w.Write(p)
-	lw.left -= int64(n)
-	return n, err
 }
 
 // InitTable creates the scheduled_tasks table.
@@ -346,27 +326,27 @@ func runSingleTask(id int64, command, schedule string) {
 }
 
 func executeCommand(command string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), executionTimeout)
-	defer cancel()
+	result, err := systemadapter.RunShell(command, executionTimeout)
 
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &limitWriter{w: &stdout, left: maxOutputSize}
-	cmd.Stderr = &limitWriter{w: &stderr, left: maxOutputSize / 4}
-	err := cmd.Run()
-
-	output := stdout.String()
-	if stderr.Len() > 0 {
+	output := result.Stdout
+	if result.Stderr != "" {
 		if output != "" {
 			output += "\n"
 		}
-		output += stderr.String()
+		output += result.Stderr
 	}
 	// Truncate output to maxOutputSize
 	if len(output) > maxOutputSize {
 		output = output[:maxOutputSize] + "\n... (truncated)"
 	}
-	return output, err
+
+	if err != nil {
+		return output, err
+	}
+	if result.ExitCode != 0 {
+		return output, fmt.Errorf("command exited with code %d", result.ExitCode)
+	}
+	return output, nil
 }
 
 // --- Cron expression parsing (5-field: min hour dom month dow) ---

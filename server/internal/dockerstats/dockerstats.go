@@ -3,11 +3,11 @@ package dockerstats
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 type ContainerStats struct {
@@ -78,14 +78,16 @@ func InitTable() {
 
 // GetContainerStats runs `docker stats --no-stream` and parses the output.
 func GetContainerStats() ([]ContainerStats, error) {
-	cmd := exec.Command("docker", "stats", "--no-stream", "--format", "{{json .}}")
-	out, err := cmd.Output()
+	result, err := systemadapter.Run("docker", []string{"stats", "--no-stream", "--format", "{{json .}}"}, 30*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("docker stats failed: %w", err)
 	}
+	if result.ExitCode != 0 {
+		return nil, fmt.Errorf("docker stats failed: %s", result.Stderr)
+	}
 
 	stats := make([]ContainerStats, 0)
-	lines := splitLines(out)
+	lines := splitLines([]byte(result.Stdout))
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	for _, line := range lines {

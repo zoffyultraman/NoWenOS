@@ -1,10 +1,12 @@
 package sysinfo
 
 import (
-	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
+
+	"nowenos-server/internal/systemadapter"
 )
 
 type ProcessInfo struct {
@@ -26,14 +28,13 @@ func GetProcesses() ([]ProcessInfo, error) {
 
 func getProcessesLinux() ([]ProcessInfo, error) {
 	// Use ps command: ps aux --sort=-%mem
-	cmd := exec.Command("ps", "aux", "--sort=-%mem")
-	out, err := cmd.Output()
+	result, err := systemadapter.Run("ps", []string{"aux", "--sort=-%mem"}, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
 
 	procs := make([]ProcessInfo, 0)
-	lines := strings.Split(string(out), "\n")
+	lines := strings.Split(result.Stdout, "\n")
 	for i, line := range lines {
 		if i == 0 || strings.TrimSpace(line) == "" {
 			continue // skip header
@@ -70,14 +71,13 @@ func getProcessesLinux() ([]ProcessInfo, error) {
 
 func getProcessesWindows() ([]ProcessInfo, error) {
 	// tasklist /FO CSV /NH
-	cmd := exec.Command("tasklist", "/FO", "CSV", "/NH")
-	out, err := cmd.Output()
+	result, err := systemadapter.Run("tasklist", []string{"/FO", "CSV", "/NH"}, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
 
 	procs := make([]ProcessInfo, 0)
-	lines := strings.Split(string(out), "\n")
+	lines := strings.Split(result.Stdout, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {

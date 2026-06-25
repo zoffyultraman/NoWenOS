@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 // VPNConfig represents a VPN configuration entry.
@@ -298,7 +298,7 @@ func connectWireGuard(cfg *VPNConfig) error {
 	// Write config to temp file and bring up interface
 	// On Linux: wg-quick up <interface>
 	// For now, simulate with a check that wg tool exists
-	if _, err := exec.LookPath("wg"); err != nil {
+	if !systemadapter.IsBinaryAvailable("wg") {
 		return fmt.Errorf("WireGuard (wg) is not installed")
 	}
 
@@ -309,7 +309,7 @@ func connectWireGuard(cfg *VPNConfig) error {
 }
 
 func connectOpenVPN(cfg *VPNConfig) error {
-	if _, err := exec.LookPath("openvpn"); err != nil {
+	if !systemadapter.IsBinaryAvailable("openvpn") {
 		return fmt.Errorf("OpenVPN is not installed")
 	}
 
@@ -329,13 +329,14 @@ func disconnectOpenVPN() error {
 }
 
 func derivePublicKey(privateKey string) (string, error) {
-	cmd := exec.Command("wg", "pubkey")
-	cmd.Stdin = strings.NewReader(privateKey)
-	out, err := cmd.Output()
+	result, err := systemadapter.RunWithStdin("wg", []string{"pubkey"}, privateKey, 10*time.Second)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(out)), nil
+	if result.ExitCode != 0 {
+		return "", fmt.Errorf("wg pubkey failed: %s", result.Stderr)
+	}
+	return strings.TrimSpace(result.Stdout), nil
 }
 
 func scanRows(rows *sql.Rows) []VPNConfig {

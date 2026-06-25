@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+
+	"nowenos-server/internal/systemadapter"
 )
 
 const (
@@ -143,16 +144,15 @@ func UpInterface(name string) error {
 		return fmt.Errorf("interface %s not found: %w", name, err)
 	}
 
-	cmd := exec.Command("ip", "link", "set", name, "up")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to bring up interface: %s", string(out))
+	if _, err := systemadapter.LinkSetUp(name); err != nil {
+		return fmt.Errorf("failed to bring up interface: %w", err)
 	}
 
 	// If configured as static, apply the address
 	configs := loadConfigs()
 	if cfg, ok := configs[name]; ok && cfg.Mode == "static" && cfg.Address != "" {
 		// Flush existing addresses
-		exec.Command("ip", "addr", "flush", "dev", name).Run()
+		systemadapter.AddrFlush(name)
 
 		cidr := cfg.Address
 		if cfg.Netmask != "" {
@@ -161,22 +161,20 @@ func UpInterface(name string) error {
 			cidr = fmt.Sprintf("%s/%d", cfg.Address, ones)
 		}
 
-		cmd = exec.Command("ip", "addr", "add", cidr, "dev", name)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("failed to set address: %s", string(out))
+		if _, err := systemadapter.AddrAdd(cidr, name); err != nil {
+			return fmt.Errorf("failed to set address: %w", err)
 		}
 
 		// Set gateway if specified
 		if cfg.Gateway != "" {
-			cmd = exec.Command("ip", "route", "replace", "default", "via", cfg.Gateway, "dev", name)
-			if out, err := cmd.CombinedOutput(); err != nil {
-				return fmt.Errorf("failed to set gateway: %s", string(out))
+			if _, err := systemadapter.RouteReplaceDefault(cfg.Gateway, name); err != nil {
+				return fmt.Errorf("failed to set gateway: %w", err)
 			}
 		}
 	} else if cfg, ok := configs[name]; ok && cfg.Mode == "dhcp" {
 		// Try dhclient
 		go func() {
-			exec.Command("dhclient", "-nw", name).Run()
+			systemadapter.DHClient(name)
 		}()
 	}
 
@@ -192,9 +190,8 @@ func DownInterface(name string) error {
 		return fmt.Errorf("interface %s not found: %w", name, err)
 	}
 
-	cmd := exec.Command("ip", "link", "set", name, "down")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to bring down interface: %s", string(out))
+	if _, err := systemadapter.LinkDown(name); err != nil {
+		return fmt.Errorf("failed to bring down interface: %w", err)
 	}
 
 	return nil

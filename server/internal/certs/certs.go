@@ -6,24 +6,39 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"database/sql"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"math/big"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"regexp"
 	"time"
 
-	"database/sql"
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 const (
-	certDir      = "/var/lib/nowenos/certs"
-	certbotBin   = "certbot"
-	renewalDays  = 30
+	certDir     = "/var/lib/nowenos/certs"
+	certbotBin  = "certbot"
+	renewalDays = 30
 )
+
+// domainRe validates domain names: alphanumeric, dots, and hyphens only.
+var domainRe = regexp.MustCompile(`^[a-zA-Z0-9.-]+$`)
+
+// validateDomain checks that the domain name is safe for use in cert commands.
+func validateDomain(domain string) error {
+	if domain == "" {
+		return errors.New("domain is empty")
+	}
+	if !domainRe.MatchString(domain) {
+		return fmt.Errorf("invalid domain: %q", domain)
+	}
+	return nil
+}
 
 // Certificate represents a stored TLS certificate record.
 type Certificate struct {
@@ -104,6 +119,9 @@ func RequestLetsEncrypt(req CreateLERequest) (*Certificate, error) {
 	if req.Domain == "" {
 		return nil, errors.New("domain is required")
 	}
+	if err := validateDomain(req.Domain); err != nil {
+		return nil, err
+	}
 	if req.Email == "" {
 		return nil, errors.New("email is required for Let's Encrypt")
 	}
@@ -115,7 +133,8 @@ func RequestLetsEncrypt(req CreateLERequest) (*Certificate, error) {
 	keyPath := filepath.Join(domainDir, "privkey.pem")
 
 	// Run certbot in standalone mode
-	cmd := exec.Command(certbotBin, "certonly",
+	result, err := systemadapter.Run(certbotBin, []string{
+		"certonly",
 		"--standalone",
 		"--non-interactive",
 		"--agree-tos",
@@ -124,10 +143,12 @@ func RequestLetsEncrypt(req CreateLERequest) (*Certificate, error) {
 		"--cert-path", certPath,
 		"--key-path", keyPath,
 		"--fullchain-path", certPath,
-	)
-	output, err := cmd.CombinedOutput()
+	}, 120*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("certbot failed: %s", string(output))
+		return nil, fmt.Errorf("certbot failed: %w", err)
+	}
+	if result.ExitCode != 0 {
+		return nil, fmt.Errorf("certbot failed: %s", result.Stderr+result.Stdout)
 	}
 
 	// Parse expiry from the certificate
@@ -138,7 +159,7 @@ func RequestLetsEncrypt(req CreateLERequest) (*Certificate, error) {
 	if req.AutoRenew {
 		autoRenewInt = 1
 	}
-	result, err := db.Exec(
+	dbResult, err := db.Exec(
 		"INSERT INTO certificates (domain, type, cert_path, key_path, expires_at, auto_renew) VALUES (?, 'letsencrypt', ?, ?, ?, ?)",
 		req.Domain, certPath, keyPath, expiresAt, autoRenewInt,
 	)
@@ -146,7 +167,7 @@ func RequestLetsEncrypt(req CreateLERequest) (*Certificate, error) {
 		return nil, fmt.Errorf("save certificate record: %w", err)
 	}
 
-	id, _ := result.LastInsertId()
+	id, _ := dbResult.LastInsertId()
 	return GetCertificate(id)
 }
 
@@ -266,13 +287,16 @@ func RenewCertificate(id int64) (*Certificate, error) {
 
 	switch cert.Type {
 	case "letsencrypt":
-		cmd := exec.Command(certbotBin, "renew",
+		result, err := systemadapter.Run(certbotBin, []string{
+			"renew",
 			"--cert-name", cert.Domain,
 			"--non-interactive",
-		)
-		output, err := cmd.CombinedOutput()
+		}, 120*time.Second)
 		if err != nil {
-			return nil, fmt.Errorf("certbot renew failed: %s", string(output))
+			return nil, fmt.Errorf("certbot renew failed: %w", err)
+		}
+		if result.ExitCode != 0 {
+			return nil, fmt.Errorf("certbot renew failed: %s", result.Stderr+result.Stdout)
 		}
 
 		// Update expiry
@@ -375,10 +399,13 @@ func ToggleAutoRenew(id int64, autoRenew bool) error {
 // GetStatus reports whether certbot is installed.
 func GetStatus() Status {
 	s := Status{}
-	out, err := exec.Command(certbotBin, "--version").CombinedOutput()
+	if !systemadapter.IsBinaryAvailable(certbotBin) {
+		return s
+	}
+	s.CertbotInstalled = true
+	result, err := systemadapter.Run(certbotBin, []string{"--version"}, 10*time.Second)
 	if err == nil {
-		s.CertbotInstalled = true
-		s.CertbotVersion = string(out)
+		s.CertbotVersion = result.Stdout + result.Stderr
 	}
 	return s
 }
@@ -473,15 +500,18 @@ func ExportP12(id int64) ([]byte, error) {
 	tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
-	cmd := exec.Command("openssl", "pkcs12", "-export",
+	result, err := systemadapter.Run("openssl", []string{
+		"pkcs12", "-export",
 		"-in", cert.CertPath,
 		"-inkey", cert.KeyPath,
 		"-out", tmpFile.Name(),
 		"-passout", "pass:",
-	)
-	output, err := cmd.CombinedOutput()
+	}, 30*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("openssl pkcs12 failed: %s", string(output))
+		return nil, fmt.Errorf("openssl pkcs12 failed: %w", err)
+	}
+	if result.ExitCode != 0 {
+		return nil, fmt.Errorf("openssl pkcs12 failed: %s", result.Stderr+result.Stdout)
 	}
 
 	data, err := os.ReadFile(tmpFile.Name())

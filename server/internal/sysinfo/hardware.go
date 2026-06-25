@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
+	"time"
+
+	"nowenos-server/internal/systemadapter"
 )
 
 type HardwareInfo struct {
@@ -83,8 +85,8 @@ func GetHardwareInfo() (*HardwareInfo, error) {
 	info.Temperature = readThermalZones()
 
 	if info.Kernel == "" {
-		if out, err := exec.Command("uname", "-r").Output(); err == nil {
-			info.Kernel = strings.TrimSpace(string(out))
+		if result, err := systemadapter.Run("uname", []string{"-r"}, 5*time.Second); err == nil {
+			info.Kernel = strings.TrimSpace(result.Stdout)
 		}
 	}
 	if info.CPUModel == "" {

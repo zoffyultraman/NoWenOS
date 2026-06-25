@@ -6,12 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 // DDNSConfig represents a DDNS provider configuration.
@@ -476,13 +476,12 @@ func updateCustom(cfg *DDNSConfig, ip string) error {
 	script = strings.ReplaceAll(script, "{username}", cfg.Username)
 	script = strings.ReplaceAll(script, "{password}", cfg.Password)
 
-	cmd := exec.Command("bash", "-c", script)
-	out, err := cmd.CombinedOutput()
+	result, err := systemadapter.RunScript(script, 60*time.Second)
 	if err != nil {
-		return fmt.Errorf("custom script error: %s: %w", string(out), err)
+		return fmt.Errorf("custom script error: %s: %w", result.Stderr+result.Stdout, err)
 	}
 
-	log.Printf("ddns: Custom update for %s -> %s: %s", cfg.Domain, ip, strings.TrimSpace(string(out)))
+	log.Printf("ddns: Custom update for %s -> %s: %s", cfg.Domain, ip, strings.TrimSpace(result.Stdout))
 	return nil
 }
 

@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	"nowenos-server/internal/systemadapter"
 )
 
 type SystemStats struct {
@@ -177,12 +178,11 @@ func getDiskStats(path string) (*DiskStats, error) {
 }
 
 func execDF(path string) (string, error) {
-	cmd := exec.Command("df", "-k", path)
-	out, err := cmd.Output()
+	result, err := systemadapter.Run("df", []string{"-k", path}, 10*time.Second)
 	if err != nil {
 		return "", err
 	}
-	return string(out), nil
+	return result.Stdout, nil
 }
 
 func getUptime() (string, error) {

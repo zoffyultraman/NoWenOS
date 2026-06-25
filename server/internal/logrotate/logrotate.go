@@ -3,13 +3,13 @@ package logrotate
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	"nowenos-server/internal/database"
+	"nowenos-server/internal/systemadapter"
 )
 
 // LogRotateConfig represents a logrotate configuration entry.
@@ -291,15 +291,15 @@ func TestRotation(id int64) (*TestResult, error) {
 		return nil, fmt.Errorf("failed to write config for test: %v", err)
 	}
 
-	cmd := exec.Command("logrotate", "-d", configPath)
-	output, err := cmd.CombinedOutput()
+	result, err := systemadapter.Run("logrotate", []string{"-d", configPath}, 30*time.Second)
+	output := result.Stdout + result.Stderr
 	if err != nil {
 		// logrotate -d returns exit 0 on success, non-zero on config errors.
 		// We still return the output for diagnostic purposes.
-		return &TestResult{Output: string(output)}, fmt.Errorf("logrotate test failed: %v\n%s", err, string(output))
+		return &TestResult{Output: output}, fmt.Errorf("logrotate test failed: %v\n%s", err, output)
 	}
 
-	return &TestResult{Output: string(output)}, nil
+	return &TestResult{Output: output}, nil
 }
 
 // GetRotationLogs reads the logrotate status file to show last rotation info.
