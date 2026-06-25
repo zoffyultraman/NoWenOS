@@ -1,0 +1,28 @@
+# NoWenOS sudoers drop-in
+# Allows the 'nowenos' service user to run specific privileged commands
+# without a password. Installed to /etc/sudoers.d/nowenos (mode 0440).
+#
+# SECURITY: Only add commands that the application strictly requires.
+# Always use full absolute paths. Never use wildcards on arguments.
+
+# --- Firewall ---
+nowenos ALL=(root) NOPASSWD: /usr/sbin/nft
+nowenos ALL=(root) NOPASSWD: /usr/sbin/iptables
+
+# --- Services (restart / reload / status only) ---
+nowenos ALL=(root) NOPASSWD: /usr/bin/systemctl restart smbd nmbd apache2 caddy nfs-kernel-server
+nowenos ALL=(root) NOPASSWD: /usr/bin/systemctl reload smbd nmbd apache2 caddy nfs-kernel-server
+nowenos ALL=(root) NOPASSWD: /usr/bin/systemctl is-active smbd nmbd apache2 caddy nfs-kernel-server
+
+# --- Shares ---
+nowenos ALL=(root) NOPASSWD: /usr/bin/cp
+nowenos ALL=(root) NOPASSWD: /usr/sbin/exportfs
+nowenos ALL=(root) NOPASSWD: /usr/sbin/a2enmod
+nowenos ALL=(root) NOPASSWD: /usr/sbin/a2ensite
+
+# --- Network ---
+nowenos ALL=(root) NOPASSWD: /usr/sbin/ip
+nowenos ALL=(root) NOPASSWD: /usr/sbin/dhclient
+
+# --- Other ---
+nowenos ALL=(root) NOPASSWD: /usr/sbin/logrotate
