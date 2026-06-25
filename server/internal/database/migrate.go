@@ -54,8 +54,7 @@ func AutoMigrate() {
 		}
 		log.Printf("[migrate] applying v%d: %s", m.Version, m.Description)
 		if err := m.Up(db); err != nil {
-			log.Printf("[migrate] v%d failed: %v", m.Version, err)
-			continue
+			log.Fatalf("[migrate] v%d failed, aborting: %v", m.Version, err)
 		}
 		db.Exec("INSERT INTO schema_migrations (version, description) VALUES (?, ?)", m.Version, m.Description)
 	}
