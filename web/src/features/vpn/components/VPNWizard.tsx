@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/stores/toast";
 import type { WizardState } from "@/features/vpn/hooks/useVPNForm";
+import type { WireGuardConfigParams } from "@/features/vpn/api";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { Key, Copy, Check, ChevronRight, ChevronLeft, X } from "lucide-react";
 
@@ -12,9 +13,9 @@ interface VPNWizardProps {
   setWizard: React.Dispatch<React.SetStateAction<WizardState>>;
   wizardName: string;
   setWizardName: (name: string) => void;
-  genKeysMutation: UseMutationResult;
-  genConfigMutation: UseMutationResult;
-  createMutation: UseMutationResult;
+  genKeysMutation: UseMutationResult<unknown, Error, void, unknown>;
+  genConfigMutation: UseMutationResult<unknown, Error, WireGuardConfigParams, unknown>;
+  createMutation: UseMutationResult<unknown, Error, { name: string; type: string; config: string }, unknown>;
   onClose: () => void;
 }
 

@@ -58,7 +58,7 @@ export default function VPNPage() {
       {(dialog === "add" || dialog === "edit") && (
         <VPNConfigDialog
           mode={dialog}
-          form={{ register, handleSubmit: handleFormSubmit, formState: { errors }, watch: () => "", setValue: () => {}, reset: () => {} } as any}
+          form={{ register, handleSubmit: handleFormSubmit, formState: { errors } }}
           isPending={createMutation.isPending || updateMutation.isPending}
           onSubmit={onSubmit}
           onClose={closeDialog}
@@ -71,9 +71,9 @@ export default function VPNPage() {
           setWizard={setWizard}
           wizardName={wizardName}
           setWizardName={setWizardName}
-          genKeysMutation={genKeysMutation as any}
-          genConfigMutation={genConfigMutation as any}
-          createMutation={createMutation as any}
+          genKeysMutation={genKeysMutation}
+          genConfigMutation={genConfigMutation}
+          createMutation={createMutation}
           onClose={closeDialog}
         />
       )}

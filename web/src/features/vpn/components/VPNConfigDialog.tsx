@@ -1,4 +1,4 @@
-import type { UseFormReturn } from "react-hook-form";
+import type { UseFormRegister, UseFormHandleSubmit, FieldErrors } from "react-hook-form";
 import type { VPNConfigFormData } from "@/features/vpn/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,15 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/hooks/useTranslation";
 import { X } from "lucide-react";
 
+export interface VPNConfigDialogForm {
+  register: UseFormRegister<VPNConfigFormData>;
+  handleSubmit: UseFormHandleSubmit<VPNConfigFormData>;
+  formState: { errors: FieldErrors<VPNConfigFormData> };
+}
+
 interface VPNConfigDialogProps {
   mode: "add" | "edit";
-  form: UseFormReturn<VPNConfigFormData>;
+  form: VPNConfigDialogForm;
   isPending: boolean;
   onSubmit: (data: VPNConfigFormData) => void;
   onClose: () => void;

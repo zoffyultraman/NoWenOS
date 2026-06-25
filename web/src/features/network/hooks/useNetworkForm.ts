@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,9 +44,14 @@ export function useNetworkForm() {
 
   // Sync DNS form with fetched data
   const dnsData = dnsQuery.data?.data;
-  if (dnsData && dnsForm.servers.length === 0 && dnsData.servers && dnsData.servers.length > 0) {
-    setDnsForm({ servers: [...dnsData.servers], search: dnsData.search ? [...dnsData.search] : [] });
-  }
+  useEffect(() => {
+    if (dnsData && dnsData.servers && dnsData.servers.length > 0) {
+      setDnsForm((prev) => {
+        if (prev.servers.length > 0) return prev;
+        return { servers: [...dnsData.servers], search: dnsData.search ? [...dnsData.search] : [] };
+      });
+    }
+  }, [dnsData]);
 
   // Mutations
   const configureMutation = useMutation({
