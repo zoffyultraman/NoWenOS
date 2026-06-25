@@ -211,6 +211,10 @@ const translations: Record<string, Record<Locale, string>> = {
   "storage.unmountTitle": { en: "Unmount Device", zh: "卸载设备" },
   "storage.unmountDesc": { en: "Unmount", zh: "卸载" },
   "storage.unmountSuccess": { en: "Device unmounted successfully", zh: "设备卸载成功" },
+  "storage.spinDownBtn": { en: "Spin Down", zh: "休眠" },
+  "storage.spinDownTitle": { en: "Spin Down Disk", zh: "硬盘休眠" },
+  "storage.spinDownDesc": { en: "Spin down disk to save power?", zh: "休眠硬盘以节省电力？" },
+  "storage.spinDownSuccess": { en: "Disk spun down successfully", zh: "硬盘已休眠" },
 
   // Storage - Mountpoints
   "storage.mountpoints": { en: "Mountpoints", zh: "挂载点列表" },

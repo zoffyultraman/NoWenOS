@@ -9,6 +9,7 @@ import {
   fetchRAIDStatus,
   fetchLVMInfo,
   fetchZFSInfo,
+  spinDownDevice,
 } from "@/features/storage/api";
 import type {
   DiskInfo,
@@ -39,6 +40,7 @@ import {
   Layers,
   Box,
   Waves,
+  Moon,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -340,12 +342,39 @@ function UnmountConfirm({ disk, open, onClose, t }: { disk: DiskInfo; open: bool
   );
 }
 
+function SpinDownConfirm({ disk, open, onClose, t }: { disk: DiskInfo; open: boolean; onClose: () => void; t: (k: string) => string }) {
+  const toast = useToast();
+
+  const spinDownMutation = useMutation({
+    mutationFn: () => spinDownDevice(disk.name),
+    onSuccess: () => {
+      toast.success(t("storage.spinDownSuccess"));
+      onClose();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      title={t("storage.spinDownTitle")}
+      message={`${t("storage.spinDownDesc")} /dev/${disk.name}?`}
+      confirmLabel={t("storage.spinDownBtn")}
+      variant="default"
+      loading={spinDownMutation.isPending}
+      onConfirm={() => spinDownMutation.mutate()}
+    />
+  );
+}
+
 /* ───────────────── Disk Card ───────────────── */
 
 function DiskCard({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
   const isDisk = disk.type === "disk";
   const [showMount, setShowMount] = useState(false);
   const [showUnmount, setShowUnmount] = useState(false);
+  const [showSpinDown, setShowSpinDown] = useState(false);
 
   return (
     <>
@@ -412,6 +441,12 @@ function DiskCard({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
                 {t("storage.unmountBtn")}
               </Button>
             )}
+            {isDisk && (
+              <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowSpinDown(true)}>
+                <Moon className="mr-1 h-3 w-3" />
+                {t("storage.spinDownBtn")}
+              </Button>
+            )}
           </div>
 
           {/* SMART Section */}
@@ -421,6 +456,7 @@ function DiskCard({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
 
       {showMount && <MountDialog disk={disk} open={showMount} onClose={() => setShowMount(false)} t={t} />}
       {showUnmount && <UnmountConfirm disk={disk} open={showUnmount} onClose={() => setShowUnmount(false)} t={t} />}
+      {showSpinDown && <SpinDownConfirm disk={disk} open={showSpinDown} onClose={() => setShowSpinDown(false)} t={t} />}
     </>
   );
 }
