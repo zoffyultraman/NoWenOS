@@ -2,8 +2,7 @@
 import {
   LayoutDashboard, HardDrive, FolderOpen, Container, Users, Network,
   ScrollText, Settings, Info, Share2, Bell, Trash2, LayoutGrid,
-  ShieldCheck, Activity, Clock,
-  ShieldCheck, RefreshCw,
+  ShieldCheck, Activity, Clock, RefreshCw,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 

@@ -2,9 +2,6 @@ package httpapi
 
 import (
 	"net/http"
-	"net/url"
-	"os"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -40,6 +37,8 @@ func New() *gin.Engine {
 		registerUserRoutes(api)
 		registerAuthProtectedRoutes(api)
 		registerInfraRoutes(api)
+		registerTaskRoutes(api)
+		registerStorageRoutes(api)
 	}
 
 	static.ServeStatic(r)

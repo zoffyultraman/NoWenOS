@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/http";
 
 export interface DiskInfo {
@@ -178,8 +179,166 @@ export async function fetchZFSInfo() {
   return api.get<ZFSResponse>("/storage/zfs");
 }
 
+// --- Disk Operations (convenience wrappers around createStorageTask) ---
+
+export async function wipeDisk(device: string, password: string) {
+  return createStorageTask("wipe", { device }, password);
+}
+
+export async function formatDisk(
+  device: string,
+  fstype: string,
+  label: string,
+  password: string,
+) {
+  return createStorageTask("format", { device, fstype, label }, password);
+}
+
+export async function partitionDisk(
+  device: string,
+  scheme: string,
+  password: string,
+) {
+  return createStorageTask("partition", { device, scheme }, password);
+}
+
 // --- Spin Down ---
 
 export async function spinDownDevice(device: string) {
   return api.post(`/storage/spindown/${device}`);
+}
+
+// --- Tasks ---
+
+export interface TaskInfo {
+  id: number;
+  type: string;
+  payload: string;
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  progress: number;
+  log: string;
+  error_msg: string;
+  result: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskResponse {
+  data: TaskInfo;
+}
+
+export interface CreateTaskResponse {
+  data: { task_id: number; status: string };
+}
+
+export interface TaskLog {
+  id: number;
+  task_id: number;
+  stream: "stdout" | "stderr" | "system";
+  content: string;
+  timestamp: string;
+}
+
+export interface TaskLogsResponse {
+  data: TaskLog[];
+}
+
+export async function fetchTask(taskId: number) {
+  return api.get<TaskResponse>(`/tasks/${taskId}`);
+}
+
+export async function fetchTaskLogs(taskId: number, sinceId?: number) {
+  const query = sinceId ? `?since=${sinceId}` : "";
+  return api.get<TaskLogsResponse>(`/tasks/${taskId}/logs${query}`);
+}
+
+export async function cancelTask(taskId: number) {
+  return api.post(`/tasks/${taskId}/cancel`);
+}
+
+/**
+ * Create a storage task (wipe, format, partition, raid, lvm, zfs).
+ * Sends the password via X-Confirm-Password header for the password challenge.
+ */
+export async function createStorageTask(
+  type: string,
+  payload: Record<string, unknown>,
+  password: string,
+) {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Confirm-Password": password,
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`/api/v1/storage/tasks/${type}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message = body?.error || "Request failed";
+    throw new Error(message);
+  }
+
+  return (await response.json()) as CreateTaskResponse;
+}
+
+function getToken(): string | null {
+  try {
+    const stored = localStorage.getItem("nowenos-session");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed?.state?.token ?? null;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+// --- TanStack Query hooks for task polling ---
+
+const TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled"]);
+
+/**
+ * Polls a task by ID using TanStack Query's refetchInterval.
+ * Automatically stops polling when the task reaches a terminal state.
+ */
+export function useTaskQuery(taskId: number | null) {
+  return useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => fetchTask(taskId!),
+    enabled: taskId != null,
+    refetchInterval: (query) => {
+      const status = query.state.data?.data?.status;
+      if (!status || TERMINAL_STATUSES.has(status)) {
+        return false; // stop polling
+      }
+      return 1500; // 1.5s while running
+    },
+  });
+}
+
+/**
+ * Polls task logs using TanStack Query's refetchInterval.
+ * Stops when the task reaches a terminal state.
+ */
+export function useTaskLogsQuery(taskId: number | null, taskStatus?: string) {
+  return useQuery({
+    queryKey: ["taskLogs", taskId],
+    queryFn: () => fetchTaskLogs(taskId!),
+    enabled: taskId != null,
+    refetchInterval: () => {
+      if (!taskStatus || TERMINAL_STATUSES.has(taskStatus)) {
+        return false; // stop polling once task is done
+      }
+      return 800; // 800ms while running
+    },
+  });
 }

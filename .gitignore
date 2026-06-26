@@ -31,6 +31,8 @@ Thumbs.db
 # go
 server/bin/
 *.exe
+server/nowenos-api
+server/data/
 
 # duplicate/accidental dirs
 web/src/src/

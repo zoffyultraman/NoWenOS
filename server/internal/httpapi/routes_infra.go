@@ -61,6 +61,15 @@ func registerInfraRoutes(api *gin.RouterGroup) {
 		c.JSON(http.StatusOK, gin.H{"data": audit.GetStats()})
 	})
 
+	// Security audit logs (device-path focused, for forensic review)
+	api.GET("/audit/security", func(c *gin.Context) {
+		devicePath := c.Query("device")
+		limitStr := c.DefaultQuery("limit", "100")
+		limit, _ := strconv.Atoi(limitStr)
+		logs := audit.GetSecurityLogs(devicePath, limit)
+		c.JSON(http.StatusOK, gin.H{"data": logs})
+	})
+
 	// Backup & Restore
 	api.GET("/backups", func(c *gin.Context) {
 		backups, err := backup.ListBackups()

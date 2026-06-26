@@ -838,6 +838,18 @@ const translations: Record<string, Record<Locale, string>> = {
   "storage.mp.options": { en: "Options", zh: "选项" },
   "storage.mp.used": { en: "Used", zh: "已用" },
 
+  // Disk management
+  "storage.manageBtn": { en: "Manage", zh: "管理" },
+  "storage.wipeBtn": { en: "Wipe", zh: "擦除" },
+  "storage.wipeTitle": { en: "Wipe Disk", zh: "擦除磁盘" },
+  "storage.wipeDesc": { en: "This will permanently erase ALL data on the disk. This action cannot be undone.", zh: "这将永久擦除磁盘上的所有数据。此操作不可撤销。" },
+  "storage.formatBtn": { en: "Format", zh: "格式化" },
+  "storage.formatTitle": { en: "Format Disk", zh: "格式化磁盘" },
+  "storage.formatDesc": { en: "This will erase all data and create a new filesystem. This action cannot be undone.", zh: "这将擦除所有数据并创建新文件系统。此操作不可撤销。" },
+  "storage.partitionBtn": { en: "Partition", zh: "分区" },
+  "storage.partitionTitle": { en: "Partition Disk", zh: "磁盘分区" },
+  "storage.partitionDesc": { en: "This will erase the partition table and create a new one. All data will be lost.", zh: "这将擦除分区表并创建新的。所有数据将丢失。" },
+
 };
 
 export function t(key: string, locale: Locale): string {

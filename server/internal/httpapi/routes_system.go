@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"nowenos-server/internal/audit"
 	"nowenos-server/internal/configmgr"
 	"nowenos-server/internal/settings"
 	"nowenos-server/internal/statsstore"
@@ -134,8 +135,8 @@ func registerSystemRoutes(api *gin.RouterGroup) {
 		c.JSON(http.StatusOK, gin.H{"data": mounts})
 	})
 
-	// Mount a device (write operation)
-	api.POST("/storage/mount", requireWrite(), func(c *gin.Context) {
+	// Mount a device (write operation, requires password challenge)
+	api.POST("/storage/mount", requireWrite(), audit.RequirePasswordChallenge(), func(c *gin.Context) {
 		var req struct {
 			Device     string `json:"device"`
 			Mountpoint string `json:"mountpoint"`
@@ -155,8 +156,8 @@ func registerSystemRoutes(api *gin.RouterGroup) {
 		c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "mounted", "device": req.Device, "mountpoint": req.Mountpoint}})
 	})
 
-	// Unmount a device (write operation)
-	api.POST("/storage/unmount", requireWrite(), func(c *gin.Context) {
+	// Unmount a device (write operation, requires password challenge)
+	api.POST("/storage/unmount", requireWrite(), audit.RequirePasswordChallenge(), func(c *gin.Context) {
 		var req struct {
 			Mountpoint string `json:"mountpoint"`
 		}
@@ -175,8 +176,8 @@ func registerSystemRoutes(api *gin.RouterGroup) {
 		c.JSON(http.StatusOK, gin.H{"data": gin.H{"status": "unmounted", "mountpoint": req.Mountpoint}})
 	})
 
-	// Spin down a disk (admin only)
-	api.POST("/storage/spindown/:device", requireWrite(), requireRole("admin"), func(c *gin.Context) {
+	// Spin down a disk (admin only, requires password challenge)
+	api.POST("/storage/spindown/:device", requireWrite(), requireRole("admin"), audit.RequirePasswordChallenge(), func(c *gin.Context) {
 		device := c.Param("device")
 		if err := systemadapter.SpinDownDevice(device); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

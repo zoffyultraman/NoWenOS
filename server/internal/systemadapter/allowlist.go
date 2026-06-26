@@ -11,6 +11,7 @@ import (
 // AllowedBinaries is the set of binaries that the systemadapter is permitted to execute.
 // Each entry maps the binary name to a human-readable description.
 var AllowedBinaries = map[string]string{
+	"sudo":          "execute a command as another user",
 	"docker":        "Docker container runtime",
 	"systemctl":     "systemd service manager",
 	"nft":           "nftables firewall",
@@ -38,16 +39,19 @@ var AllowedBinaries = map[string]string{
 	"umount":        "unmount filesystem",
 	"tasklist":      "Windows process list",
 	"curl":          "HTTP client (for DDNS updates)",
-	"mdadm":         "Linux software RAID management",
-	"pvs":           "LVM physical volume display",
-	"vgs":           "LVM volume group display",
-	"lvs":           "LVM logical volume display",
-	"zpool":         "ZFS pool management",
-	"zfs":           "ZFS dataset management",
-	"hdparm":        "get/set hard disk parameters",
-	"smartctl":      "SMART disk health monitoring",
-	"findmnt":       "find mounted filesystems",
-	"cat":           "concatenate files",
+	"mdadm":    "Linux software RAID management (read-only: --detail, --examine)",
+	"pvs":      "LVM physical volume display",
+	"vgs":      "LVM volume group display",
+	"lvs":      "LVM logical volume display",
+	"zpool":    "ZFS pool management (read-only: status, list)",
+	"zfs":      "ZFS dataset management (read-only: list)",
+	"hdparm":   "get/set hard disk parameters",
+	"smartctl": "SMART disk health monitoring",
+	"findmnt":  "find mounted filesystems",
+	"cat":      "concatenate files",
+	// NOTE: Destructive disk commands (fdisk, parted, sgdisk, mkfs.*, wipefs,
+	// dd, vgcreate, lvcreate) have been moved to the diskcmd package.
+	// They are no longer accessible through systemadapter.Run/RunStreamed.
 }
 
 // shellMetachars matches characters that have special meaning in shell contexts.
@@ -114,4 +118,33 @@ func ValidateNoShellMeta(value string) error {
 		return fmt.Errorf("%w: value contains metacharacters", ErrArgsInvalid)
 	}
 	return nil
+}
+
+// RequiresSudo determines if a given binary needs to be executed with elevated privileges.
+func RequiresSudo(binary string) bool {
+	privileged := map[string]bool{
+		"systemctl": true,
+		"nft":       true,
+		"iptables":  true,
+		"ip":        true,
+		"smbpasswd": true,
+		"a2enmod":   true,
+		"a2ensite":  true,
+		"exportfs":  true,
+		"certbot":   true,
+		"wg":        true,
+		"openvpn":   true,
+		"dhclient":  true,
+		"mount":     true,
+		"umount":    true,
+		"mdadm":     true, // read-only queries only (via diskcmd for writes)
+		"zpool":     true, // read-only queries only (via diskcmd for writes)
+		"zfs":       true, // read-only queries only (via diskcmd for writes)
+		"hdparm":    true,
+		"smartctl":  true,
+		// NOTE: Destructive disk commands (fdisk, parted, sgdisk, mkfs.*, wipefs,
+		// dd, vgcreate, lvcreate) are now handled by the diskcmd package which
+		// manages its own sudo elevation internally.
+	}
+	return privileged[binary]
 }

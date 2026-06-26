@@ -5,23 +5,17 @@ import (
 	"time"
 
 	"nowenos-server/internal/alerts"
-	"nowenos-server/internal/appcenter"
+	"nowenos-server/internal/audit"
 	"nowenos-server/internal/dockerstats"
-	"nowenos-server/internal/logrotate"
-	"nowenos-server/internal/proxy"
 	"nowenos-server/internal/statsstore"
 	"nowenos-server/internal/ws"
-	"nowenos-server/internal/audit"
-	"nowenos-server/internal/auth"
 	"nowenos-server/internal/config"
 	"nowenos-server/internal/database"
 	"nowenos-server/internal/httpapi"
 	"nowenos-server/internal/tlsconfig"
-	"nowenos-server/internal/recyclebin"
-	"nowenos-server/internal/shares"
 	"nowenos-server/internal/backup"
-	"nowenos-server/internal/twofa"
 	"nowenos-server/internal/cronmanager"
+	"nowenos-server/internal/taskqueue"
 )
 
 func main() {
@@ -34,10 +28,14 @@ func main() {
 	// Apply pending migrations before module InitTable calls
 	database.AutoMigrate()
 
+	// Ensure security audit schema is ready (safety net for the v2 migration)
+	audit.InitSecurityAuditSchema()
+
 	// Initialize default users
 	backup.InitBackupDir()
 	cronmanager.StartScheduler()
 	alerts.StartPeriodicCheck()
+	taskqueue.StartWorker()
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()

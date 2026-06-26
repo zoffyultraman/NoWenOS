@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchDisks, fetchSmartInfo, fetchMountpoints, mountDevice, unmountDevice, spinDownDevice } from "@/features/storage/api";
+import {
+  fetchDisks, fetchSmartInfo, fetchMountpoints,
+  mountDevice, unmountDevice, spinDownDevice,
+  wipeDisk, formatDisk, partitionDisk,
+} from "@/features/storage/api";
 import type { DiskInfo, SmartInfo, Mountpoint } from "@/features/storage/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DropdownMenu, DropdownItem, DropdownSeparator } from "@/components/ui/dropdown-menu";
+import { DestructiveConfirm } from "@/components/DestructiveConfirm";
 import { useToast } from "@/stores/toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
   HardDrive, Database, Server, ChevronDown, ChevronUp,
   Thermometer, Clock, Shield, FolderPlus, FolderMinus, Moon,
+  Settings, Eraser, HardDriveDownload, SplitSquareHorizontal,
 } from "lucide-react";
 
 function InfoItem({ label, value, color }: { label: string; value: string; color?: string }) {
@@ -195,6 +202,94 @@ function SpinDownConfirm({ disk, open, onClose, t }: { disk: DiskInfo; open: boo
   );
 }
 
+function ManageDiskMenu({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const [dialogType, setDialogType] = useState<"wipe" | "format" | "partition" | null>(null);
+  const [taskId, setTaskId] = useState<number | null>(null);
+
+  const handleConfirm = async (password: string) => {
+    try {
+      let res;
+      if (dialogType === "wipe") {
+        res = await wipeDisk(disk.name, password);
+      } else if (dialogType === "format") {
+        res = await formatDisk(disk.name, "ext4", disk.name, password);
+      } else if (dialogType === "partition") {
+        res = await partitionDisk(disk.name, "gpt", password);
+      }
+      if (res?.data?.task_id) {
+        setTaskId(res.data.task_id);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Operation failed");
+    }
+  };
+
+  const handleClose = () => {
+    setDialogType(null);
+    setTaskId(null);
+    queryClient.invalidateQueries({ queryKey: ["disks"] });
+  };
+
+  const dialogTitle =
+    dialogType === "wipe" ? t("storage.wipeTitle") :
+    dialogType === "format" ? t("storage.formatTitle") :
+    dialogType === "partition" ? t("storage.partitionTitle") : "";
+
+  const dialogDesc =
+    dialogType === "wipe" ? t("storage.wipeDesc") :
+    dialogType === "format" ? t("storage.formatDesc") :
+    dialogType === "partition" ? t("storage.partitionDesc") : "";
+
+  const confirmVerb =
+    dialogType === "wipe" ? t("storage.wipeBtn") :
+    dialogType === "format" ? t("storage.formatBtn") :
+    dialogType === "partition" ? t("storage.partitionBtn") : "Proceed";
+
+  return (
+    <>
+      <DropdownMenu
+        trigger={
+          <Button size="sm" variant="outline" className="text-xs">
+            <Settings className="mr-1 h-3 w-3" />
+            {t("storage.manageBtn")}
+            <ChevronDown className="ml-1 h-3 w-3" />
+          </Button>
+        }
+      >
+        <DropdownItem onClick={() => setDialogType("wipe")} danger>
+          <Eraser className="h-3.5 w-3.5" />
+          {t("storage.wipeBtn")}
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem onClick={() => setDialogType("format")} danger>
+          <HardDriveDownload className="h-3.5 w-3.5" />
+          {t("storage.formatBtn")}
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem onClick={() => setDialogType("partition")} danger>
+          <SplitSquareHorizontal className="h-3.5 w-3.5" />
+          {t("storage.partitionBtn")}
+        </DropdownItem>
+      </DropdownMenu>
+
+      {dialogType && (
+        <DestructiveConfirm
+          open={true}
+          onClose={handleClose}
+          onConfirm={handleConfirm}
+          title={dialogTitle}
+          description={dialogDesc}
+          deviceName={disk.name}
+          confirmVerb={confirmVerb}
+          taskId={taskId}
+        />
+      )}
+    </>
+  );
+}
+
 function DiskCard({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
   const isDisk = disk.type === "disk";
   const [showMount, setShowMount] = useState(false);
@@ -252,7 +347,7 @@ function DiskCard({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
             </div>
           )}
 
-          <div className="flex gap-2 pt-1">
+          <div className="flex flex-wrap gap-2 pt-1">
             {!disk.mountpoint && isDisk && (
               <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setShowMount(true)}>
                 <FolderPlus className="mr-1 h-3 w-3" />
@@ -271,6 +366,7 @@ function DiskCard({ disk, t }: { disk: DiskInfo; t: (k: string) => string }) {
                 {t("storage.spinDownBtn")}
               </Button>
             )}
+            {isDisk && <ManageDiskMenu disk={disk} t={t} />}
           </div>
 
           {isDisk && <SmartSection device={disk.name} t={t} />}

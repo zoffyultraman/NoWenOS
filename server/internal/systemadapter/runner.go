@@ -1,11 +1,14 @@
 package systemadapter
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os/exec"
+	"sync"
 	"time"
 )
 
@@ -24,6 +27,14 @@ type CommandResult struct {
 // The binary MUST be in the allowlist. Args are validated for shell metacharacters.
 // This never uses sh -c; commands are executed directly via exec.CommandContext.
 func Run(binary string, args []string, timeout time.Duration) (*CommandResult, error) {
+	return RunStreamed(binary, args, timeout, nil)
+}
+
+// RunStreamed executes a binary like Run, but calls onLine for each line of
+// stdout/stderr output in real time. onLine receives the stream name ("stdout"
+// or "stderr") and the line content (without trailing newline). If onLine is
+// nil, output is only captured into the returned CommandResult (same as Run).
+func RunStreamed(binary string, args []string, timeout time.Duration, onLine func(stream, line string)) (*CommandResult, error) {
 	if err := ValidateBinary(binary); err != nil {
 		return nil, err
 	}
@@ -34,12 +45,91 @@ func Run(binary string, args []string, timeout time.Duration) (*CommandResult, e
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, binary, args...)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	var cmd *exec.Cmd
+	if RequiresSudo(binary) {
+		sudoArgs := append([]string{"-n", binary}, args...)
+		cmd = exec.CommandContext(ctx, "sudo", sudoArgs...)
+	} else {
+		cmd = exec.CommandContext(ctx, binary, args...)
+	}
 
-	err := cmd.Run()
+	// When onLine is nil, use simple buffer capture (same as old Run).
+	if onLine == nil {
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		err := cmd.Run()
+		exitCode := 0
+		if err != nil {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				exitCode = exitErr.ExitCode()
+			} else {
+				return nil, fmt.Errorf("command execution failed: %w", err)
+			}
+		}
+		return &CommandResult{
+			Stdout:   stdout.String(),
+			Stderr:   stderr.String(),
+			ExitCode: exitCode,
+		}, nil
+	}
+
+	// Streaming mode: use pipes and goroutines to capture line-by-line.
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start command: %w", err)
+	}
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	var wg sync.WaitGroup
+
+	// Goroutine to read stdout line-by-line
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		scanner := bufio.NewScanner(stdoutPipe)
+		for scanner.Scan() {
+			line := scanner.Text()
+			stdoutBuf.WriteString(line + "\n")
+			onLine("stdout", line)
+		}
+	}()
+
+	// Goroutine to read stderr line-by-line
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		scanner := bufio.NewScanner(stderrPipe)
+		for scanner.Scan() {
+			line := scanner.Text()
+			stderrBuf.WriteString(line + "\n")
+			onLine("stderr", line)
+		}
+	}()
+
+	// Wait for pipe readers to finish, then wait for the command.
+	wg.Wait()
+	err = cmd.Wait()
+
+	// Drain any remaining partial lines (no trailing newline)
+	if rest := drainReader(stdoutPipe); rest != "" {
+		stdoutBuf.WriteString(rest)
+		onLine("stdout", rest)
+	}
+	if rest := drainReader(stderrPipe); rest != "" {
+		stderrBuf.WriteString(rest)
+		onLine("stderr", rest)
+	}
+
 	exitCode := 0
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -50,10 +140,21 @@ func Run(binary string, args []string, timeout time.Duration) (*CommandResult, e
 	}
 
 	return &CommandResult{
-		Stdout:   stdout.String(),
-		Stderr:   stderr.String(),
+		Stdout:   stdoutBuf.String(),
+		Stderr:   stderrBuf.String(),
 		ExitCode: exitCode,
 	}, nil
+}
+
+// drainReader reads any remaining bytes from r (for partial last lines).
+func drainReader(r io.ReadCloser) string {
+	var buf bytes.Buffer
+	remaining, err := io.ReadAll(r)
+	if err != nil || len(remaining) == 0 {
+		return ""
+	}
+	buf.Write(remaining)
+	return buf.String()
 }
 
 // RunWithStdin executes a binary with the given arguments and feeds
@@ -70,7 +171,13 @@ func RunWithStdin(binary string, args []string, stdinData string, timeout time.D
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, binary, args...)
+	var cmd *exec.Cmd
+	if RequiresSudo(binary) {
+		sudoArgs := append([]string{"-n", binary}, args...)
+		cmd = exec.CommandContext(ctx, "sudo", sudoArgs...)
+	} else {
+		cmd = exec.CommandContext(ctx, binary, args...)
+	}
 	cmd.Stdin = bytes.NewReader([]byte(stdinData))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -121,7 +228,12 @@ func RunPipeline(stages []PipelineStage, timeout time.Duration) (*CommandResult,
 
 	var cmds []*exec.Cmd
 	for _, stage := range stages {
-		cmds = append(cmds, exec.CommandContext(ctx, stage.Binary, stage.Args...))
+		if RequiresSudo(stage.Binary) {
+			sudoArgs := append([]string{"-n", stage.Binary}, stage.Args...)
+			cmds = append(cmds, exec.CommandContext(ctx, "sudo", sudoArgs...))
+		} else {
+			cmds = append(cmds, exec.CommandContext(ctx, stage.Binary, stage.Args...))
+		}
 	}
 
 	// Wire up pipes between consecutive commands
@@ -183,7 +295,8 @@ func RunShell(command string, timeout time.Duration) (*CommandResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+	// Run user shells as nobody to sandbox them
+	cmd := exec.CommandContext(ctx, "sudo", "-u", "nobody", "sh", "-c", command)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
